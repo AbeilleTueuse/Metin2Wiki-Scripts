@@ -437,7 +437,7 @@ function uploadCharacter(
   });
 }
 
-function deleteCharacter(characters, pseudo, displayedPseudo, element, battle) {
+function deleteCharacter(characters, pseudo, element, battle) {
   battle.battleForm.reset();
   delete characters.savedCharacters[pseudo];
   element.remove();
@@ -598,13 +598,7 @@ function handleClickOnCharacter(
             " ?"
         );
         if (result) {
-          deleteCharacter(
-            characters,
-            pseudo,
-            displayedPseudo,
-            characterElement,
-            battle
-          );
+          deleteCharacter(characters, pseudo, characterElement, battle);
         }
         break;
     }
@@ -620,7 +614,6 @@ function handleNewCharacter(
 ) {
   var newCharacterTemplate = characterTemplate.cloneNode(true);
   var spanInput = newCharacterTemplate.querySelector("span.input");
-  var svgContainer = newCharacterTemplate.querySelector("div.svg-container");
 
   newCharacterTemplate.setAttribute("tabindex", "0");
   charactersContainer.appendChild(newCharacterTemplate);
@@ -659,7 +652,7 @@ function handleNewCharacter(
     }
   });
 
-  return [newCharacterTemplate, spanInput, svgContainer];
+  return [newCharacterTemplate, spanInput];
 }
 
 function validPseudo(pseudo) {
@@ -679,11 +672,7 @@ function addNewCharacter(
   battle,
   pseudoToDuplicate
 ) {
-  function editAndSetCharacterPseudoInput(
-    selectedCharacter,
-    spanInput,
-    svgContainer
-  ) {
+  function editAndSetCharacterPseudoInput(selectedCharacter, spanInput) {
     var maxPseudoLength = 15;
 
     var selection = window.getSelection();
@@ -767,14 +756,14 @@ function addNewCharacter(
   }
 
   hideElement(characters.characterCreation);
-  var [selectedCharacter, spanInput, svgContainer] = handleNewCharacter(
+  var [selectedCharacter, spanInput] = handleNewCharacter(
     characters,
     characterTemplate,
     charactersContainer,
     battle
   );
 
-  editAndSetCharacterPseudoInput(selectedCharacter, spanInput, svgContainer);
+  editAndSetCharacterPseudoInput(selectedCharacter, spanInput);
 }
 
 function handleFocus() {
@@ -1501,8 +1490,6 @@ function createBattleValues(attacker, victim, mapping) {
 }
 
 function calcBattleDamages(attacker, victim, tableResult, mapping) {
-  var primaryDamages = [];
-  var weights = [];
   var attackerWeapon = null;
   var battleValues = createBattleValues(attacker, victim, mapping);
 
