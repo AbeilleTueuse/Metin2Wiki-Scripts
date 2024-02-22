@@ -72,21 +72,6 @@ function clearTableResult(tableResult) {
   }
 }
 
-function addWeapon(weaponChoice) {
-  for (var weapon in weaponData) {
-    var option = document.createElement("option");
-    option.textContent = weaponData[weapon][0];
-    option.value = weapon;
-
-    var weaponType = weaponData[weapon][1];
-
-    if (weaponType !== 0 && weaponType !== 3) {
-      hideElement(option);
-    }
-    weaponChoice.appendChild(option);
-  }
-}
-
 function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
   if (selectedRace == "lycan") {
     hideElement(classChoice.parentElement);
@@ -110,6 +95,7 @@ function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
 function filterWeapon(
   selectedRace,
   weaponChoice,
+  weaponCategory,
   selectValueIsChanged = false
 ) {
   var allowedWeaponsPerRace = {
@@ -125,19 +111,25 @@ function filterWeapon(
     var weaponType = weaponData[weaponChoice.value][1];
 
     if (!isValueInArray(weaponType, allowedWeapons)) {
-      weaponChoice.value = "Fist";
+      weaponChoice.value = 0;
     }
   }
 
-  for (var option of weaponChoice.options) {
-    var weaponType = weaponData[option.value][1];
+  var children = weaponCategory.children;
 
-    if (isValueInArray(weaponType, allowedWeapons)) {
-      showElement(option);
+  for (var index = 0; index < children.length; index++) {
+    var child = children[index];
+
+    if (isValueInArray(index, allowedWeapons)) {
+      showElement(child);
     } else {
-      hideElement(option);
+      hideElement(child);
     }
   }
+}
+
+function weaponDisplay(weaponChoice, selectedWeapon) {
+  selectedWeapon.replaceChild(weaponChoice.nextElementSibling.cloneNode(), selectedWeapon.firstChild)
 }
 
 function filterUpgrade(
@@ -202,8 +194,6 @@ function filterPlayerRank(lowRankCheckbox, playerRankChoice) {
 }
 
 function filterForm(characters) {
-  addWeapon(characters.weaponChoice);
-
   characters.characterCreation.addEventListener("change", function (event) {
     var target = event.target;
 
@@ -211,7 +201,11 @@ function filterForm(characters) {
       case "raceChoice":
         var selectedRace = target.value;
         filterClass(selectedRace, characters.classChoice);
-        filterWeapon(selectedRace, characters.weaponChoice);
+        filterWeapon(
+          selectedRace,
+          characters.weaponChoice,
+          characters.weaponCategory
+        );
         filterUpgrade(
           selectedRace,
           characters.weaponUpgrade,
@@ -221,6 +215,7 @@ function filterForm(characters) {
         );
         break;
       case "weaponChoice":
+        weaponDisplay(target, characters.selectedWeapon);
         filterUpgrade(
           characters.raceChoice.value,
           characters.weaponUpgrade,
@@ -504,7 +499,12 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
   var selectedRace = characters.raceChoice.value;
 
   filterClass(selectedRace, characters.classChoice, true);
-  filterWeapon(selectedRace, characters.weaponChoice, true);
+  filterWeapon(
+    selectedRace,
+    characters.weaponChoice,
+    characters.weaponCategory,
+    true
+  );
   filterUpgrade(
     selectedRace,
     characters.weaponUpgrade,
@@ -1504,8 +1504,6 @@ function createBattleValues(attacker, victim, mapping) {
 }
 
 function calcBattleDamages(attacker, victim, tableResult, mapping) {
-  var primaryDamages = [];
-  var weights = [];
   var attackerWeapon = null;
   var battleValues = createBattleValues(attacker, victim, mapping);
 
@@ -1823,7 +1821,8 @@ function createDamageCalculatorInformation() {
     classChoice: document.getElementById("class-choice"),
     stateChoice: document.getElementById("state-choice"),
     polymorphMonster: document.getElementById("polymorph-monster"),
-    weaponChoice: document.getElementById("weapon-choice"),
+    weaponCategory: document.getElementById("weapon-category"),
+    selectedWeapon: document.getElementById("selected-weapon"),
     weaponUpgrade: document.getElementById("upgrade-choice"),
     randomAttackValue: document.getElementById("random-attack-value"),
     randomMagicAttackValue: document.getElementById(
@@ -1833,6 +1832,7 @@ function createDamageCalculatorInformation() {
     playerRankChoice: document.getElementById("player-rank"),
   };
   characters.raceChoice = characters.characterCreation.raceChoice;
+  characters.weaponChoice = characters.characterCreation.weaponChoice;
 
   delete characters.newCharacterTemplate.dataset.click;
 
