@@ -208,7 +208,7 @@ function filterForm(characters) {
     var target = event.target;
 
     switch (target.name) {
-      case "raceChoice":
+      case "race":
         var selectedRace = target.value;
         filterClass(selectedRace, characters.classChoice);
         filterWeapon(selectedRace, characters.weaponChoice);
@@ -220,16 +220,16 @@ function filterForm(characters) {
           characters.randomMagicAttackValue
         );
         break;
-      case "weaponChoice":
+      case "weapon":
         filterUpgrade(
-          characters.raceChoice.value,
+          characters.race.value,
           characters.weaponUpgrade,
           target,
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
         break;
-      case "stateChoice":
+      case "state":
         filterState(target, characters.polymorphMonster);
         break;
       case "lowRank":
@@ -501,7 +501,7 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
     }
   }
 
-  var selectedRace = characters.raceChoice.value;
+  var selectedRace = characters.race.value;
 
   filterClass(selectedRace, characters.classChoice, true);
   filterWeapon(selectedRace, characters.weaponChoice, true);
@@ -1113,9 +1113,6 @@ function calcStatAttackValue(character) {
 }
 
 function calcSecondaryAttackValue(attacker, attackerWeapon) {
-  var attackValues = [];
-  var weights = [];
-
   var attackValueOther = 0;
 
   var minAttackValue = 0;
@@ -1125,7 +1122,7 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
   var maxAttackValueSlash = 0;
 
   if (isPC(attacker)) {
-    if (isValueInArray("serpent", attacker.weapon.toLowerCase())) {
+    if (isValueInArray("serpent", attackerWeapon[0].toLowerCase())) {
       var rawAttackValue = attackerWeapon[3][attacker.upgrade];
 
       minAttackValue = attacker.minAttackValueRandom - rawAttackValue;
@@ -1832,7 +1829,7 @@ function createDamageCalculatorInformation() {
     lowRankCheckbox: document.getElementById("low-rank"),
     playerRankChoice: document.getElementById("player-rank"),
   };
-  characters.raceChoice = characters.characterCreation.raceChoice;
+  characters.race = characters.characterCreation.race;
 
   delete characters.newCharacterTemplate.dataset.click;
 
