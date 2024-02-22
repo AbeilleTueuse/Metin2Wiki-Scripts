@@ -94,7 +94,7 @@ function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
 
 function filterWeapon(
   selectedRace,
-  weaponChoice,
+  weapon,
   weaponCategory,
   selectValueIsChanged = false
 ) {
@@ -108,10 +108,10 @@ function filterWeapon(
   var allowedWeapons = allowedWeaponsPerRace[selectedRace];
 
   if (!selectValueIsChanged) {
-    var weaponType = weaponData[weaponChoice.value][1];
+    var weaponType = weaponData[weapon.value][1];
 
     if (!isValueInArray(weaponType, allowedWeapons)) {
-      weaponChoice.value = 0;
+      weapon.value = 0;
     }
   }
 
@@ -128,19 +128,19 @@ function filterWeapon(
   }
 }
 
-function weaponDisplay(weaponChoice, selectedWeapon) {
-  selectedWeapon.replaceChild(weaponChoice.nextElementSibling.cloneNode(), selectedWeapon.firstChild)
+function weaponDisplay(weapon, selectedWeapon) {
+  selectedWeapon.replaceChild(weapon.nextElementSibling.cloneNode(), selectedWeapon.firstChild)
 }
 
 function filterUpgrade(
   selectedRace,
   weaponUpgrade,
-  weaponChoice,
+  weapon,
   randomAttackValue,
   randomMagicAttackValue,
   currentUpgrade
 ) {
-  var weaponName = weaponChoice.value;
+  var weaponName = weapon.value;
 
   if (isValueInArray("serpent", weaponName.toLowerCase())) {
     showElement(randomAttackValue);
@@ -203,18 +203,18 @@ function filterForm(characters) {
         filterClass(selectedRace, characters.classChoice);
         filterWeapon(
           selectedRace,
-          characters.weaponChoice,
+          characters.weapon,
           characters.weaponCategory
         );
         filterUpgrade(
           selectedRace,
           characters.weaponUpgrade,
-          characters.weaponChoice,
+          characters.weapon,
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
         break;
-      case "weaponChoice":
+      case "weapon":
         weaponDisplay(target, characters.selectedWeapon);
         filterUpgrade(
           characters.race.value,
@@ -501,14 +501,14 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
   filterClass(selectedRace, characters.classChoice, true);
   filterWeapon(
     selectedRace,
-    characters.weaponChoice,
+    characters.weapon,
     characters.weaponCategory,
     true
   );
   filterUpgrade(
     selectedRace,
     characters.weaponUpgrade,
-    characters.weaponChoice,
+    characters.weapon,
     characters.randomAttackValue,
     characters.randomMagicAttackValue,
     formData.upgrade
@@ -1818,7 +1818,7 @@ function createDamageCalculatorInformation() {
     playerRankChoice: document.getElementById("player-rank"),
   };
   characters.race = characters.characterCreation.race;
-  characters.weaponChoice = characters.characterCreation.weaponChoice;
+  characters.weapon = characters.characterCreation.weapon;
 
   delete characters.newCharacterTemplate.dataset.click;
 
