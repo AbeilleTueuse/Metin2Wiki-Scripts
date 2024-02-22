@@ -1832,7 +1832,7 @@ function createDamageCalculatorInformation() {
     lowRankCheckbox: document.getElementById("low-rank"),
     playerRankChoice: document.getElementById("player-rank"),
   };
-  characters.raceChoice = characters.characterCreation["raceChoice"];
+  characters.raceChoice = characters.characterCreation.raceChoice;
 
   delete characters.newCharacterTemplate.dataset.click;
 
