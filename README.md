@@ -1,1 +1,0 @@
-"# Metin2Wiki-Calculator" 
