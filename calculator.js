@@ -198,7 +198,7 @@ function filterForm(characters) {
     var target = event.target;
 
     switch (target.name) {
-      case "raceChoice":
+      case "race":
         var selectedRace = target.value;
         filterClass(selectedRace, characters.classChoice);
         filterWeapon(
@@ -217,14 +217,14 @@ function filterForm(characters) {
       case "weaponChoice":
         weaponDisplay(target, characters.selectedWeapon);
         filterUpgrade(
-          characters.raceChoice.value,
+          characters.race.value,
           characters.weaponUpgrade,
           target,
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
         break;
-      case "stateChoice":
+      case "state":
         filterState(target, characters.polymorphMonster);
         break;
       case "lowRank":
@@ -432,7 +432,7 @@ function uploadCharacter(
   });
 }
 
-function deleteCharacter(characters, pseudo, displayedPseudo, element, battle) {
+function deleteCharacter(characters, pseudo, element, battle) {
   battle.battleForm.reset();
   delete characters.savedCharacters[pseudo];
   element.remove();
@@ -496,7 +496,7 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
     }
   }
 
-  var selectedRace = characters.raceChoice.value;
+  var selectedRace = characters.race.value;
 
   filterClass(selectedRace, characters.classChoice, true);
   filterWeapon(
@@ -598,13 +598,7 @@ function handleClickOnCharacter(
             " ?"
         );
         if (result) {
-          deleteCharacter(
-            characters,
-            pseudo,
-            displayedPseudo,
-            characterElement,
-            battle
-          );
+          deleteCharacter(characters, pseudo, characterElement, battle);
         }
         break;
     }
@@ -620,7 +614,6 @@ function handleNewCharacter(
 ) {
   var newCharacterTemplate = characterTemplate.cloneNode(true);
   var spanInput = newCharacterTemplate.querySelector("span.input");
-  var svgContainer = newCharacterTemplate.querySelector("div.svg-container");
 
   newCharacterTemplate.setAttribute("tabindex", "0");
   charactersContainer.appendChild(newCharacterTemplate);
@@ -659,7 +652,7 @@ function handleNewCharacter(
     }
   });
 
-  return [newCharacterTemplate, spanInput, svgContainer];
+  return [newCharacterTemplate, spanInput];
 }
 
 function validPseudo(pseudo) {
@@ -679,11 +672,7 @@ function addNewCharacter(
   battle,
   pseudoToDuplicate
 ) {
-  function editAndSetCharacterPseudoInput(
-    selectedCharacter,
-    spanInput,
-    svgContainer
-  ) {
+  function editAndSetCharacterPseudoInput(selectedCharacter, spanInput) {
     var maxPseudoLength = 15;
 
     var selection = window.getSelection();
@@ -767,14 +756,14 @@ function addNewCharacter(
   }
 
   hideElement(characters.characterCreation);
-  var [selectedCharacter, spanInput, svgContainer] = handleNewCharacter(
+  var [selectedCharacter, spanInput] = handleNewCharacter(
     characters,
     characterTemplate,
     charactersContainer,
     battle
   );
 
-  editAndSetCharacterPseudoInput(selectedCharacter, spanInput, svgContainer);
+  editAndSetCharacterPseudoInput(selectedCharacter, spanInput);
 }
 
 function handleFocus() {
@@ -1113,9 +1102,6 @@ function calcStatAttackValue(character) {
 }
 
 function calcSecondaryAttackValue(attacker, attackerWeapon) {
-  var attackValues = [];
-  var weights = [];
-
   var attackValueOther = 0;
 
   var minAttackValue = 0;
@@ -1125,7 +1111,7 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
   var maxAttackValueSlash = 0;
 
   if (isPC(attacker)) {
-    if (isValueInArray("serpent", attacker.weapon.toLowerCase())) {
+    if (isValueInArray("serpent", attackerWeapon[0].toLowerCase())) {
       var rawAttackValue = attackerWeapon[3][attacker.upgrade];
 
       minAttackValue = attacker.minAttackValueRandom - rawAttackValue;
@@ -1831,7 +1817,7 @@ function createDamageCalculatorInformation() {
     lowRankCheckbox: document.getElementById("low-rank"),
     playerRankChoice: document.getElementById("player-rank"),
   };
-  characters.raceChoice = characters.characterCreation.raceChoice;
+  characters.race = characters.characterCreation.race;
   characters.weaponChoice = characters.characterCreation.weaponChoice;
 
   delete characters.newCharacterTemplate.dataset.click;
