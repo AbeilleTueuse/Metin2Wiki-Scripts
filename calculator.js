@@ -128,8 +128,13 @@ function filterWeapon(
   }
 }
 
-function weaponDisplay(weapon, selectedWeapon) {
-  selectedWeapon.replaceChild(weapon.nextElementSibling.cloneNode(), selectedWeapon.firstChild)
+function getSelectedWeapon(weaponCategory) {
+  return weaponCategory.querySelector("input[type='radio']:checked");
+}
+
+function weaponDisplay(selectedWeapon, newWeapon, weaponValue) {
+  weaponName = weaponData[weaponValue][0];
+  selectedWeapon.replaceChild(newWeapon.nextElementSibling.cloneNode(), selectedWeapon.firstChild)
 }
 
 function filterUpgrade(
@@ -206,6 +211,9 @@ function filterForm(characters) {
           characters.weapon,
           characters.weaponCategory
         );
+
+        var newWeapon = getSelectedWeapon(characters.weaponCategory);
+        weaponDisplay(characters.selectedWeapon, newWeapon, characters.weapon.value);
         filterUpgrade(
           selectedRace,
           characters.weaponUpgrade,
@@ -215,7 +223,7 @@ function filterForm(characters) {
         );
         break;
       case "weapon":
-        weaponDisplay(target, characters.selectedWeapon);
+        weaponDisplay(characters.selectedWeapon, target, characters.weapon.value);
         filterUpgrade(
           characters.race.value,
           characters.weaponUpgrade,
@@ -505,6 +513,9 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
     characters.weaponCategory,
     true
   );
+
+  var newWeapon = getSelectedWeapon(characters.weaponCategory);
+  weaponDisplay(characters.selectedWeapon, newWeapon, characters.weapon.value);
   filterUpgrade(
     selectedRace,
     characters.weaponUpgrade,
