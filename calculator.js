@@ -132,22 +132,29 @@ function getSelectedWeapon(weaponCategory) {
   return weaponCategory.querySelector("input[type='radio']:checked");
 }
 
-function weaponDisplay(selectedWeapon, newWeapon, weaponValue) {
-  weaponName = weaponData[weaponValue][0];
-  selectedWeapon.replaceChild(newWeapon.nextElementSibling.cloneNode(), selectedWeapon.firstChild)
+function handleWeaponDisplay(weaponDisplay, newWeapon, weaponValue) {
+  var newImage = newWeapon.nextElementSibling.cloneNode();
+  var newText = document.createElement("span");
+  var oldImage = weaponDisplay.firstChild;
+  var oldText = oldImage.nextElementSibling;
+
+  newText.textContent = " " + weaponData[weaponValue][0] + " ";
+  
+  weaponDisplay.replaceChild(newImage, oldImage);
+  weaponDisplay.replaceChild(newText, oldText);
 }
 
 function filterUpgrade(
   selectedRace,
   weaponUpgrade,
-  weapon,
+  weaponValue,
   randomAttackValue,
   randomMagicAttackValue,
   currentUpgrade
 ) {
-  var weaponName = weapon.value;
+  var weapon = weaponData[weaponValue];
 
-  if (isValueInArray("serpent", weaponName.toLowerCase())) {
+  if (isValueInArray("serpent", weapon[0].toLowerCase())) {
     showElement(randomAttackValue);
 
     if (selectedRace === "sura" || selectedRace === "shaman") {
@@ -158,9 +165,9 @@ function filterUpgrade(
     hideElement(randomMagicAttackValue);
   }
 
-  var upgradeNumber = weaponData[weaponName][3].length;
+  var upgradeNumber = weapon[3].length;
 
-  if (!upgradeNumber) {
+  if (upgradeNumber <= 1) {
     hideElement(weaponUpgrade.parentElement);
   } else {
     showElement(weaponUpgrade.parentElement);
@@ -213,21 +220,21 @@ function filterForm(characters) {
         );
 
         var newWeapon = getSelectedWeapon(characters.weaponCategory);
-        weaponDisplay(characters.selectedWeapon, newWeapon, characters.weapon.value);
+        handleWeaponDisplay(characters.weaponDisplay, newWeapon, characters.weapon.value);
         filterUpgrade(
           selectedRace,
           characters.weaponUpgrade,
-          characters.weapon,
+          characters.weapon.value,
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
         break;
       case "weapon":
-        weaponDisplay(characters.selectedWeapon, target, characters.weapon.value);
+        handleWeaponDisplay(characters.weaponDisplay, target, characters.weapon.value);
         filterUpgrade(
           characters.race.value,
           characters.weaponUpgrade,
-          target,
+          target.value,
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
@@ -515,11 +522,11 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
   );
 
   var newWeapon = getSelectedWeapon(characters.weaponCategory);
-  weaponDisplay(characters.selectedWeapon, newWeapon, characters.weapon.value);
+  handleWeaponDisplay(characters.weaponDisplay, newWeapon, characters.weapon.value);
   filterUpgrade(
     selectedRace,
     characters.weaponUpgrade,
-    characters.weapon,
+    characters.weapon.value,
     characters.randomAttackValue,
     characters.randomMagicAttackValue,
     formData.upgrade
@@ -1819,7 +1826,7 @@ function createDamageCalculatorInformation() {
     stateChoice: document.getElementById("state-choice"),
     polymorphMonster: document.getElementById("polymorph-monster"),
     weaponCategory: document.getElementById("weapon-category"),
-    selectedWeapon: document.getElementById("selected-weapon"),
+    weaponDisplay: document.getElementById("weapon-display"),
     weaponUpgrade: document.getElementById("upgrade-choice"),
     randomAttackValue: document.getElementById("random-attack-value"),
     randomMagicAttackValue: document.getElementById(
