@@ -1273,7 +1273,7 @@ function calcDamageWithSecondaryBonuses(
   );
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
 
-  damages += Math.floor(battleValues.defensePercent);
+  damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
 
   return damages;
 }
