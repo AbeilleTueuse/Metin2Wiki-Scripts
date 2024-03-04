@@ -139,7 +139,7 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponValue) {
   var oldText = oldImage.nextElementSibling;
 
   newText.textContent = " " + weaponData[weaponValue][0] + " ";
-  
+
   weaponDisplay.replaceChild(newImage, oldImage);
   weaponDisplay.replaceChild(newText, oldText);
 }
@@ -220,7 +220,11 @@ function filterForm(characters) {
         );
 
         var newWeapon = getSelectedWeapon(characters.weaponCategory);
-        handleWeaponDisplay(characters.weaponDisplay, newWeapon, characters.weapon.value);
+        handleWeaponDisplay(
+          characters.weaponDisplay,
+          newWeapon,
+          characters.weapon.value
+        );
         filterUpgrade(
           selectedRace,
           characters.weaponUpgrade,
@@ -230,7 +234,11 @@ function filterForm(characters) {
         );
         break;
       case "weapon":
-        handleWeaponDisplay(characters.weaponDisplay, target, characters.weapon.value);
+        handleWeaponDisplay(
+          characters.weaponDisplay,
+          target,
+          characters.weapon.value
+        );
         filterUpgrade(
           characters.race.value,
           characters.weaponUpgrade,
@@ -522,7 +530,11 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
   );
 
   var newWeapon = getSelectedWeapon(characters.weaponCategory);
-  handleWeaponDisplay(characters.weaponDisplay, newWeapon, characters.weapon.value);
+  handleWeaponDisplay(
+    characters.weaponDisplay,
+    newWeapon,
+    characters.weapon.value
+  );
   filterUpgrade(
     selectedRace,
     characters.weaponUpgrade,
