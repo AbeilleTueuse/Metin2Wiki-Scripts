@@ -73,22 +73,21 @@ function clearTableResult(tableResult) {
 }
 
 function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
+  showElement(classChoice.parentElement);
+
+  for (var option of classChoice.options) {
+    if (option.getAttribute("data-race") === selectedRace) {
+      if (!selectValueIsChanged) {
+        classChoice.value = option.value;
+        selectValueIsChanged = true;
+      }
+      showElement(option);
+    } else {
+      hideElement(option);
+    }
+  }
   if (selectedRace == "lycan") {
     hideElement(classChoice.parentElement);
-  } else {
-    showElement(classChoice.parentElement);
-
-    for (var option of classChoice.options) {
-      if (option.getAttribute("data-race") === selectedRace) {
-        if (!selectValueIsChanged) {
-          classChoice.value = option.value;
-          selectValueIsChanged = true;
-        }
-        showElement(option);
-      } else {
-        hideElement(option);
-      }
-    }
   }
 }
 
@@ -1361,6 +1360,13 @@ function getRankBonus(attacker) {
   return 0;
 }
 
+function skillChanceReduction(value) {
+  if (value <= 9) {
+    return Math.floor(value / 2);
+  }
+  return 5 + Math.floor((value - 10) / 4);
+}
+
 function createPhysicalBattleValues(
   attacker,
   victim,
@@ -1455,8 +1461,8 @@ function createPhysicalBattleValues(
   }
 
   if (isPC(victim)) {
-    criticalHitPercentage -= victim.criticalHitResistance;
-    piercingHitPercentage -= victim.piercingHitResistance;
+    criticalHitPercentage = Math.max(0, criticalHitPercentage - victim.criticalHitResistance);
+    piercingHitPercentage = Math.max(0, piercingHitPercentage - victim.piercingHitResistance);
     averageDamageResistance = victim.averageDamageResistance;
 
     if (isMagicClass(victim)) {
@@ -1526,8 +1532,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var damageMultiplier = 1;
   var weaponDefense = 0;
-  var criticalHitPercentage = attacker.criticalHit;
-  var piercingHitPercentage = attacker.piercingHit;
+  var criticalHitPercentage = skillChanceReduction(attacker.criticalHit);
+  var piercingHitPercentage = skillChanceReduction(attacker.piercingHit);
   var skillDamage = 0;
   var skillDamageResistance = 0;
   var rankBonus = 0;
@@ -1605,8 +1611,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
   }
 
   if (isPC(victim)) {
-    criticalHitPercentage -= victim.criticalHitResistance;
-    piercingHitPercentage -= victim.piercingHitResistance;
+    criticalHitPercentage = Math.max(0, criticalHitPercentage - victim.criticalHitResistance);
+    piercingHitPercentage = Math.max(0, piercingHitPercentage - victim.piercingHitResistance);
     skillDamageResistance = victim.skillDamageResistance;
 
     if (isMagicClass(victim)) {
@@ -1733,7 +1739,7 @@ function calcPhysicalDamages(
         battleValues
       );
 
-      damages -= battleValues.defense;
+      damagesWithPrimaryBonuses -= battleValues.defense;
 
       if (damagesWithPrimaryBonuses <= 2) {
         for (var damages = 1; damages <= 5; damages++) {
