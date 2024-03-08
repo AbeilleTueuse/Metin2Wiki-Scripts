@@ -1461,8 +1461,14 @@ function createPhysicalBattleValues(
   }
 
   if (isPC(victim)) {
-    criticalHitPercentage = Math.max(0, criticalHitPercentage - victim.criticalHitResistance);
-    piercingHitPercentage = Math.max(0, piercingHitPercentage - victim.piercingHitResistance);
+    criticalHitPercentage = Math.max(
+      0,
+      criticalHitPercentage - victim.criticalHitResistance
+    );
+    piercingHitPercentage = Math.max(
+      0,
+      piercingHitPercentage - victim.piercingHitResistance
+    );
     averageDamageResistance = victim.averageDamageResistance;
 
     if (isMagicClass(victim)) {
@@ -1611,8 +1617,14 @@ function createSkillBattleValues(attacker, victim, mapping) {
   }
 
   if (isPC(victim)) {
-    criticalHitPercentage = Math.max(0, criticalHitPercentage - victim.criticalHitResistance);
-    piercingHitPercentage = Math.max(0, piercingHitPercentage - victim.piercingHitResistance);
+    criticalHitPercentage = Math.max(
+      0,
+      criticalHitPercentage - victim.criticalHitResistance
+    );
+    piercingHitPercentage = Math.max(
+      0,
+      piercingHitPercentage - victim.piercingHitResistance
+    );
     skillDamageResistance = victim.skillDamageResistance;
 
     if (isMagicClass(victim)) {
@@ -1786,13 +1798,23 @@ function calcPhysicalDamages(
   ];
 }
 
-function getSkillFormula(skillId, vit, str, int, dex, skillPower) {
+function getSkillFormula(skillId, lv, vit, str, int, dex, skillPower) {
   switch (skillId) {
     case 5:
       return function (atk) {
-        return (
-          2 * atk +
-          floorMultiplication(atk + dex * 3 + str * 7 + vit, skillPower)
+        return floorMultiplication(
+          2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
+          1
+        );
+      };
+    case 62:
+      return function (atk) {
+        return floorMultiplication(
+          1.1 * atk +
+            2 * lv +
+            2 * int +
+            (1.5 * atk + str + 12 * int) * skillPower,
+          1
         );
       };
   }
@@ -1809,6 +1831,7 @@ function calcSkillDamages(
   var skillPower = getSkillPower(attacker["skill" + skillId], skillPowerTable);
   var skillFormula = getSkillFormula(
     skillId,
+    attacker.level,
     attacker.vit,
     attacker.str,
     attacker.int,
