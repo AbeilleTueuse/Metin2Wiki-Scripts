@@ -1203,6 +1203,9 @@ function getSkillPower(skillPoint, skillPowerTable) {
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
   damages = floorMultiplication(damages, battleValues.attackValueCoeff);
   damages = floorMultiplication(damages, battleValues.typeBonusCoeff);
+  damages +=
+    floorMultiplication(damages, battleValues.raceBonusCoeff) -
+    floorMultiplication(damages, battleValues.raceResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.stoneBonusCoeff);
   damages = floorMultiplication(damages, battleValues.monsterBonusCoeff);
 
@@ -1376,6 +1379,8 @@ function createPhysicalBattleValues(
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
   var typeBonus = 0;
+  var raceBonus = 0;
+  var raceResistance = 0;
   var stoneBonus = 0;
   var monsterBonus = 0;
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
@@ -1410,7 +1415,12 @@ function createPhysicalBattleValues(
     }
 
     if (isPC(victim)) {
-      typeBonus = attacker.humanBonus;
+      typeBonus = Math.max(
+        0,
+        Math.max(1, attacker.humanBonus) - victim.humanResistance
+      );
+      raceBonus = attacker[mapping.raceBonus[victim.race]];
+      raceResistance = victim[mapping.raceResistance[attacker.race]];
 
       for (var index = 0; index <= 5; index++) {
         elementBonus[index] =
@@ -1457,10 +1467,14 @@ function createPhysicalBattleValues(
     averageDamage += attacker.averageDamage;
     rankBonus = getRankBonus(attacker);
   } else {
+    typeBonus = 1;
     damageMultiplier = attacker.damageMultiplier;
   }
 
   if (isPC(victim)) {
+    if (victim.biologist70 === "on") {
+      victim.defense = floorMultiplication(victim.defense, 1.1);
+    }
     criticalHitPercentage = Math.max(
       0,
       criticalHitPercentage - victim.criticalHitResistance
@@ -1482,6 +1496,8 @@ function createPhysicalBattleValues(
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
+    raceBonusCoeff: raceBonus / 100,
+    raceResistanceCoeff: raceResistance / 100,
     monsterBonusCoeff: 1 + monsterBonus / 100,
     stoneBonusCoeff: 1 + stoneBonus / 100,
     elementBonusCoeff: elementBonus,
@@ -1533,6 +1549,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
   var typeBonus = 0;
+  var raceBonus = 0;
+  var raceResistance = 0;
   var stoneBonus = 0;
   var monsterBonus = 0;
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
@@ -1566,7 +1584,12 @@ function createSkillBattleValues(attacker, victim, mapping) {
     }
 
     if (isPC(victim)) {
-      typeBonus = attacker.humanBonus;
+      typeBonus = Math.max(
+        0,
+        Math.max(1, attacker.humanBonus) - victim.humanResistance
+      );
+      raceBonus = attacker[mapping.raceBonus[victim.race]];
+      raceResistance = victim[mapping.raceResistance[attacker.race]];
 
       for (var index = 0; index <= 5; index++) {
         elementBonus[index] =
@@ -1613,6 +1636,7 @@ function createSkillBattleValues(attacker, victim, mapping) {
     skillDamage += attacker.skillDamage;
     rankBonus = getRankBonus(attacker);
   } else {
+    typeBonus = 1;
     damageMultiplier = attacker.damageMultiplier;
   }
 
@@ -1638,6 +1662,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
+    raceBonusCoeff: raceBonus / 100,
+    raceResistanceCoeff: raceResistance / 100,
     monsterBonusCoeff: 1 + monsterBonus / 100,
     stoneBonusCoeff: 1 + stoneBonus / 100,
     elementBonusCoeff: elementBonus,
@@ -2090,6 +2116,20 @@ function createMapping() {
       "desertBonus", // 6
       "devilBonus", // 7
     ],
+    raceBonus: {
+      warrior: "warriorBonus",
+      sura: "suraBonus",
+      ninja: "ninjaBonus",
+      shaman: "shamanBonus",
+      lycan: "lycanBonus",
+    },
+    raceResistance: {
+      warrior: "warriorResistance",
+      sura: "suraResistance",
+      ninja: "ninjaResistance",
+      shaman: "shamanResistance",
+      lycan: "lycanResistance",
+    },
     defenseWeapon: [
       "swordDefense", // 0
       "daggerDefense", // 1
