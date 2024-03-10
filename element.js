@@ -95,7 +95,6 @@ function addCollapsible(toggleButton) {
     }
   });
   collapsibleContent.addEventListener("transitionend", function (event) {
-    console.log(isCollapsed);
     if (isCollapsed) {
       this.style.overflow = "visible";
     } else {
