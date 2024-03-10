@@ -44,8 +44,6 @@ function addRowToTableResult(tableResult, value) {
   firstCell.textContent = value;
   firstCell.colSpan = 2;
 
-  newRow.style.backgroundColor = "#1f0e02";
-  newRow.style.color = "#f0d9a2";
   newRow.style.fontWeight = "bold";
 }
 
@@ -56,7 +54,10 @@ function addToTableResult(tableResult, value1, value2) {
   firstCell.textContent = value1;
 
   var secondCell = newRow.insertCell(1);
-  secondCell.textContent = numberFormat(value2 * 100, 3) + " %";
+  secondCell.textContent =
+    numberFormat(value2 * 100, 3)
+      .toString()
+      .replace(".", ",") + " %";
 }
 
 function getMinDamages(tableResult) {
@@ -1083,6 +1084,14 @@ function isMagicClass(character) {
   return character.race === "shaman" || character.class === "black_magic";
 }
 
+function isPolymorph(character) {
+  return character.state === "polymorph";
+}
+
+function isRiding(character) {
+  return character.state === "horse";
+}
+
 function calcAttackFactor(attacker, victim) {
   function calcCoeffK(dex, level) {
     return Math.min(90, Math.floor((2 * dex + level) / 3));
@@ -1290,7 +1299,7 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
   attacker.minAttackValuePolymorph = 0;
   attacker.maxAttackValuePolymorph = 0;
 
-  if (isPC(attacker) && attacker.state === "polymorph" && polymorphPowerTable) {
+  if (isPC(attacker) && isPolymorph(attacker) && polymorphPowerTable) {
     var polymorphPowerPct =
       getPolymorphPower(attacker.polymorphPoint, polymorphPowerTable) / 100;
     var polymorphMonster = createMonster(attacker.polymorphMonster);
@@ -1333,7 +1342,7 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
 function computeHorse(attacker) {
   attacker.horseAttackValue = 0;
 
-  if (isPC(attacker) && attacker.state === "horse") {
+  if (isPC(attacker) && isRiding(attacker)) {
     var horseConstant = 30;
 
     if (attacker.class === "weaponary") {
@@ -1376,6 +1385,7 @@ function createPhysicalBattleValues(
   mapping,
   polymorphPowerTable
 ) {
+  var missPercentage = 0;
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
   var typeBonus = 0;
@@ -1415,6 +1425,16 @@ function createPhysicalBattleValues(
     }
 
     if (isPC(victim)) {
+      if (weaponType === 2 && !isPolymorph(attacker)) {
+        missPercentage = victim.arrowBlock;
+      } else {
+        missPercentage = victim.meleeBlock;
+      }
+
+      missPercentage +=
+        victim.meleeArrowBlock -
+        (missPercentage * victim.meleeArrowBlock) / 100;
+
       typeBonus = Math.max(
         0,
         Math.max(1, attacker.humanBonus) - victim.humanResistance
@@ -1467,6 +1487,18 @@ function createPhysicalBattleValues(
     averageDamage += attacker.averageDamage;
     rankBonus = getRankBonus(attacker);
   } else {
+    if (isPC(victim)) {
+      if (attacker.attack == 0) {
+        missPercentage = victim.meleeBlock;
+      } else {
+        missPercentage = victim.arrowBlock;
+      }
+
+      missPercentage +=
+        victim.meleeArrowBlock -
+        (missPercentage * victim.meleeArrowBlock) / 100;
+    }
+
     typeBonus = 1;
     damageMultiplier = attacker.damageMultiplier;
   }
@@ -1492,7 +1524,10 @@ function createPhysicalBattleValues(
     }
   }
 
+  missPercentage = Math.min(100, missPercentage);
+
   var battleValues = {
+    missPercentage: missPercentage,
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
@@ -1519,25 +1554,35 @@ function createPhysicalBattleValues(
     {
       criticalHit: false,
       piercingHit: false,
-      weight: (100 - criticalHitPercentage) * (100 - piercingHitPercentage),
+      weight:
+        (100 - criticalHitPercentage) *
+        (100 - piercingHitPercentage) *
+        (100 - missPercentage),
       name: "Coup classique",
     },
     {
       criticalHit: true,
       piercingHit: false,
-      weight: criticalHitPercentage * (100 - piercingHitPercentage),
+      weight:
+        criticalHitPercentage *
+        (100 - piercingHitPercentage) *
+        (100 - missPercentage),
       name: "Coup critique",
     },
     {
       criticalHit: false,
       piercingHit: true,
-      weight: (100 - criticalHitPercentage) * piercingHitPercentage,
+      weight:
+        (100 - criticalHitPercentage) *
+        piercingHitPercentage *
+        (100 - missPercentage),
       name: "Coup perçant",
     },
     {
       criticalHit: true,
       piercingHit: true,
-      weight: criticalHitPercentage * piercingHitPercentage,
+      weight:
+        criticalHitPercentage * piercingHitPercentage * (100 - missPercentage),
       name: "Coup critique + coup perçant",
     },
   ];
@@ -1726,6 +1771,7 @@ function calcPhysicalDamages(
 
   var sumDamages = 0;
   var saveDamages = 0;
+  var finalDamages = 0;
 
   clearTableResult(tableResult);
 
@@ -1742,6 +1788,13 @@ function calcPhysicalDamages(
     minInterval,
     totalCardinal,
   ] = calcSecondaryAttackValue(attacker, attackerWeapon);
+
+  totalCardinal *= 100;
+
+  if (battleValues.missPercentage) {
+    addRowToTableResult(tableResult, "Miss");
+    addToTableResult(tableResult, 0, battleValues.missPercentage / 100);
+  }
 
   var lastWeightsLimit = maxAttackValue - minInterval + 1;
   var firstWeightLimit = minAttackValue + minInterval - 1;
@@ -1975,38 +2028,39 @@ function createMonster(name) {
     name: name,
     rank: data[0],
     race: data[1],
-    level: data[2],
-    type: data[3],
-    str: data[4],
-    dex: data[5],
-    vit: data[6],
-    int: data[7],
-    minAttackValue: data[8],
-    maxAttackValue: data[9],
-    defense: data[10] + data[2] + data[6],
-    criticalHit: data[11],
-    piercingHit: data[12],
-    fistDefense: data[13],
-    swordDefense: data[14],
-    twoHandedSwordDefense: data[15],
-    daggerDefense: data[16],
-    bellDefense: data[17],
-    fanDefense: data[18],
-    arrowDefense: data[19],
-    clawDefense: data[20],
-    fireResistance: data[21],
-    lightningResistance: data[22],
-    windResistance: data[24],
-    lightningBonus: data[25],
-    fireBonus: data[26],
-    iceBonus: data[27],
-    windBonus: data[28],
-    earthBonus: data[29],
-    darknessBonus: data[30],
-    darknessResistance: data[31],
-    iceResistance: data[32],
-    earthResistance: data[33],
-    damageMultiplier: data[34],
+    attack: data[2],
+    level: data[3],
+    type: data[4],
+    str: data[5],
+    dex: data[6],
+    vit: data[7],
+    int: data[8],
+    minAttackValue: data[9],
+    maxAttackValue: data[10],
+    defense: data[11] + data[3] + data[7],
+    criticalHit: data[12],
+    piercingHit: data[13],
+    fistDefense: data[14],
+    swordDefense: data[15],
+    twoHandedSwordDefense: data[16],
+    daggerDefense: data[17],
+    bellDefense: data[18],
+    fanDefense: data[19],
+    arrowDefense: data[20],
+    clawDefense: data[21],
+    fireResistance: data[22],
+    lightningResistance: data[23],
+    windResistance: data[25],
+    lightningBonus: data[26],
+    fireBonus: data[27],
+    iceBonus: data[28],
+    windBonus: data[29],
+    earthBonus: data[30],
+    darknessBonus: data[31],
+    darknessResistance: data[32],
+    iceResistance: data[33],
+    earthResistance: data[34],
+    damageMultiplier: data[35],
   };
 
   return monster;
@@ -2051,8 +2105,6 @@ function createBattle(characters, battle) {
         battle.mapping,
         battle.constants.polymorphPowerTable
       );
-    } else if (attackType === "skill") {
-      // [meanDamages, minDamages, maxDamages] = calcMagicSkills(attacker, victim, battle.tableResult, battle.mapping);
     } else if (attackType.startsWith("skill")) {
       var skillId = parseInt(attackType.split("-")[1]);
       [meanDamages, minDamages, maxDamages] = calcSkillDamages(
@@ -2286,7 +2338,7 @@ function loading() {
 
 (function () {
   var javascriptSource =
-    "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
+    "/index.php?title=Utilisateur:Ankhseram/test.js&action=raw&ctype=text/javascript";
   var cssSource =
     "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
 
