@@ -1209,8 +1209,9 @@ function getSkillPower(skillPoint, skillPowerTable) {
   return skillPowerTable[skillPoint];
 }
 
-function getMarriageBonusValue(lovePoint, marriageTable, itemName) {
+function getMarriageBonusValue(character, marriageTable, itemName) {
   var index;
+  var lovePoint = character.lovePoint;
 
   if (lovePoint < 65) {
     index = 0;
@@ -1227,6 +1228,10 @@ function getMarriageBonusValue(lovePoint, marriageTable, itemName) {
 
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
   damages = floorMultiplication(damages, battleValues.attackValueCoeff);
+  damages = floorMultiplication(
+    damages,
+    battleValues.monsterResistanceMarriageCoeff
+  );
   damages = floorMultiplication(damages, battleValues.monsterResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.typeBonusCoeff);
   damages +=
@@ -1414,11 +1419,13 @@ function createPhysicalBattleValues(
   attacker,
   victim,
   mapping,
-  polymorphPowerTable
+  polymorphPowerTable,
+  marriageTable
 ) {
   var missPercentage = 0;
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
+  var monsterResistanceMarriage = 0;
   var monsterResistance = 0;
   var typeBonus = 0;
   var raceBonus = 0;
@@ -1530,6 +1537,14 @@ function createPhysicalBattleValues(
     }
   } else {
     if (isPC(victim)) {
+      if (victim.harmonyBracelet === "on") {
+        monsterResistanceMarriage = getMarriageBonusValue(
+          victim,
+          marriageTable,
+          "harmonyBracelet"
+        );
+      }
+
       monsterResistance = victim.monsterResistance;
 
       if (attacker.attack == 0) {
@@ -1579,6 +1594,7 @@ function createPhysicalBattleValues(
     missPercentage: missPercentage,
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
+    monsterResistanceMarriageCoeff: 1 - monsterResistanceMarriage / 100,
     monsterResistanceCoeff: 1 - monsterResistance / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
     raceBonusCoeff: raceBonus / 100,
@@ -1646,6 +1662,7 @@ function createPhysicalBattleValues(
 function createSkillBattleValues(attacker, victim, mapping) {
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
+  var monsterResistanceMarriage = 0;
   var monsterResistance = 0;
   var typeBonus = 0;
   var raceBonus = 0;
@@ -1743,6 +1760,13 @@ function createSkillBattleValues(attacker, victim, mapping) {
     }
   } else {
     if (isPC(victim)) {
+      if (victim.harmonyBracelet === "on") {
+        monsterResistanceMarriage = getMarriageBonusValue(
+          victim,
+          marriageTable,
+          "harmonyBracelet"
+        );
+      }
       monsterResistance = victim.monsterResistance;
     }
 
@@ -1772,6 +1796,7 @@ function createSkillBattleValues(attacker, victim, mapping) {
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
     monsterResistanceCoeff: 1 - monsterResistance / 100,
+    monsterResistanceMarriageCoeff: 1 - monsterResistanceMarriage / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
     raceBonusCoeff: raceBonus / 100,
     raceResistanceCoeff: raceResistance / 100,
@@ -1827,14 +1852,16 @@ function calcPhysicalDamages(
   victim,
   tableResult,
   mapping,
-  polymorphPowerTable
+  polymorphPowerTable,
+  marriageTable
 ) {
   var attackerWeapon = null;
   var battleValues = createPhysicalBattleValues(
     attacker,
     victim,
     mapping,
-    polymorphPowerTable
+    polymorphPowerTable,
+    marriageTable
   );
 
   var sumDamages = 0;
@@ -2171,7 +2198,8 @@ function createBattle(characters, battle) {
         victim,
         battle.tableResult,
         battle.mapping,
-        battle.constants.polymorphPowerTable
+        battle.constants.polymorphPowerTable,
+        battle.constants.marriageTable
       );
     } else if (attackType.startsWith("skill")) {
       var skillId = parseInt(attackType.split("-")[1]);
@@ -2307,7 +2335,7 @@ function createConstants() {
     marriageTable: {
       harmonyEarrings: [4, 5, 6, 8],
       loveEarrings: [4, 5, 6, 8],
-      harmonyBracelet: [-4, -5, -6, -8],
+      harmonyBracelet: [4, 5, 6, 8],
       loveNecklace: [20, 25, 30, 40],
       harmonyNecklace: [12, 16, 20, 30],
     },
