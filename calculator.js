@@ -1211,6 +1211,7 @@ function getSkillPower(skillPoint, skillPowerTable) {
 
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
   damages = floorMultiplication(damages, battleValues.attackValueCoeff);
+  damages = floorMultiplication(damages, battleValues.monsterResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.typeBonusCoeff);
   damages +=
     floorMultiplication(damages, battleValues.raceBonusCoeff) -
@@ -1257,8 +1258,9 @@ function calcDamageWithSecondaryBonuses(
   );
 
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
-
   damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
+  damages += Math.min(300, floorMultiplication(damages, battleValues.damageBonusCoeff));
+  damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
 
   return damages;
 }
@@ -1288,9 +1290,11 @@ function calcSkillDamageWithSecondaryBonuses(
     damages,
     battleValues.skillDamageResistanceCoeff
   );
-  damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
 
+  damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
   damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
+  damages += Math.min(300, floorMultiplication(damages, battleValues.damageBonusCoeff));
+  damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
 
   return damages;
 }
@@ -1393,6 +1397,7 @@ function createPhysicalBattleValues(
   var missPercentage = 0;
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
+  var monsterResistance = 0;
   var typeBonus = 0;
   var raceBonus = 0;
   var raceResistance = 0;
@@ -1409,6 +1414,8 @@ function createPhysicalBattleValues(
   var skillDamageResistance = 0;
   var rankBonus = 0;
   var defensePercent = 0;
+  var damageBonus = 0;
+  var empireMalus = 0;
 
   computePolymorphPoint(attacker, victim, polymorphPowerTable);
   computeHorse(attacker);
@@ -1494,8 +1501,15 @@ function createPhysicalBattleValues(
 
     averageDamage += attacker.averageDamage;
     rankBonus = getRankBonus(attacker);
+    damageBonus = attacker.damageBonus;
+    
+    if (attacker.empireMalus === "on") {
+      empireMalus = 10;
+    }
   } else {
     if (isPC(victim)) {
+      monsterResistance = victim.monsterResistance;
+
       if (attacker.attack == 0) {
         missPercentage = victim.meleeBlock;
         averageDamageResistance = victim.averageDamageResistance;
@@ -1543,6 +1557,7 @@ function createPhysicalBattleValues(
     missPercentage: missPercentage,
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
+    monsterResistanceCoeff: 1 - monsterResistance / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
     raceBonusCoeff: raceBonus / 100,
     raceResistanceCoeff: raceResistance / 100,
@@ -1559,6 +1574,8 @@ function createPhysicalBattleValues(
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
     defensePercent: defensePercent,
+    damageBonusCoeff: damageBonus / 100,
+    empireMalusCoeff: 1 - empireMalus / 100,
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
@@ -1607,6 +1624,7 @@ function createPhysicalBattleValues(
 function createSkillBattleValues(attacker, victim, mapping) {
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
+  var monsterResistance = 0;
   var typeBonus = 0;
   var raceBonus = 0;
   var raceResistance = 0;
@@ -1621,6 +1639,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
   var skillDamageResistance = 0;
   var rankBonus = 0;
   var defensePercent = 0;
+  var damageBonus = 0;
+  var empireMalus = 0;
 
   computePolymorphPoint(attacker, victim);
   computeHorse(attacker);
@@ -1694,7 +1714,16 @@ function createSkillBattleValues(attacker, victim, mapping) {
 
     skillDamage += attacker.skillDamage;
     rankBonus = getRankBonus(attacker);
+    damageBonus = attacker.damageBonus;
+
+    if (attacker.empireMalus === "on") {
+      empireMalus = 10;
+    }
   } else {
+    if (isPC(victim)) {
+      monsterResistance = victim.monsterResistance;
+    }
+
     typeBonus = 1;
     damageMultiplier = attacker.damageMultiplier;
   }
@@ -1720,6 +1749,7 @@ function createSkillBattleValues(attacker, victim, mapping) {
   var battleValues = {
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
+    monsterResistanceCoeff: 1 - monsterResistance / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
     raceBonusCoeff: raceBonus / 100,
     raceResistanceCoeff: raceResistance / 100,
@@ -1733,6 +1763,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
     defensePercent: defensePercent,
+    damageBonusCoeff: damageBonus / 100,
+    empireMalusCoeff: 1 - empireMalus / 100,
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
