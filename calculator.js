@@ -1209,6 +1209,22 @@ function getSkillPower(skillPoint, skillPowerTable) {
   return skillPowerTable[skillPoint];
 }
 
+function getMarriageBonusValue(lovePoint, marriageTable, itemName) {
+  var index;
+
+  if (lovePoint < 65) {
+    index = 0;
+  } else if (lovePoint < 80) {
+    index = 1;
+  } else if (lovePoint < 100) {
+    index = 2;
+  } else {
+    index = 3;
+  }
+
+  return marriageTable[itemName][index];
+}
+
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
   damages = floorMultiplication(damages, battleValues.attackValueCoeff);
   damages = floorMultiplication(damages, battleValues.monsterResistanceCoeff);
@@ -1259,7 +1275,10 @@ function calcDamageWithSecondaryBonuses(
 
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
   damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
-  damages += Math.min(300, floorMultiplication(damages, battleValues.damageBonusCoeff));
+  damages += Math.min(
+    300,
+    floorMultiplication(damages, battleValues.damageBonusCoeff)
+  );
   damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
 
   return damages;
@@ -1293,7 +1312,10 @@ function calcSkillDamageWithSecondaryBonuses(
 
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
   damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
-  damages += Math.min(300, floorMultiplication(damages, battleValues.damageBonusCoeff));
+  damages += Math.min(
+    300,
+    floorMultiplication(damages, battleValues.damageBonusCoeff)
+  );
   damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
 
   return damages;
@@ -1502,7 +1524,7 @@ function createPhysicalBattleValues(
     averageDamage += attacker.averageDamage;
     rankBonus = getRankBonus(attacker);
     damageBonus = attacker.damageBonus;
-    
+
     if (attacker.empireMalus === "on") {
       empireMalus = 10;
     }
@@ -2282,6 +2304,13 @@ function createConstants() {
       0.63, 0.66, 0.69, 0.72, 0.82, 0.85, 0.88, 0.91, 0.94, 0.98, 1.02, 1.06,
       1.1, 1.15, 1.25,
     ],
+    marriageTable: {
+      harmonyEarrings: [4, 5, 6, 8],
+      loveEarrings: [4, 5, 6, 8],
+      harmonyBracelet: [-4, -5, -6, -8],
+      loveNecklace: [20, 25, 30, 40],
+      harmonyNecklace: [12, 16, 20, 30],
+    },
   };
   return constants;
 }
