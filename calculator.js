@@ -1251,6 +1251,11 @@ function calcDamageWithSecondaryBonuses(
     damages,
     battleValues.averageDamageResistanceCoeff
   );
+  damages = floorMultiplication(
+    damages,
+    battleValues.skillDamageResistanceCoeff
+  );
+
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
 
   damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
@@ -1401,6 +1406,7 @@ function createPhysicalBattleValues(
   var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
   var averageDamage = 0;
   var averageDamageResistance = 0;
+  var skillDamageResistance = 0;
   var rankBonus = 0;
   var defensePercent = 0;
 
@@ -1454,6 +1460,8 @@ function createPhysicalBattleValues(
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
+
+      averageDamageResistance = victim.averageDamageResistance;
     } else {
       for (var index = 0; index <= 5; index++) {
         var elementBonusName = mapping.elementBonus[index];
@@ -1490,8 +1498,14 @@ function createPhysicalBattleValues(
     if (isPC(victim)) {
       if (attacker.attack == 0) {
         missPercentage = victim.meleeBlock;
+        averageDamageResistance = victim.averageDamageResistance;
+      } else if (attacker.attack == 1) {
+        missPercentage = victim.arrowBlock;
+        weaponDefense = victim.arrowDefense;
+        averageDamageResistance = victim.averageDamageResistance;
       } else {
         missPercentage = victim.arrowBlock;
+        skillDamageResistance = victim.skillDamageResistance;
       }
 
       missPercentage +=
@@ -1515,7 +1529,6 @@ function createPhysicalBattleValues(
       0,
       piercingHitPercentage - victim.piercingHitResistance
     );
-    averageDamageResistance = victim.averageDamageResistance;
 
     if (isMagicClass(victim)) {
       defensePercent = (-2 * victim.magicDefense * victim.defensePercent) / 100;
@@ -1543,6 +1556,7 @@ function createPhysicalBattleValues(
     averageDamageCoeff: 1 + averageDamage / 100,
     averageDamageResistanceCoeff:
       1 - Math.min(99, averageDamageResistance) / 100,
+    skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
     defensePercent: defensePercent,
   };
