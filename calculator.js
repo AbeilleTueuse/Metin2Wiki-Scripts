@@ -1228,6 +1228,7 @@ function getMarriageBonusValue(character, marriageTable, itemName) {
 
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
   damages = floorMultiplication(damages, battleValues.attackValueCoeff);
+  damages += battleValues.attackValueMarriage;
   damages = floorMultiplication(
     damages,
     battleValues.monsterResistanceMarriageCoeff
@@ -1425,6 +1426,7 @@ function createPhysicalBattleValues(
   var missPercentage = 0;
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
+  var attackValueMarriage = 0;
   var monsterResistanceMarriage = 0;
   var monsterResistance = 0;
   var typeBonus = 0;
@@ -1433,10 +1435,13 @@ function createPhysicalBattleValues(
   var stoneBonus = 0;
   var monsterBonus = 0;
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
+  var defenseMarriage = 0;
   var damageMultiplier = 1;
   var weaponDefense = 0;
   var criticalHitPercentage = attacker.criticalHit;
+  var criticalHitPercentageMarriage = 0;
   var piercingHitPercentage = attacker.piercingHit;
+  var piercingHitPercentageMarriage = 0;
   var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
   var averageDamage = 0;
   var averageDamageResistance = 0;
@@ -1499,6 +1504,30 @@ function createPhysicalBattleValues(
 
       averageDamageResistance = victim.averageDamageResistance;
     } else {
+      if (attacker.loveNecklace === "on") {
+        attackValueMarriage = getMarriageBonusValue(
+          attacker,
+          marriageTable,
+          "loveNecklace"
+        );
+      }
+
+      if (attacker.loveEarrings === "on") {
+        criticalHitPercentageMarriage = getMarriageBonusValue(
+          attacker,
+          marriageTable,
+          "loveEarrings"
+        );
+      }
+
+      if (attacker.harmonyEarrings === "on") {
+        piercingHitPercentageMarriage = getMarriageBonusValue(
+          attacker,
+          marriageTable,
+          "harmonyEarrings"
+        );
+      }
+
       for (var index = 0; index <= 5; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
@@ -1542,6 +1571,14 @@ function createPhysicalBattleValues(
           victim,
           marriageTable,
           "harmonyBracelet"
+        );
+      }
+
+      if (victim.harmonyNecklace === "on") {
+        defenseMarriage = getMarriageBonusValue(
+          victim,
+          marriageTable,
+          "harmonyNecklace"
         );
       }
 
@@ -1594,6 +1631,7 @@ function createPhysicalBattleValues(
     missPercentage: missPercentage,
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
+    attackValueMarriage: attackValueMarriage,
     monsterResistanceMarriageCoeff: 1 - monsterResistanceMarriage / 100,
     monsterResistanceCoeff: 1 - monsterResistance / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
@@ -1604,6 +1642,7 @@ function createPhysicalBattleValues(
     elementBonusCoeff: elementBonus,
     damageMultiplier: damageMultiplier,
     defense: victim.defense,
+    defenseMarriage: defenseMarriage,
     weaponDefenseCoeff: 1 - weaponDefense / 100,
     extraPiercingHitCoeff: 1 + extraPiercingHitPercentage / 200,
     averageDamageCoeff: 1 + averageDamage / 100,
@@ -1616,8 +1655,14 @@ function createPhysicalBattleValues(
     empireMalusCoeff: 1 - empireMalus / 100,
   };
 
-  criticalHitPercentage = Math.min(criticalHitPercentage, 100);
-  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
+  criticalHitPercentage = Math.min(
+    criticalHitPercentage + criticalHitPercentageMarriage,
+    100
+  );
+  piercingHitPercentage = Math.min(
+    piercingHitPercentage + piercingHitPercentageMarriage,
+    100
+  );
 
   battleValues.damagesTypeCombinaison = [
     {
@@ -1662,6 +1707,7 @@ function createPhysicalBattleValues(
 function createSkillBattleValues(attacker, victim, mapping) {
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
+  var attackValueMarriage = 0;
   var monsterResistanceMarriage = 0;
   var monsterResistance = 0;
   var typeBonus = 0;
@@ -1672,8 +1718,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var damageMultiplier = 1;
   var weaponDefense = 0;
-  var criticalHitPercentage = skillChanceReduction(attacker.criticalHit);
-  var piercingHitPercentage = skillChanceReduction(attacker.piercingHit);
+  var criticalHitPercentage = attacker.criticalHit;
+  var piercingHitPercentage = attacker.piercingHit;
   var skillDamage = 0;
   var skillDamageResistance = 0;
   var rankBonus = 0;
@@ -1722,6 +1768,30 @@ function createSkillBattleValues(attacker, victim, mapping) {
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
     } else {
+      if (attacker.loveNecklace === "on") {
+        attackValueMarriage = getMarriageBonusValue(
+          attacker,
+          marriageTable,
+          "loveNecklace"
+        );
+      }
+
+      if (attacker.loveEarrings === "on") {
+        criticalHitPercentage += getMarriageBonusValue(
+          attacker,
+          marriageTable,
+          "loveEarrings"
+        );
+      }
+
+      if (attacker.harmonyEarrings === "on") {
+        piercingHitPercentage += getMarriageBonusValue(
+          attacker,
+          marriageTable,
+          "harmonyEarrings"
+        );
+      }
+
       for (var index = 0; index <= 5; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
@@ -1774,6 +1844,9 @@ function createSkillBattleValues(attacker, victim, mapping) {
     damageMultiplier = attacker.damageMultiplier;
   }
 
+  criticalHitPercentage = skillChanceReduction(criticalHitPercentage);
+  piercingHitPercentage = skillChanceReduction(piercingHitPercentage);
+
   if (isPC(victim)) {
     criticalHitPercentage = Math.max(
       0,
@@ -1795,8 +1868,9 @@ function createSkillBattleValues(attacker, victim, mapping) {
   var battleValues = {
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
-    monsterResistanceCoeff: 1 - monsterResistance / 100,
+    attackValueMarriage: attackValueMarriage,
     monsterResistanceMarriageCoeff: 1 - monsterResistanceMarriage / 100,
+    monsterResistanceCoeff: 1 - monsterResistance / 100,
     typeBonusCoeff: 1 + typeBonus / 100,
     raceBonusCoeff: raceBonus / 100,
     raceResistanceCoeff: raceResistance / 100,
@@ -1925,7 +1999,8 @@ function calcPhysicalDamages(
         battleValues
       );
 
-      damagesWithPrimaryBonuses -= battleValues.defense;
+      damagesWithPrimaryBonuses -=
+        battleValues.defense + battleValues.defenseMarriage;
 
       if (damagesWithPrimaryBonuses <= 2) {
         for (var damages = 1; damages <= 5; damages++) {
