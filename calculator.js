@@ -1605,6 +1605,16 @@ function createPhysicalBattleValues(
 
       monsterResistance = victim.monsterResistance;
 
+      for (var index = 0; index <= 5; index++) {
+        var elementBonusName = mapping.elementBonus[index];
+        var elementResistanceName = mapping.elementResistance[index];
+
+        if (attacker[elementBonusName]) {
+          elementBonus[index] =
+            (attacker[elementBonusName] - victim[elementResistanceName]) / 125;
+        }
+      }
+
       if (attacker.attack == 0) {
         missPercentage = victim.meleeBlock;
         averageDamageResistance = victim.averageDamageResistance;
@@ -1859,6 +1869,16 @@ function createSkillBattleValues(attacker, victim, mapping) {
         );
       }
       monsterResistance = victim.monsterResistance;
+
+      for (var index = 0; index <= 5; index++) {
+        var elementBonusName = mapping.elementBonus[index];
+        var elementResistanceName = mapping.elementResistance[index];
+
+        if (attacker[elementBonusName]) {
+          elementBonus[index] =
+            (attacker[elementBonusName] - victim[elementResistanceName]) / 125;
+        }
+      }
     }
 
     typeBonus = 1;
