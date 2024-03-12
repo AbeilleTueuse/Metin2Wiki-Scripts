@@ -228,7 +228,7 @@ function filterPlayerRank(lowRankCheckbox, playerRankChoice) {
 
 function filterSkills(selectedClass, skillElementsToFilter) {
   for (var element of skillElementsToFilter) {
-    if (element.dataset.class === selectedClass) {
+    if (isValueInArray(selectedClass, element.dataset.class)) {
       showElement(element);
     } else {
       hideElement(element);
@@ -2516,7 +2516,7 @@ function createDamageCalculatorInformation() {
   characters.savedMonsters = savedMonsters;
 
   var skillContainer = document.getElementById("skill-container");
-  characters.skillElementsToFilter = skillContainer.querySelectorAll("span[data-class]");
+  characters.skillElementsToFilter = skillContainer.querySelectorAll("[data-class]");
 
   var mapping = createMapping();
   var constants = createConstants();
