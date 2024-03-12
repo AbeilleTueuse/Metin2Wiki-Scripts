@@ -2069,7 +2069,7 @@ function calcPhysicalDamages(
         addKeyValue(
           damagesWeighted,
           finalDamages,
-          (weight * damagesType.weight) / (5 * totalCardinal)
+          (weight * damagesType.weight) / totalCardinal
         );
         sumDamages += finalDamages * weight * damagesType.weight;
       }
@@ -2211,7 +2211,7 @@ function calcSkillDamages(
         addKeyValue(
           damagesWeighted,
           finalDamages,
-          (weight * damagesType.weight) / (5 * totalCardinal)
+          (weight * damagesType.weight) / totalCardinal
         );
         sumDamages += finalDamages * weight * damagesType.weight;
       }
