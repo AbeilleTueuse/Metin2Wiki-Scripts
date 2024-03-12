@@ -263,7 +263,10 @@ function filterForm(characters) {
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
-        filterSkills(characters.classChoice.value, characters.skillElementsToFilter);
+        filterSkills(
+          characters.classChoice.value,
+          characters.skillElementsToFilter
+        );
         break;
       case "class":
         filterSkills(target.value, characters.skillElementsToFilter);
@@ -2355,25 +2358,37 @@ function createBattle(characters, battle) {
   });
 
   battle.attackerSelection.addEventListener("change", function (event) {
-    var name = event.target.value;
+    var attackerName = event.target.value;
     var attackTypeSelection = battle.attackTypeSelection;
+    var selectedOption = attackTypeSelection.options[attackTypeSelection.selectedIndex];
 
-    if (isPseudoSaved(name)) {
-      //pass
+    if (isPseudoSaved(attackerName)) {
+      var attacker = characters.savedCharacters[attackerName];
+      var attackerClass = attacker.class;
+
+      for (var option of attackTypeSelection.options) {
+        optionClass = option.dataset.class;
+
+        if (optionClass) {
+          if (optionClass === attackerClass && attacker[option.value]) {
+            showElement(option);
+          } else {
+            hideElement(option);
+            
+            if (selectedOption === option) {
+              attackTypeSelection.selectedIndex = 0;
+            }
+          }
+        }
+      }
     } else {
-      var optionsLength = attackTypeSelection.options.length;
-
-      if (optionsLength <= 1) {
-        return;
+      for (var option of attackTypeSelection.options) {
+        if (option.dataset.class) {
+          hideElement(option);
+        }
       }
-
-      for (
-        var optionIndex = optionsLength - 1;
-        optionIndex >= 2;
-        optionIndex--
-      ) {
-        attackTypeSelection.remove(optionIndex);
-      }
+      
+      attackTypeSelection.selectedIndex = 0;
     }
   });
 }
@@ -2516,7 +2531,8 @@ function createDamageCalculatorInformation() {
   characters.savedMonsters = savedMonsters;
 
   var skillContainer = document.getElementById("skill-container");
-  characters.skillElementsToFilter = skillContainer.querySelectorAll("[data-class]");
+  characters.skillElementsToFilter =
+    skillContainer.querySelectorAll("[data-class]");
 
   var mapping = createMapping();
   var constants = createConstants();
