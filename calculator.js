@@ -37,6 +37,14 @@ function numberFormat(number, precision) {
   return Math.round(number * 10 ** precision) / 10 ** precision;
 }
 
+function addKeyValue(object, key, value) {
+  if (object.hasOwnProperty(key)) {
+    object[key] += value;
+  } else {
+    object[key] = value;
+  }
+}
+
 function addRowToTableResult(tableResult, value) {
   var newRow = tableResult.insertRow(-1);
   var firstCell = newRow.insertCell(0);
@@ -47,21 +55,34 @@ function addRowToTableResult(tableResult, value) {
   newRow.style.fontWeight = "bold";
 }
 
-function addToTableResult(tableResult, value1, value2) {
-  var newRow = tableResult.insertRow(-1);
+function addToTableResult(tableResult, damagesWeighted, minMaxDamages) {
+  var firstIteration = true;
 
-  var firstCell = newRow.insertCell(0);
-  firstCell.textContent = value1;
+  for (var damages in damagesWeighted) {
+    if (firstIteration && minMaxDamages) {
+      damages = parseInt(damages)
+      if (damages < minMaxDamages.min) {
+        minMaxDamages.min = damages;
+      }
+      firstIteration = false;
+    }
 
-  var secondCell = newRow.insertCell(1);
-  secondCell.textContent =
-    numberFormat(value2 * 100, 3)
-      .toString()
-      .replace(".", ",") + " %";
-}
+    var newRow = tableResult.insertRow(-1);
+    var firstCell = newRow.insertCell(0);
 
-function getMinDamages(tableResult) {
-  return tableResult.rows[2].cells[0].textContent;
+    firstCell.textContent = damages;
+
+    var secondCell = newRow.insertCell(1);
+    secondCell.textContent =
+      numberFormat(damagesWeighted[damages] * 100, 3)
+        .toString()
+        .replace(".", ",") + " %";
+  }
+
+  damages = parseInt(damages);
+  if (minMaxDamages && damages > minMaxDamages.max) {
+    minMaxDamages.max = damages;
+  }
 }
 
 function clearTableResult(tableResult) {
@@ -1939,9 +1960,7 @@ function calcPhysicalDamages(
   );
 
   var sumDamages = 0;
-  var saveDamages = 0;
-  var finalDamages = 0;
-
+  var minMaxDamages = { min: Infinity, max: 0 };
   clearTableResult(tableResult);
 
   if (isPC(attacker)) {
@@ -1962,7 +1981,7 @@ function calcPhysicalDamages(
 
   if (battleValues.missPercentage) {
     addRowToTableResult(tableResult, "Miss");
-    addToTableResult(tableResult, 0, battleValues.missPercentage / 100);
+    addToTableResult(tableResult, { 0: battleValues.missPercentage / 100 });
   }
 
   var lastWeightsLimit = maxAttackValue - minInterval + 1;
@@ -1973,6 +1992,7 @@ function calcPhysicalDamages(
       continue;
     }
 
+    var damagesWeighted = {};
     addRowToTableResult(tableResult, damagesType.name);
 
     for (
@@ -2010,16 +2030,12 @@ function calcPhysicalDamages(
             damagesType,
             damagesWithPrimaryBonuses
           );
-          addToTableResult(
-            tableResult,
+
+          addKeyValue(
+            damagesWeighted,
             finalDamages,
             (weight * damagesType.weight) / (5 * totalCardinal)
           );
-
-          if (damages === 5) {
-            saveDamages = finalDamages;
-          }
-
           sumDamages += (finalDamages * weight * damagesType.weight) / 5;
         }
       } else {
@@ -2029,22 +2045,24 @@ function calcPhysicalDamages(
           damagesType,
           damagesWithPrimaryBonuses
         );
-        addToTableResult(
-          tableResult,
-          finalDamages,
-          (weight * damagesType.weight) / totalCardinal
-        );
 
+        addKeyValue(
+          damagesWeighted,
+          finalDamages,
+          (weight * damagesType.weight) / (5 * totalCardinal)
+        );
         sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
+
+    addToTableResult(tableResult, damagesWeighted, minMaxDamages);
   }
 
-  return [
-    sumDamages / totalCardinal,
-    getMinDamages(tableResult),
-    Math.max(saveDamages, finalDamages),
-  ];
+  if (minMaxDamages.min === Infinity) {
+    minMaxDamages.min = 0;
+  }
+
+  return [sumDamages / totalCardinal, minMaxDamages];
 }
 
 function getSkillFormula(skillId, lv, vit, str, int, dex, skillPower) {
@@ -2092,8 +2110,7 @@ function calcSkillDamages(
   var battleValues = createSkillBattleValues(attacker, victim, mapping);
 
   var sumDamages = 0;
-  var saveDamages = 0;
-
+  var minMaxDamages = { min: Infinity, max: 0 };
   clearTableResult(tableResult);
 
   if (isPC(attacker)) {
@@ -2118,6 +2135,7 @@ function calcSkillDamages(
       continue;
     }
 
+    var damagesWeighted = {};
     addRowToTableResult(tableResult, damagesType.name);
 
     for (
@@ -2153,16 +2171,12 @@ function calcSkillDamages(
             damagesWithPrimaryBonuses,
             skillFormula
           );
-          addToTableResult(
-            tableResult,
+
+          addKeyValue(
+            damagesWeighted,
             finalDamages,
             (weight * damagesType.weight) / (5 * totalCardinal)
           );
-
-          if (damages === 5) {
-            saveDamages = finalDamages;
-          }
-
           sumDamages += (finalDamages * weight * damagesType.weight) / 5;
         }
       } else {
@@ -2173,21 +2187,26 @@ function calcSkillDamages(
           damagesWithPrimaryBonuses,
           skillFormula
         );
-        addToTableResult(
-          tableResult,
-          finalDamages,
-          (weight * damagesType.weight) / totalCardinal
-        );
 
+        addKeyValue(
+          damagesWeighted,
+          finalDamages,
+          (weight * damagesType.weight) / (5 * totalCardinal)
+        );
         sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
+
+    addToTableResult(tableResult, damagesWeighted, minMaxDamages);
+  }
+
+  if (minMaxDamages.min === Infinity) {
+    minMaxDamages.min = 0;
   }
 
   return [
     sumDamages / totalCardinal,
-    getMinDamages(tableResult),
-    Math.max(saveDamages, finalDamages),
+    minMaxDamages,
   ];
 }
 
@@ -2265,10 +2284,10 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName);
     }
 
-    var meanDamages, minDamages, maxDamages;
+    var meanDamages, minMaxDamages;
 
     if (attackType === "physical") {
-      [meanDamages, minDamages, maxDamages] = calcPhysicalDamages(
+      [meanDamages, minMaxDamages] = calcPhysicalDamages(
         attacker,
         victim,
         battle.tableResult,
@@ -2278,7 +2297,7 @@ function createBattle(characters, battle) {
       );
     } else if (attackType.startsWith("skill")) {
       var skillId = parseInt(attackType.split("-")[1]);
-      [meanDamages, minDamages, maxDamages] = calcSkillDamages(
+      [meanDamages, minMaxDamages] = calcSkillDamages(
         attacker,
         victim,
         battle.tableResult,
@@ -2295,9 +2314,9 @@ function createBattle(characters, battle) {
       " dégâts en moyenne à " +
       victim.name +
       " (minimum : " +
-      minDamages +
+      minMaxDamages.min +
       ", maximum : " +
-      maxDamages +
+      minMaxDamages.max +
       ").";
 
     showElement(battle.tableContainer);
