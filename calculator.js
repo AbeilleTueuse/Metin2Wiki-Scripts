@@ -60,7 +60,7 @@ function addToTableResult(tableResult, damagesWeighted, minMaxDamages) {
 
   for (var damages in damagesWeighted) {
     if (firstIteration && minMaxDamages) {
-      damages = parseInt(damages)
+      damages = parseInt(damages);
       if (damages < minMaxDamages.min) {
         minMaxDamages.min = damages;
       }
@@ -226,6 +226,16 @@ function filterPlayerRank(lowRankCheckbox, playerRankChoice) {
   }
 }
 
+function filterSkills(selectedClass, skillElementsToFilter) {
+  for (var element of skillElementsToFilter) {
+    if (element.dataset.class === selectedClass) {
+      showElement(element);
+    } else {
+      hideElement(element);
+    }
+  }
+}
+
 function filterForm(characters) {
   characters.characterCreation.addEventListener("change", function (event) {
     var target = event.target;
@@ -253,6 +263,10 @@ function filterForm(characters) {
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
+        filterSkills(characters.classChoice.value, characters.skillElementsToFilter);
+        break;
+      case "class":
+        filterSkills(target.value, characters.skillElementsToFilter);
         break;
       case "weapon":
         handleWeaponDisplay(
@@ -539,8 +553,8 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
       formElement.value = value;
     }
   }
-
-  var selectedRace = characters.race.value;
+  var selectedRace = characterCreation.race.value;
+  var selectedClass = characterCreation.class.value;
 
   filterClass(selectedRace, characters.classChoice, true);
   filterWeapon(
@@ -566,6 +580,7 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
   );
   filterState(characters.stateChoice, characters.polymorphMonster);
   filterPlayerRank(characters.lowRankCheckbox, characters.playerRankChoice);
+  filterSkills(selectedClass, characters.skillElementsToFilter);
 }
 
 function handleClickOnCharacter(
@@ -2224,10 +2239,7 @@ function calcSkillDamages(
     minMaxDamages.min = 0;
   }
 
-  return [
-    sumDamages / totalCardinal,
-    minMaxDamages,
-  ];
+  return [sumDamages / totalCardinal, minMaxDamages];
 }
 
 function createMonster(name) {
@@ -2487,6 +2499,7 @@ function createDamageCalculatorInformation() {
     ),
     lowRankCheckbox: document.getElementById("low-rank"),
     playerRankChoice: document.getElementById("player-rank"),
+    skillContainer: document.getElementById("skill-container"),
   };
   characters.race = characters.characterCreation.race;
   characters.weapon = characters.characterCreation.weapon;
@@ -2501,6 +2514,9 @@ function createDamageCalculatorInformation() {
   }
 
   characters.savedMonsters = savedMonsters;
+
+  var skillContainer = document.getElementById("skill-container");
+  characters.skillElementsToFilter = skillContainer.querySelectorAll("span[data-class]");
 
   var mapping = createMapping();
   var constants = createConstants();
