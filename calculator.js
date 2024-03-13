@@ -236,11 +236,38 @@ function filterSkills(selectedClass, skillElementsToFilter) {
   }
 }
 
-function filterForm(characters) {
+function filterAttackTypeSelection(attacker, attackTypeSelection) {
+  var attackerClass = attacker.class;
+  var selectedOption =
+    attackTypeSelection.options[attackTypeSelection.selectedIndex];
+
+  for (var option of attackTypeSelection.options) {
+    optionClass = option.dataset.class;
+
+    if (optionClass) {
+      if (
+        optionClass === attackerClass &&
+        attacker[option.value] &&
+        attacker.state !== "polymorph"
+      ) {
+        showElement(option);
+      } else {
+        hideElement(option);
+
+        if (selectedOption === option) {
+          attackTypeSelection.selectedIndex = 0;
+        }
+      }
+    }
+  }
+}
+
+function filterForm(characters, battle) {
   characters.characterCreation.addEventListener("change", function (event) {
     var target = event.target;
+    var targetName = target.name;
 
-    switch (target.name) {
+    switch (targetName) {
       case "race":
         var selectedRace = target.value;
         filterClass(selectedRace, characters.classChoice);
@@ -267,9 +294,23 @@ function filterForm(characters) {
           characters.classChoice.value,
           characters.skillElementsToFilter
         );
+
+        if (
+          characters.characterCreation.name.value ===
+          battle.attackerSelection.value
+        ) {
+          battle.resetAttackType = true;
+        }
         break;
       case "class":
         filterSkills(target.value, characters.skillElementsToFilter);
+
+        if (
+          characters.characterCreation.name.value ===
+          battle.attackerSelection.value
+        ) {
+          battle.resetAttackType = true;
+        }
         break;
       case "weapon":
         handleWeaponDisplay(
@@ -287,10 +328,20 @@ function filterForm(characters) {
         break;
       case "state":
         filterState(target, characters.polymorphMonster);
+        if (
+          characters.characterCreation.name.value ===
+          battle.attackerSelection.value
+        ) {
+          battle.resetAttackType = true;
+        }
         break;
       case "lowRank":
         filterPlayerRank(target, characters.playerRankChoice);
         break;
+    }
+
+    if (targetName.startsWith("attackSkill")) {
+      battle.resetAttackType = true;
     }
   });
 }
@@ -375,6 +426,11 @@ function saveCharacter(
 
   if (newCharacter) {
     addBattleChoice(battle, characterDataObject.name);
+  }
+
+  if (battle.resetAttackType) {
+    filterAttackTypeSelection(characterDataObject, battle.attackTypeSelection);
+    battle.resetAttackType = false;
   }
 }
 
@@ -891,7 +947,7 @@ function characterManagement(characters, battle) {
     characters.unsavedChanges = true;
   });
 
-  filterForm(characters);
+  filterForm(characters, battle);
   characterCreationListener(characters, battle);
   handleFocus();
 
@@ -2103,17 +2159,27 @@ function calcPhysicalDamages(
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
-function getSkillFormula(skillId, lv, vit, str, int, dex, skillPower) {
-  switch (skillId) {
-    case 5:
-      return function (atk) {
+function getSkillFormula(
+  skillId,
+  attackerClass,
+  lv,
+  vit,
+  str,
+  int,
+  dex,
+  skillPower
+) {
+  var skillFormulas = {
+    body: {
+      5: function (atk) {
         return floorMultiplication(
           2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
           1
         );
-      };
-    case 62:
-      return function (atk) {
+      },
+    },
+    weaponary: {
+      2: function (atk) {
         return floorMultiplication(
           1.1 * atk +
             2 * lv +
@@ -2121,8 +2187,11 @@ function getSkillFormula(skillId, lv, vit, str, int, dex, skillPower) {
             (1.5 * atk + str + 12 * int) * skillPower,
           1
         );
-      };
-  }
+      },
+    },
+  };
+
+  return skillFormulas[attackerClass][skillId];
 }
 
 function calcSkillDamages(
@@ -2136,6 +2205,7 @@ function calcSkillDamages(
   var skillPower = getSkillPower(attacker["skill" + skillId], skillPowerTable);
   var skillFormula = getSkillFormula(
     skillId,
+    attacker.class,
     attacker.level,
     attacker.vit,
     attacker.str,
@@ -2330,8 +2400,8 @@ function createBattle(characters, battle) {
         battle.constants.polymorphPowerTable,
         battle.constants.marriageTable
       );
-    } else if (attackType.startsWith("skill")) {
-      var skillId = parseInt(attackType.split("-")[1]);
+    } else if (attackType.startsWith("attackSkill")) {
+      var skillId = parseInt(attackType.split("attackSkill")[1]);
       [meanDamages, minMaxDamages] = calcSkillDamages(
         attacker,
         victim,
@@ -2360,34 +2430,16 @@ function createBattle(characters, battle) {
   battle.attackerSelection.addEventListener("change", function (event) {
     var attackerName = event.target.value;
     var attackTypeSelection = battle.attackTypeSelection;
-    var selectedOption = attackTypeSelection.options[attackTypeSelection.selectedIndex];
 
     if (isPseudoSaved(attackerName)) {
       var attacker = characters.savedCharacters[attackerName];
-      var attackerClass = attacker.class;
-
-      for (var option of attackTypeSelection.options) {
-        optionClass = option.dataset.class;
-
-        if (optionClass) {
-          if (optionClass === attackerClass && attacker[option.value]) {
-            showElement(option);
-          } else {
-            hideElement(option);
-            
-            if (selectedOption === option) {
-              attackTypeSelection.selectedIndex = 0;
-            }
-          }
-        }
-      }
+      filterAttackTypeSelection(attacker, attackTypeSelection);
     } else {
       for (var option of attackTypeSelection.options) {
         if (option.dataset.class) {
           hideElement(option);
         }
       }
-      
       attackTypeSelection.selectedIndex = 0;
     }
   });
@@ -2538,6 +2590,7 @@ function createDamageCalculatorInformation() {
   var constants = createConstants();
 
   var battle = {
+    resetAttackType: false,
     battleForm: document.getElementById("create-battle"),
     attackerSelection: document.getElementById("attacker-selection"),
     attackTypeSelection: document.getElementById("attack-type-selection"),
