@@ -1187,6 +1187,10 @@ function isRiding(character) {
   return character.state === "horse";
 }
 
+function isBow(weapon) {
+  return weapon[1] === 2;
+}
+
 function calcAttackFactor(attacker, victim) {
   function calcCoeffK(dex, level) {
     return Math.min(90, Math.floor((2 * dex + level) / 3));
@@ -1266,7 +1270,11 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
       attacker.maxAttackValueSlash
     );
 
-    attackValueOther = attacker.attackValue;
+    attackValueOther += attacker.attackValue;
+
+    if (isBow(attackerWeapon)) {
+      attackValueOther += 25;
+    }
   } else {
     minAttackValue = attacker.minAttackValue;
     maxAttackValue = attacker.maxAttackValue;
@@ -2172,11 +2180,82 @@ function getSkillFormula(
 ) {
   var skillFormulas = {
     body: {
+      1: function (atk) {
+        return floorMultiplication(
+          1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
+          1
+        ); // Triple lacération
+      },
+      2: function (atk) {
+        return floorMultiplication(
+          3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
+          1
+        ); // Moulinet à l'épée
+      },
       5: function (atk) {
         return floorMultiplication(
           2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
           1
-        );
+        ); // Accélération
+      },
+      // 6: function (atk) {
+      //   return floorMultiplication(
+      //     (3*atk+(atk+1.5*str)*k)*1.07
+      //     (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
+      //     1
+      //   ); // Volonté de vivre
+      // },
+    },
+    mental: {
+      1: function (atk) {
+        return floorMultiplication(
+          2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
+          1
+        ); // Attaque de l'esprit
+      },
+      2: function (atk) {
+        return floorMultiplication(
+          2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
+          1
+        ); // Attaque de la paume
+      },
+      3: function (atk) {
+        return floorMultiplication(
+          2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
+          1
+        ); // Charge
+      },
+      5: function (atk) {
+        return floorMultiplication(
+          2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+          1
+        ); // Coup d'épée
+      },
+      // 6: function (atk) {
+      //   return floorMultiplication(
+      //     (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) * 1.1,
+      //     1
+      //   ); // Orbe de l'épée
+      // },
+    },
+    blade_fight: {
+      3: function (atk) {
+        return floorMultiplication(
+          2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
+          1
+        ); // Dague filante
+      },
+      5: function (atk) {
+        return floorMultiplication(
+          2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
+          1
+        ); // Brume empoisonnée
+      },
+      6: function (atk) {
+        return floorMultiplication(
+          (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
+          1
+        ); // Poison insidieux
       },
     },
     weaponary: {
@@ -2239,7 +2318,7 @@ function calcSkillDamages(
   var lastWeightsLimit = maxAttackValue - minInterval + 1;
   var firstWeightLimit = minAttackValue + minInterval - 1;
 
-  var skillPower = getSkillPower(attacker["skill" + skillId], skillPowerTable);
+  var skillPower = getSkillPower(attacker["attackSkill" + skillId], skillPowerTable);
   var skillFormula = getSkillFormula(
     skillId,
     attacker.class,
