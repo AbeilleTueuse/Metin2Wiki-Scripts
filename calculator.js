@@ -1278,11 +1278,11 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
   attackValueOther += attacker.statAttackValue;
   attackValueOther += attacker.horseAttackValue;
 
-  var weaponInterval = maxAttackValue - minAttackValue;
-  var slashInterval = maxAttackValueSlash - minAttackValueSlash;
+  var weaponInterval = maxAttackValue - minAttackValue + 1;
+  var slashInterval = maxAttackValueSlash - minAttackValueSlash + 1;
 
-  var totalCardinal = (weaponInterval + 1) * (slashInterval + 1) * 10000;
-  var minInterval = Math.min(weaponInterval, slashInterval) + 1;
+  var totalCardinal = weaponInterval * slashInterval * 10000;
+  var minInterval = Math.min(weaponInterval, slashInterval);
 
   minAttackValue += minAttackValueSlash;
   maxAttackValue += maxAttackValueSlash;
@@ -2167,6 +2167,7 @@ function getSkillFormula(
   str,
   int,
   dex,
+  attackFactor,
   skillPower
 ) {
   var skillFormulas = {
@@ -2189,6 +2190,18 @@ function getSkillFormula(
         );
       },
     },
+    health: {
+      1: function (mav) {
+        return floorMultiplication(
+          60 +
+            5 * lv +
+            (8 * int + 2 * dex + 8 * mav + number(int * 5, int * 15)) *
+              attackFactor *
+              skillPower,
+          1
+        ); // Jet de foudre
+      },
+    },
   };
 
   return skillFormulas[attackerClass][skillId];
@@ -2202,18 +2215,6 @@ function calcSkillDamages(
   skillPowerTable,
   skillId
 ) {
-  var skillPower = getSkillPower(attacker["skill" + skillId], skillPowerTable);
-  var skillFormula = getSkillFormula(
-    skillId,
-    attacker.class,
-    attacker.level,
-    attacker.vit,
-    attacker.str,
-    attacker.int,
-    attacker.dex,
-    skillPower
-  );
-
   var attackerWeapon = null;
   var battleValues = createSkillBattleValues(attacker, victim, mapping);
 
@@ -2237,6 +2238,19 @@ function calcSkillDamages(
 
   var lastWeightsLimit = maxAttackValue - minInterval + 1;
   var firstWeightLimit = minAttackValue + minInterval - 1;
+
+  var skillPower = getSkillPower(attacker["skill" + skillId], skillPowerTable);
+  var skillFormula = getSkillFormula(
+    skillId,
+    attacker.class,
+    attacker.level,
+    attacker.vit,
+    attacker.str,
+    attacker.int,
+    attacker.dex,
+    attackFactor,
+    skillPower
+  );
 
   for (var damagesType of battleValues.damagesTypeCombinaison) {
     if (!damagesType.weight) {
