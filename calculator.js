@@ -1446,6 +1446,7 @@ function calcSkillDamageWithSecondaryBonuses(
   damagesType,
   minPiercingDamages,
 ) {
+  // damages = floorMultiplication(damages, 1.35);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
 
   damages -= battleValues.defense;
@@ -2388,6 +2389,32 @@ function getSkillFormula(
     },
     heal: {
 
+    },
+    lycan: {
+      // 1: function (atk) {
+      //   return floorMultiplication(
+      //     1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
+      //     1
+      //   ); // Déchiqueter
+      // },
+      // 2: function (atk) {
+      //   return floorMultiplication(
+      //     2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+      //     1
+      //   ); // Souffle de loup
+      // },
+      3: function (atk) {
+        return floorMultiplication(
+          atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
+          1
+        ); // Bond de loup
+      },
+      4: function (atk) {
+        return floorMultiplication(
+          3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
+          1
+        ); // Griffe de loup
+      },
     }
   };
 
@@ -2481,9 +2508,8 @@ function calcPhysicalSkillDamages(
 
       if (damagesWithPrimaryBonuses <= 2) {
         for (var damages = 1; damages <= 5; damages++) {
-          var damages = skillFormula(damages);
           var finalDamages = calcSkillDamageWithSecondaryBonuses(
-            damages,
+            skillFormula(damages),
             battleValues,
             damagesType,
             damagesWithPrimaryBonuses
@@ -2497,9 +2523,8 @@ function calcPhysicalSkillDamages(
           sumDamages += (finalDamages * weight * damagesType.weight) / 5;
         }
       } else {
-        var damages = skillFormula(damages);
         var finalDamages = calcSkillDamageWithSecondaryBonuses(
-          damagesWithPrimaryBonuses,
+          skillFormula(damagesWithPrimaryBonuses),
           battleValues,
           damagesType,
           damagesWithPrimaryBonuses
