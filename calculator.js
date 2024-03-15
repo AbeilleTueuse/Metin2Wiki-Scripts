@@ -2366,6 +2366,29 @@ function getSkillFormula(
         ); // Orbe des ténèbres
       },
     },
+    dragon: {
+      1: function (mav) {
+        return floorMultiplication(
+          70 + 5 * lv + (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+          1
+        ); // Talisman volant
+      },
+      2: function (mav) {
+        return floorMultiplication(
+          60 + 5 * lv + (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
+          1
+        ); // Talisman volant
+      },
+      3: function (mav) {
+        return floorMultiplication(
+          70 + 3 * lv + (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
+          1
+        ); // Rugissement du dragon
+      },
+    },
+    heal: {
+
+    }
   };
 
   return skillFormulas[attackerClass][skillId];
