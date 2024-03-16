@@ -2373,8 +2373,7 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
         break;
     }
   } else if (attackerClass === "archery") {
-    switch (
-      skillId
+    switch (skillId) {
       // Tir à répétition
       // case 1:
       //   skillFormula = function (atk) {
@@ -2395,7 +2394,6 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
       //     );
       //   };
       //   break;
-    ) {
     }
   } else if (attackerClass === "weaponary") {
     switch (skillId) {
@@ -2606,7 +2604,10 @@ function calcPhysicalSkillDamages(
         for (var damages = 1; damages <= 5; damages++) {
           var damagesWithFormula = skillFormula(damages);
 
-          damagesWithFormula = floorMultiplication(damagesWithFormula, battleValues.weaponBonusCoeff);
+          damagesWithFormula = floorMultiplication(
+            damagesWithFormula,
+            battleValues.weaponBonusCoeff
+          );
 
           var finalDamages = calcSkillDamageWithSecondaryBonuses(
             damagesWithFormula,
@@ -2625,7 +2626,10 @@ function calcPhysicalSkillDamages(
       } else {
         var damagesWithFormula = skillFormula(damagesWithPrimaryBonuses);
 
-        damagesWithFormula = floorMultiplication(damagesWithFormula, battleValues.weaponBonusCoeff);
+        damagesWithFormula = floorMultiplication(
+          damagesWithFormula,
+          battleValues.weaponBonusCoeff
+        );
 
         var finalDamages = calcSkillDamageWithSecondaryBonuses(
           damagesWithFormula,
