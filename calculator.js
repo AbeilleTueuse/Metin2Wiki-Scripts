@@ -2243,6 +2243,7 @@ function getSkillFormula(
   skillPower
 ) {
   var skillFormula;
+  var skillInfo = {};
 
   if (attackerClass === "body") {
     switch (skillId) {
@@ -2497,6 +2498,7 @@ function getSkillFormula(
             1
           );
         };
+        skillInfo.weaponBonus = [5, 35];
         break;
       // Griffe de loup
       case 4:
@@ -2510,7 +2512,7 @@ function getSkillFormula(
     }
   }
 
-  return skillFormula;
+  return [skillFormula, skillInfo];
 }
 
 function calcPhysicalSkillDamages(
@@ -2554,7 +2556,7 @@ function calcPhysicalSkillDamages(
     attacker["attackSkill" + skillId],
     constants.skillPowerTable
   );
-  var skillFormula = getSkillFormula(
+  var [skillFormula, skillInfo] = getSkillFormula(
     skillId,
     attacker.class,
     attacker.level,
@@ -2673,7 +2675,7 @@ function calcMagicSkillDamages(
     attacker["attackSkill" + skillId],
     constants.skillPowerTable
   );
-  var skillFormula = getSkillFormula(
+  var [skillFormula, skillInfo] = getSkillFormula(
     skillId,
     attacker.class,
     attacker.level,
