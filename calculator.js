@@ -1444,7 +1444,7 @@ function calcSkillDamageWithSecondaryBonuses(
   damages,
   battleValues,
   damagesType,
-  minPiercingDamages,
+  minPiercingDamages
 ) {
   // damages = floorMultiplication(damages, 1.35);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
@@ -2242,183 +2242,275 @@ function getSkillFormula(
   attackFactor,
   skillPower
 ) {
-  var skillFormulas = {
-    body: {
-      1: function (atk) {
-        return floorMultiplication(
-          1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
-          1
-        ); // Triple lacération
-      },
-      2: function (atk) {
-        return floorMultiplication(
-          3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
-          1
-        ); // Moulinet à l'épée
-      },
-      5: function (atk) {
-        return floorMultiplication(
-          2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
-          1
-        ); // Accélération
-      },
-      // 6: function (atk) {
-      //   return floorMultiplication(
-      //     (3*atk+(atk+1.5*str)*k)*1.07
-      //     (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
-      //     1
-      //   ); // Volonté de vivre
-      // },
-    },
-    mental: {
-      1: function (atk) {
-        return floorMultiplication(
-          2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
-          1
-        ); // Attaque de l'esprit
-      },
-      2: function (atk) {
-        return floorMultiplication(
-          2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
-          1
-        ); // Attaque de la paume
-      },
-      3: function (atk) {
-        return floorMultiplication(
-          2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
-          1
-        ); // Charge
-      },
-      5: function (atk) {
-        return floorMultiplication(
-          2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-          1
-        ); // Coup d'épée
-      },
-      // 6: function (atk) {
-      //   return floorMultiplication(
-      //     (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) * 1.1,
-      //     1
-      //   ); // Orbe de l'épée
-      // },
-    },
-    blade_fight: {
-      3: function (atk) {
-        return floorMultiplication(
-          2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
-          1
-        ); // Dague filante
-      },
-      5: function (atk) {
-        return floorMultiplication(
-          2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
-          1
-        ); // Brume empoisonnée
-      },
-      6: function (atk) {
-        return floorMultiplication(
-          (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
-          1
-        ); // Poison insidieux
-      },
-    },
-    archery: {
-      // 1: function (atk) {
-      //   return floorMultiplication(
-      //     atk +
-      //       0.2 * atk * Math.floor(2 + 6 * skillPower) +
-      //       (0.8 * atk + 8 * dex * attackFactor + 2 * int) * skillPower,
-      //     1
-      //   ); // Tir à répétition
-      // },
-      // 2: function (atk) {
-      //   return floorMultiplication(
-      //     atk + (1.7 * atk + 5 * dex + str) * skillPower,
-      //     1
-      //   ); // Pluie de flèches
-      // },
-    },
-    weaponary: {
-      1: function (atk) {
-        return floorMultiplication(
-          atk + 2 * lv + 2 * int + (2 * atk + 4 * str + 14 * int) * skillPower,
-          1
-        ); // Toucher brûlant
-      },
-      2: function (atk) {
-        return floorMultiplication(
-          1.1 * atk +
-            2 * lv +
-            2 * int +
-            (1.5 * atk + str + 12 * int) * skillPower,
-          1
-        ); // Tourbillon du dragon
-      },
-    },
-    black_magic: {
-      6: function (mav) {
-        return floorMultiplication(
-          120 +
-            6 * lv +
-            (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-              attackFactor *
-              skillPower,
-          1
-        ); // Orbe des ténèbres
-      },
-    },
-    dragon: {
-      1: function (mav) {
-        return floorMultiplication(
-          70 + 5 * lv + (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
-          1
-        ); // Talisman volant
-      },
-      2: function (mav) {
-        return floorMultiplication(
-          60 + 5 * lv + (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
-          1
-        ); // Talisman volant
-      },
-      3: function (mav) {
-        return floorMultiplication(
-          70 + 3 * lv + (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
-          1
-        ); // Rugissement du dragon
-      },
-    },
-    heal: {
+  var skillFormula;
 
-    },
-    lycan: {
-      // 1: function (atk) {
-      //   return floorMultiplication(
-      //     1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
-      //     1
-      //   ); // Déchiqueter
-      // },
-      // 2: function (atk) {
-      //   return floorMultiplication(
-      //     2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-      //     1
-      //   ); // Souffle de loup
-      // },
-      3: function (atk) {
-        return floorMultiplication(
-          atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
-          1
-        ); // Bond de loup
-      },
-      4: function (atk) {
-        return floorMultiplication(
-          3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
-          1
-        ); // Griffe de loup
-      },
+  if (attackerClass === "body") {
+    switch (skillId) {
+      // Triple lacération
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Moulinet à l'épée
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Accélération
+      case 5:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Volonté de vivre
+      // case 6:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       (3 * atk + (atk + 1.5 * str) * k) *
+      //         1.07(3 * atk + (atk + 1.5 * str) * skillPower) *
+      //         1.07,
+      //       1
+      //     );
+      //   };
+      //   break;
     }
-  };
+  } else if (attackerClass === "mental") {
+    switch (skillId) {
+      // Attaque de l'esprit
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Attaque de la paume
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Charge
+      case 3:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Coup d'épée
+      case 5:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Orbe de l'épée
+      // case 6:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
+      //         1.1,
+      //       1
+      //     );
+      //   };
+      //   break;
+    }
+  } else if (attackerClass === "blade_fight") {
+    switch (skillId) {
+      // Dague filante
+      case 3:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Brume empoisonnée
+      case 5:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
+            1
+          );
+        };
+        break;
+      // Poison insidieux
+      case 6:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "archery") {
+    switch (
+      skillId
+      // Tir à répétition
+      // case 1:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       atk +
+      //         0.2 * atk * Math.floor(2 + 6 * skillPower) +
+      //         (0.8 * atk + 8 * dex * attackFactor + 2 * int) * skillPower,
+      //       1
+      //     );
+      //   };
+      //   break;
+      // Pluie de flèches
+      // case 2:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       atk + (1.7 * atk + 5 * dex + str) * skillPower,
+      //       1
+      //     );
+      //   };
+      //   break;
+    ) {
+    }
+  } else if (attackerClass === "weaponary") {
+    switch (skillId) {
+      // Toucher brûlant
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk +
+              2 * lv +
+              2 * int +
+              (2 * atk + 4 * str + 14 * int) * skillPower,
+            1
+          );
+        };
+        break;
+      // Tourbillon du dragon
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            1.1 * atk +
+              2 * lv +
+              2 * int +
+              (1.5 * atk + str + 12 * int) * skillPower,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "black_magic") {
+    switch (skillId) {
+      // Orbe des ténèbres
+      case 6:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            120 +
+              6 * lv +
+              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+                attackFactor *
+                skillPower,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "dragon") {
+    switch (skillId) {
+      // Talisman volant
+      case 1:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            70 +
+              5 * lv +
+              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+            1
+          );
+        };
+        break;
+      // Talisman volant
+      case 2:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            60 +
+              5 * lv +
+              (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
+            1
+          );
+        };
+        break;
+      // Rugissement du dragon
+      case 3:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            70 +
+              3 * lv +
+              (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "heal") {
+  } else if (attackerClass === "lycan") {
+    switch (skillId) {
+      // Déchiqueter
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Souffle de loup
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Bond de loup
+      case 3:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Griffe de loup
+      case 4:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
+            1
+          );
+        };
+        break;
+    }
+  }
 
-  return skillFormulas[attackerClass][skillId];
+  return skillFormula;
 }
 
 function calcPhysicalSkillDamages(
