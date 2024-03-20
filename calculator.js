@@ -1452,6 +1452,8 @@ function calcSkillDamageWithSecondaryBonuses(
 
   damages -= battleValues.defense;
 
+  damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
+
   if (damagesType.criticalHit) {
     damages *= 2;
   }
@@ -1460,7 +1462,7 @@ function calcSkillDamageWithSecondaryBonuses(
     damages +=
       battleValues.piercingHitDefense + Math.min(0, minPiercingDamages);
   }
-
+  
   damages = floorMultiplication(damages, battleValues.skillDamageCoeff);
   damages = floorMultiplication(
     damages,
@@ -2127,6 +2129,7 @@ function createSkillBattleValues(
 
 function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
   var weaponBonus = 0;
+  var skillBonus = 0;
 
   if (skillInfo.hasOwnProperty("weaponBonus")) {
     var [weaponType, weaponBonusValue] = skillInfo.weaponBonus;
@@ -2136,7 +2139,12 @@ function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
     }
   }
 
+  if (skillInfo.skillBonus) {
+    skillBonus = skillInfo.skillBonus;
+  }
+
   battleValues.weaponBonusCoeff = 1 + weaponBonus / 100;
+  battleValues.skillBonusCoeff = 1 + skillBonus / 100;
 }
 
 function calcPhysicalDamages(
@@ -2325,6 +2333,7 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
             1
           );
         };
+        skillInfo.skillBonus = true;
         break;
       // Attaque de la paume
       case 2:
@@ -2573,6 +2582,15 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
         };
         break;
     }
+  }
+
+  if (skillInfo.skillBonus) {
+    var skillBonusPower = getSkillPower(
+      attacker.skillBonus,
+      skillPowerTable
+    );
+
+    skillInfo.skillBonus = 16 * skillBonusPower;
   }
 
   return [skillFormula, skillInfo];
