@@ -1408,6 +1408,7 @@ function calcDamageWithSecondaryBonuses(
   damagesType,
   minPiercingDamages
 ) {
+  damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
 
   if (damagesType.criticalHit) {
@@ -1446,6 +1447,7 @@ function calcSkillDamageWithSecondaryBonuses(
   damagesType,
   minPiercingDamages
 ) {
+  damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
 
   damages -= battleValues.defense;
@@ -1565,6 +1567,13 @@ function skillChanceReduction(value) {
   return 5 + Math.floor((value - 10) / 4);
 }
 
+function magicResistanceToCoeff(magicResistance) {
+  if (magicResistance) {
+    return 2000 / (6 * magicResistance + 1000) - 1
+  }
+  return 1
+}
+
 function createPhysicalBattleValues(
   attacker,
   attackerWeapon,
@@ -1587,6 +1596,7 @@ function createPhysicalBattleValues(
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var defenseMarriage = 0;
   var damageMultiplier = 1;
+  var magicResistance = 0;
   var weaponDefense = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var criticalHitPercentageMarriage = 0;
@@ -1750,6 +1760,7 @@ function createPhysicalBattleValues(
       } else {
         missPercentage = victim.arrowBlock;
         skillDamageResistance = victim.skillDamageResistance;
+        magicResistance = victim.magicResistance;
       }
 
       missPercentage +=
@@ -1800,6 +1811,7 @@ function createPhysicalBattleValues(
     damageMultiplier: damageMultiplier,
     defense: victim.defense,
     defenseMarriage: defenseMarriage,
+    magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
     extraPiercingHitCoeff: 1 + extraPiercingHitPercentage / 200,
     averageDamageCoeff: 1 + averageDamage / 100,
@@ -1883,6 +1895,7 @@ function createSkillBattleValues(
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var damageMultiplier = 1;
   var defense = victim.defense;
+  var magicResistance = 0;
   var weaponDefense = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
@@ -1909,6 +1922,10 @@ function createSkillBattleValues(
       weaponDefense = victim[weaponDefenseName];
     }
 
+    if (attacker.class === "archery") {
+      defense = 0;
+    }
+
     if (isPC(victim)) {
       typeBonus = Math.max(
         0,
@@ -1929,6 +1946,8 @@ function createSkillBattleValues(
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
+
+      criticalHitPercentage = 0;
     } else {
       if (attacker.loveNecklace === "on") {
         attackValueMarriage = getMarriageBonusValue(
@@ -2042,6 +2061,7 @@ function createSkillBattleValues(
     attackValuePercent = attacker.attackMagic;
     attackValueMarriage = 0;
     defense = 0;
+    magicResistance = victim.magicResistance;
   }
 
   var battleValues = {
@@ -2061,6 +2081,7 @@ function createSkillBattleValues(
     damageMultiplier: damageMultiplier,
     defense: defense,
     piercingHitDefense: victim.defense,
+    magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
     skillDamageCoeff: 1 + skillDamage / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
@@ -2386,14 +2407,14 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
       //   };
       //   break;
       // Pluie de flèches
-      // case 2:
-      //   skillFormula = function (atk) {
-      //     return floorMultiplication(
-      //       atk + (1.7 * atk + 5 * dex + str) * skillPower,
-      //       1
-      //     );
-      //   };
-      //   break;
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk + (1.7 * atk + 5 * dex + str) * skillPower,
+            1
+          );
+        };
+        break;
     }
   } else if (attackerClass === "weaponary") {
     switch (skillId) {
@@ -2478,6 +2499,37 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
         break;
     }
   } else if (attackerClass === "heal") {
+    switch (skillId) {
+      // Jet de foudre
+      case 1:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            60 + 5 * lv + (8 * int + 2 * dex + 8 * mav + 10 * int) * attackFactor * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [6, 10];
+        break;
+      // Invocation de foudre
+      case 2:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            40 + 4 * lv + (13 * int + 2 * str + 10 * mav + 10.5 * int) * attackFactor * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [6, 10];
+        break;
+      // Griffe de foudre
+      case 3:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            50 + 5 * lv + (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
+            1
+          );
+        };
+        break;
+      }
   } else if (attackerClass === "lycan") {
     switch (skillId) {
       // Déchiqueter
@@ -2804,6 +2856,7 @@ function createMonster(name) {
     clawDefense: data[21],
     fireResistance: data[22],
     lightningResistance: data[23],
+    magicResistance: data[24],
     windResistance: data[25],
     lightningBonus: data[26],
     fireBonus: data[27],
