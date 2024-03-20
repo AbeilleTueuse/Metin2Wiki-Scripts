@@ -60,7 +60,7 @@ function addToTableResult(tableResult, damagesWeighted, minMaxDamages) {
 
   for (var damages in damagesWeighted) {
     if (firstIteration && minMaxDamages) {
-      damages = parseInt(damages)
+      damages = parseInt(damages);
       if (damages < minMaxDamages.min) {
         minMaxDamages.min = damages;
       }
@@ -226,11 +226,48 @@ function filterPlayerRank(lowRankCheckbox, playerRankChoice) {
   }
 }
 
-function filterForm(characters) {
+function filterSkills(selectedClass, skillElementsToFilter) {
+  for (var element of skillElementsToFilter) {
+    if (isValueInArray(selectedClass, element.dataset.class)) {
+      showElement(element);
+    } else {
+      hideElement(element);
+    }
+  }
+}
+
+function filterAttackTypeSelection(attacker, attackTypeSelection) {
+  var attackerClass = attacker.class;
+  var selectedOption =
+    attackTypeSelection.options[attackTypeSelection.selectedIndex];
+
+  for (var option of attackTypeSelection.options) {
+    optionClass = option.dataset.class;
+
+    if (optionClass) {
+      if (
+        optionClass === attackerClass &&
+        attacker[option.value] &&
+        attacker.state !== "polymorph"
+      ) {
+        showElement(option);
+      } else {
+        hideElement(option);
+
+        if (selectedOption === option) {
+          attackTypeSelection.selectedIndex = 0;
+        }
+      }
+    }
+  }
+}
+
+function filterForm(characters, battle) {
   characters.characterCreation.addEventListener("change", function (event) {
     var target = event.target;
+    var targetName = target.name;
 
-    switch (target.name) {
+    switch (targetName) {
       case "race":
         var selectedRace = target.value;
         filterClass(selectedRace, characters.classChoice);
@@ -253,6 +290,27 @@ function filterForm(characters) {
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
+        filterSkills(
+          characters.classChoice.value,
+          characters.skillElementsToFilter
+        );
+
+        if (
+          characters.characterCreation.name.value ===
+          battle.attackerSelection.value
+        ) {
+          battle.resetAttackType = true;
+        }
+        break;
+      case "class":
+        filterSkills(target.value, characters.skillElementsToFilter);
+
+        if (
+          characters.characterCreation.name.value ===
+          battle.attackerSelection.value
+        ) {
+          battle.resetAttackType = true;
+        }
         break;
       case "weapon":
         handleWeaponDisplay(
@@ -270,10 +328,20 @@ function filterForm(characters) {
         break;
       case "state":
         filterState(target, characters.polymorphMonster);
+        if (
+          characters.characterCreation.name.value ===
+          battle.attackerSelection.value
+        ) {
+          battle.resetAttackType = true;
+        }
         break;
       case "lowRank":
         filterPlayerRank(target, characters.playerRankChoice);
         break;
+    }
+
+    if (targetName.startsWith("attackSkill")) {
+      battle.resetAttackType = true;
     }
   });
 }
@@ -358,6 +426,11 @@ function saveCharacter(
 
   if (newCharacter) {
     addBattleChoice(battle, characterDataObject.name);
+  }
+
+  if (battle.resetAttackType) {
+    filterAttackTypeSelection(characterDataObject, battle.attackTypeSelection);
+    battle.resetAttackType = false;
   }
 }
 
@@ -539,8 +612,8 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
       formElement.value = value;
     }
   }
-
-  var selectedRace = characters.race.value;
+  var selectedRace = characterCreation.race.value;
+  var selectedClass = characterCreation.class.value;
 
   filterClass(selectedRace, characters.classChoice, true);
   filterWeapon(
@@ -566,6 +639,7 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
   );
   filterState(characters.stateChoice, characters.polymorphMonster);
   filterPlayerRank(characters.lowRankCheckbox, characters.playerRankChoice);
+  filterSkills(selectedClass, characters.skillElementsToFilter);
 }
 
 function handleClickOnCharacter(
@@ -873,7 +947,7 @@ function characterManagement(characters, battle) {
     characters.unsavedChanges = true;
   });
 
-  filterForm(characters);
+  filterForm(characters, battle);
   characterCreationListener(characters, battle);
   handleFocus();
 
@@ -1113,6 +1187,10 @@ function isRiding(character) {
   return character.state === "horse";
 }
 
+function isBow(weapon) {
+  return weapon[1] === 2;
+}
+
 function calcAttackFactor(attacker, victim) {
   function calcCoeffK(dex, level) {
     return Math.min(90, Math.floor((2 * dex + level) / 3));
@@ -1192,7 +1270,11 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
       attacker.maxAttackValueSlash
     );
 
-    attackValueOther = attacker.attackValue;
+    attackValueOther += attacker.attackValue;
+
+    if (isBow(attackerWeapon) && !isPolymorph(attacker)) {
+      attackValueOther += 25;
+    }
   } else {
     minAttackValue = attacker.minAttackValue;
     maxAttackValue = attacker.maxAttackValue;
@@ -1204,11 +1286,11 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
   attackValueOther += attacker.statAttackValue;
   attackValueOther += attacker.horseAttackValue;
 
-  var weaponInterval = maxAttackValue - minAttackValue;
-  var slashInterval = maxAttackValueSlash - minAttackValueSlash;
+  var weaponInterval = maxAttackValue - minAttackValue + 1;
+  var slashInterval = maxAttackValueSlash - minAttackValueSlash + 1;
 
-  var totalCardinal = (weaponInterval + 1) * (slashInterval + 1) * 10000;
-  var minInterval = Math.min(weaponInterval, slashInterval) + 1;
+  var totalCardinal = weaponInterval * slashInterval * 10000;
+  var minInterval = Math.min(weaponInterval, slashInterval);
 
   minAttackValue += minAttackValueSlash;
   maxAttackValue += maxAttackValueSlash;
@@ -1220,6 +1302,50 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
     minInterval,
     totalCardinal,
   ];
+}
+
+function calcMagicAttackValue(attacker, attackerWeapon) {
+  var minMagicAttackValue = 0;
+  var maxMagicAttackValue = 0;
+
+  var minMagicAttackValueSlash = 0;
+  var maxMagicAttackValueSlash = 0;
+
+  if (isValueInArray("serpent", attackerWeapon[0].toLowerCase())) {
+    minMagicAttackValue = attacker.minMagicAttackValueRandom;
+    maxMagicAttackValue = attacker.maxMagicAttackValueRandom;
+
+    maxMagicAttackValue = Math.max(minMagicAttackValue, maxMagicAttackValue);
+  } else {
+    var rawWeaponAttackValue = attackerWeapon[3][attacker.upgrade];
+
+    if (!rawWeaponAttackValue) {
+      rawWeaponAttackValue = 0;
+    }
+
+    minMagicAttackValue = attackerWeapon[2][0] + rawWeaponAttackValue;
+    maxMagicAttackValue = attackerWeapon[2][1] + rawWeaponAttackValue;
+  }
+
+  minMagicAttackValueSlash = Math.min(
+    attacker.minMagicAttackValueSlash,
+    attacker.maxMagicAttackValueSlash
+  );
+  maxMagicAttackValueSlash = Math.max(
+    attacker.minMagicAttackValueSlash,
+    attacker.maxMagicAttackValueSlash
+  );
+
+  var weaponInterval = maxMagicAttackValue - minMagicAttackValue + 1;
+  var slashInterval = maxMagicAttackValueSlash - minMagicAttackValueSlash + 1;
+
+  var totalCardinal = weaponInterval * slashInterval * 10000;
+  var minInterval = Math.min(weaponInterval, slashInterval);
+
+  minMagicAttackValue += minMagicAttackValueSlash;
+  maxMagicAttackValue += maxMagicAttackValueSlash;
+
+  return [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal];
 }
 
 function getPolymorphPower(polymorphPoint, polymorphPowerTable) {
@@ -1248,7 +1374,10 @@ function getMarriageBonusValue(character, marriageTable, itemName) {
 }
 
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
-  damages = floorMultiplication(damages, battleValues.attackValueCoeff);
+  damages = floorMultiplication(
+    damages * battleValues.attackValueCoeff + battleValues.adjustCoeff,
+    1
+  );
   damages += battleValues.attackValueMarriage;
   damages = floorMultiplication(
     damages,
@@ -1279,6 +1408,7 @@ function calcDamageWithSecondaryBonuses(
   damagesType,
   minPiercingDamages
 ) {
+  damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
 
   if (damagesType.criticalHit) {
@@ -1315,10 +1445,9 @@ function calcSkillDamageWithSecondaryBonuses(
   damages,
   battleValues,
   damagesType,
-  minPiercingDamages,
-  skillFormula
+  minPiercingDamages
 ) {
-  damages = skillFormula(damages);
+  damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
 
   damages -= battleValues.defense;
@@ -1328,7 +1457,8 @@ function calcSkillDamageWithSecondaryBonuses(
   }
 
   if (damagesType.piercingHit) {
-    damages += battleValues.defense + Math.min(0, minPiercingDamages);
+    damages +=
+      battleValues.piercingHitDefense + Math.min(0, minPiercingDamages);
   }
 
   damages = floorMultiplication(damages, battleValues.skillDamageCoeff);
@@ -1381,7 +1511,7 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
       polymorphMonster.maxAttackValue
     );
 
-    if (attacker.weapon === "Fist") {
+    if (!attacker.weapon) {
       attacker.maxAttackValuePolymorph += 1;
     }
 
@@ -1437,8 +1567,16 @@ function skillChanceReduction(value) {
   return 5 + Math.floor((value - 10) / 4);
 }
 
+function magicResistanceToCoeff(magicResistance) {
+  if (magicResistance) {
+    return 2000 / (6 * magicResistance + 1000) - 1
+  }
+  return 1
+}
+
 function createPhysicalBattleValues(
   attacker,
+  attackerWeapon,
   victim,
   mapping,
   polymorphPowerTable,
@@ -1458,6 +1596,7 @@ function createPhysicalBattleValues(
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var defenseMarriage = 0;
   var damageMultiplier = 1;
+  var magicResistance = 0;
   var weaponDefense = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var criticalHitPercentageMarriage = 0;
@@ -1479,11 +1618,7 @@ function createPhysicalBattleValues(
     attackValuePercent = attacker.attackValuePercent;
     attackMeleeMagic = attacker.attackMeleeMagic;
 
-    var weaponType = 8;
-
-    if (weaponData.hasOwnProperty(attacker.weapon)) {
-      weaponType = weaponData[attacker.weapon][1];
-    }
+    var weaponType = attackerWeapon[1];
 
     var weaponDefenseName = mapping.defenseWeapon[weaponType];
     var weaponDefenseBreakName = mapping.breakWeapon[weaponType];
@@ -1625,6 +1760,7 @@ function createPhysicalBattleValues(
       } else {
         missPercentage = victim.arrowBlock;
         skillDamageResistance = victim.skillDamageResistance;
+        magicResistance = victim.magicResistance;
       }
 
       missPercentage +=
@@ -1660,6 +1796,7 @@ function createPhysicalBattleValues(
 
   var battleValues = {
     missPercentage: missPercentage,
+    adjustCoeff: 0,
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
     attackValueMarriage: attackValueMarriage,
@@ -1674,6 +1811,7 @@ function createPhysicalBattleValues(
     damageMultiplier: damageMultiplier,
     defense: victim.defense,
     defenseMarriage: defenseMarriage,
+    magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
     extraPiercingHitCoeff: 1 + extraPiercingHitPercentage / 200,
     averageDamageCoeff: 1 + averageDamage / 100,
@@ -1735,7 +1873,15 @@ function createPhysicalBattleValues(
   return battleValues;
 }
 
-function createSkillBattleValues(attacker, victim, mapping) {
+function createSkillBattleValues(
+  attacker,
+  attackerWeapon,
+  victim,
+  mapping,
+  marriageTable,
+  magicSkill
+) {
+  var adjustCoeff = 0;
   var attackValuePercent = 0;
   var attackMeleeMagic = 0;
   var attackValueMarriage = 0;
@@ -1748,6 +1894,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
   var monsterBonus = 0;
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var damageMultiplier = 1;
+  var defense = victim.defense;
+  var magicResistance = 0;
   var weaponDefense = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
@@ -1765,17 +1913,17 @@ function createSkillBattleValues(attacker, victim, mapping) {
     attackValuePercent = attacker.attackValuePercent;
     attackMeleeMagic = attacker.attackMeleeMagic;
 
-    var weaponType = 8;
-
-    if (weaponData.hasOwnProperty(attacker.weapon)) {
-      weaponType = weaponData[attacker.weapon][1];
-    }
+    var weaponType = attackerWeapon[1];
 
     var weaponDefenseName = mapping.defenseWeapon[weaponType];
     var weaponDefenseBreakName = mapping.breakWeapon[weaponType];
 
     if (victim.hasOwnProperty(weaponDefenseName)) {
       weaponDefense = victim[weaponDefenseName];
+    }
+
+    if (attacker.class === "archery") {
+      defense = 0;
     }
 
     if (isPC(victim)) {
@@ -1798,6 +1946,8 @@ function createSkillBattleValues(attacker, victim, mapping) {
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
+
+      criticalHitPercentage = 0;
     } else {
       if (attacker.loveNecklace === "on") {
         attackValueMarriage = getMarriageBonusValue(
@@ -1906,7 +2056,18 @@ function createSkillBattleValues(attacker, victim, mapping) {
     }
   }
 
+  if (magicSkill) {
+    adjustCoeff = 0.5;
+    attackValuePercent = attacker.attackMagic;
+    attackValueMarriage = 0;
+    defense = 0;
+    magicResistance = victim.magicResistance;
+    weaponDefense = 0;
+  }
+
   var battleValues = {
+    weaponBonusCoeff: 1,
+    adjustCoeff: adjustCoeff,
     attackValueCoeff:
       1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
     attackValueMarriage: attackValueMarriage,
@@ -1919,7 +2080,9 @@ function createSkillBattleValues(attacker, victim, mapping) {
     stoneBonusCoeff: 1 + stoneBonus / 100,
     elementBonusCoeff: elementBonus,
     damageMultiplier: damageMultiplier,
-    defense: victim.defense,
+    defense: defense,
+    piercingHitDefense: victim.defense,
+    magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
     skillDamageCoeff: 1 + skillDamage / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
@@ -1962,30 +2125,40 @@ function createSkillBattleValues(attacker, victim, mapping) {
   return battleValues;
 }
 
+function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
+  var weaponBonus = 0;
+
+  if (skillInfo.hasOwnProperty("weaponBonus")) {
+    var [weaponType, weaponBonusValue] = skillInfo.weaponBonus;
+
+    if (weaponType === attackerWeapon[1]) {
+      weaponBonus = weaponBonusValue;
+    }
+  }
+
+  battleValues.weaponBonusCoeff = 1 + weaponBonus / 100;
+}
+
 function calcPhysicalDamages(
   attacker,
+  attackerWeapon,
   victim,
   tableResult,
   mapping,
-  polymorphPowerTable,
-  marriageTable
+  constants
 ) {
-  var attackerWeapon = null;
   var battleValues = createPhysicalBattleValues(
     attacker,
+    attackerWeapon,
     victim,
     mapping,
-    polymorphPowerTable,
-    marriageTable
+    constants.polymorphPowerTable,
+    constants.marriageTable
   );
 
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
   clearTableResult(tableResult);
-
-  if (isPC(attacker)) {
-    attackerWeapon = weaponData[attacker.weapon];
-  }
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
@@ -2085,57 +2258,346 @@ function calcPhysicalDamages(
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
-function getSkillFormula(skillId, lv, vit, str, int, dex, skillPower) {
-  switch (skillId) {
-    case 5:
-      return function (atk) {
-        return floorMultiplication(
-          2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
-          1
-        );
-      };
-    case 62:
-      return function (atk) {
-        return floorMultiplication(
-          1.1 * atk +
-            2 * lv +
-            2 * int +
-            (1.5 * atk + str + 12 * int) * skillPower,
-          1
-        );
-      };
+function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
+  var skillFormula;
+  var skillInfo = {};
+
+  var attackerClass = attacker.class;
+  var lv = attacker.level;
+  var vit = attacker.vit;
+  var str = attacker.str;
+  var int = attacker.int;
+  var dex = attacker.dex;
+
+  var skillPower = getSkillPower(
+    attacker["attackSkill" + skillId],
+    skillPowerTable
+  );
+
+  if (attackerClass === "body") {
+    switch (skillId) {
+      // Triple lacération
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Moulinet à l'épée
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Accélération
+      case 5:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Volonté de vivre
+      // case 6:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       (3 * atk + (atk + 1.5 * str) * k) *
+      //         1.07(3 * atk + (atk + 1.5 * str) * skillPower) *
+      //         1.07,
+      //       1
+      //     );
+      //   };
+      //   break;
+    }
+  } else if (attackerClass === "mental") {
+    switch (skillId) {
+      // Attaque de l'esprit
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Attaque de la paume
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Charge
+      case 3:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Coup d'épée
+      case 5:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+            1
+          );
+        };
+        break;
+      // Orbe de l'épée
+      // case 6:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
+      //         1.1,
+      //       1
+      //     );
+      //   };
+      //   break;
+    }
+  } else if (attackerClass === "blade_fight") {
+    switch (skillId) {
+      // Dague filante
+      case 3:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Brume empoisonnée
+      case 5:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
+            1
+          );
+        };
+        break;
+      // Poison insidieux
+      case 6:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "archery") {
+    switch (skillId) {
+      // Tir à répétition
+      // case 1:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       atk +
+      //         0.2 * atk * Math.floor(2 + 6 * skillPower) +
+      //         (0.8 * atk + 8 * dex * attackFactor + 2 * int) * skillPower,
+      //       1
+      //     );
+      //   };
+      //   break;
+      // Pluie de flèches
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk + (1.7 * atk + 5 * dex + str) * skillPower,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "weaponary") {
+    switch (skillId) {
+      // Toucher brûlant
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk +
+              2 * lv +
+              2 * int +
+              (2 * atk + 4 * str + 14 * int) * skillPower,
+            1
+          );
+        };
+        break;
+      // Tourbillon du dragon
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            1.1 * atk +
+              2 * lv +
+              2 * int +
+              (1.5 * atk + str + 12 * int) * skillPower,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "black_magic") {
+    switch (skillId) {
+      // Orbe des ténèbres
+      case 6:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            120 +
+              6 * lv +
+              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+                attackFactor *
+                skillPower,
+            1
+          );
+        };
+        break;
+    }
+  } else if (attackerClass === "dragon") {
+    switch (skillId) {
+      // Talisman volant
+      case 1:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            70 +
+              5 * lv +
+              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [4, 10];
+        break;
+      // Dragon chassant
+      case 2:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            60 +
+              5 * lv +
+              (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [4, 10];
+        break;
+      // Rugissement du dragon
+      case 3:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            70 +
+              3 * lv +
+              (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [4, 10];
+        break;
+    }
+  } else if (attackerClass === "heal") {
+    switch (skillId) {
+      // Jet de foudre
+      case 1:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            60 + 5 * lv + (8 * int + 2 * dex + 8 * mav + 10 * int) * attackFactor * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [6, 10];
+        break;
+      // Invocation de foudre
+      case 2:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            40 + 4 * lv + (13 * int + 2 * str + 10 * mav + 10.5 * int) * attackFactor * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [6, 10];
+        break;
+      // Griffe de foudre
+      case 3:
+        skillFormula = function (mav) {
+          return floorMultiplication(
+            50 + 5 * lv + (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
+            1
+          );
+        };
+        break;
+      }
+  } else if (attackerClass === "lycan") {
+    switch (skillId) {
+      // Déchiqueter
+      // case 1:
+      //   skillFormula = function (atk) {
+      //     return floorMultiplication(
+      //       1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
+      //       1
+      //     );
+      //   };
+      //   skillInfo.weaponBonus = [5, 54];
+      //   break;
+      // Souffle de loup
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [5, 35];
+        break;
+      // Bond de loup
+      case 3:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [5, 35];
+        break;
+      // Griffe de loup
+      case 4:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
+            1
+          );
+        };
+        break;
+    }
   }
+
+  return [skillFormula, skillInfo];
 }
 
-function calcSkillDamages(
+function calcPhysicalSkillDamages(
   attacker,
+  attackerWeapon,
   victim,
   tableResult,
   mapping,
-  skillPowerTable,
+  constants,
   skillId
 ) {
-  var skillPower = getSkillPower(attacker["skill" + skillId], skillPowerTable);
-  var skillFormula = getSkillFormula(
-    skillId,
-    attacker.level,
-    attacker.vit,
-    attacker.str,
-    attacker.int,
-    attacker.dex,
-    skillPower
+  var battleValues = createSkillBattleValues(
+    attacker,
+    attackerWeapon,
+    victim,
+    mapping,
+    constants.marriageTable
   );
-
-  var attackerWeapon = null;
-  var battleValues = createSkillBattleValues(attacker, victim, mapping);
 
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
   clearTableResult(tableResult);
-
-  if (isPC(attacker)) {
-    attackerWeapon = weaponData[attacker.weapon];
-  }
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
@@ -2149,6 +2611,15 @@ function calcSkillDamages(
 
   var lastWeightsLimit = maxAttackValue - minInterval + 1;
   var firstWeightLimit = minAttackValue + minInterval - 1;
+
+  var [skillFormula, skillInfo] = getSkillFormula(
+    constants.skillPowerTable,
+    skillId,
+    attacker,
+    attackFactor
+  );
+
+  updateBattleValues(battleValues, skillInfo, attackerWeapon);
 
   for (var damagesType of battleValues.damagesTypeCombinaison) {
     if (!damagesType.weight) {
@@ -2177,6 +2648,136 @@ function calcSkillDamages(
       var rawDamages =
         mainAttackValue +
         floorMultiplication(attackFactor, secondaryAttackValue);
+      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+        rawDamages,
+        battleValues
+      );
+
+      if (damagesWithPrimaryBonuses <= 2) {
+        for (var damages = 1; damages <= 5; damages++) {
+          var damagesWithFormula = skillFormula(damages);
+
+          damagesWithFormula = floorMultiplication(
+            damagesWithFormula,
+            battleValues.weaponBonusCoeff
+          );
+
+          var finalDamages = calcSkillDamageWithSecondaryBonuses(
+            damagesWithFormula,
+            battleValues,
+            damagesType,
+            damagesWithPrimaryBonuses
+          );
+
+          addKeyValue(
+            damagesWeighted,
+            finalDamages,
+            (weight * damagesType.weight) / (5 * totalCardinal)
+          );
+          sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+        }
+      } else {
+        var damagesWithFormula = skillFormula(damagesWithPrimaryBonuses);
+
+        damagesWithFormula = floorMultiplication(
+          damagesWithFormula,
+          battleValues.weaponBonusCoeff
+        );
+
+        var finalDamages = calcSkillDamageWithSecondaryBonuses(
+          damagesWithFormula,
+          battleValues,
+          damagesType,
+          damagesWithPrimaryBonuses
+        );
+
+        addKeyValue(
+          damagesWeighted,
+          finalDamages,
+          (weight * damagesType.weight) / totalCardinal
+        );
+        sumDamages += finalDamages * weight * damagesType.weight;
+      }
+    }
+
+    addToTableResult(tableResult, damagesWeighted, minMaxDamages);
+  }
+
+  if (minMaxDamages.min === Infinity) {
+    minMaxDamages.min = 0;
+  }
+
+  return [sumDamages / totalCardinal, minMaxDamages];
+}
+
+function calcMagicSkillDamages(
+  attacker,
+  attackerWeapon,
+  victim,
+  tableResult,
+  mapping,
+  constants,
+  skillId
+) {
+  var battleValues = createSkillBattleValues(
+    attacker,
+    attackerWeapon,
+    victim,
+    mapping,
+    constants.marriageTable,
+    true
+  );
+
+  var sumDamages = 0;
+  var minMaxDamages = { min: Infinity, max: 0 };
+  clearTableResult(tableResult);
+
+  var attackFactor = calcAttackFactor(attacker, victim);
+  var [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal] =
+    calcMagicAttackValue(attacker, attackerWeapon);
+
+  var lastWeightsLimit = maxMagicAttackValue - minInterval + 1;
+  var firstWeightLimit = minMagicAttackValue + minInterval - 1;
+
+  var [skillFormula, skillInfo] = getSkillFormula(
+    constants.skillPowerTable,
+    skillId,
+    attacker,
+    attackFactor
+  );
+
+  updateBattleValues(battleValues, skillInfo, attackerWeapon);
+
+  for (var damagesType of battleValues.damagesTypeCombinaison) {
+    if (!damagesType.weight) {
+      continue;
+    }
+
+    var damagesWeighted = {};
+    addRowToTableResult(tableResult, damagesType.name);
+
+    for (
+      var magicAttackValue = minMagicAttackValue;
+      magicAttackValue <= maxMagicAttackValue;
+      magicAttackValue++
+    ) {
+      var weight;
+
+      if (magicAttackValue > lastWeightsLimit) {
+        weight = maxMagicAttackValue - magicAttackValue + 1;
+      } else if (magicAttackValue < firstWeightLimit) {
+        weight = magicAttackValue - minMagicAttackValue + 1;
+      } else {
+        weight = minInterval;
+      }
+
+      var rawDamages = skillFormula(magicAttackValue);
+
+      rawDamages = floorMultiplication(
+        rawDamages,
+        battleValues.weaponBonusCoeff
+      );
+
       var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         rawDamages,
         battleValues
@@ -2224,10 +2825,7 @@ function calcSkillDamages(
     minMaxDamages.min = 0;
   }
 
-  return [
-    sumDamages / totalCardinal,
-    minMaxDamages,
-  ];
+  return [sumDamages / totalCardinal, minMaxDamages];
 }
 
 function createMonster(name) {
@@ -2259,6 +2857,7 @@ function createMonster(name) {
     clawDefense: data[21],
     fireResistance: data[22],
     lightningResistance: data[23],
+    magicResistance: data[24],
     windResistance: data[25],
     lightningBonus: data[26],
     fireBonus: data[27],
@@ -2292,8 +2891,16 @@ function createBattle(characters, battle) {
       return;
     }
 
+    var attackerWeapon = null;
+
     if (isPseudoSaved(attackerName)) {
       var attacker = copyObject(characters.savedCharacters[attackerName]);
+
+      if (weaponData.hasOwnProperty(attacker.weapon)) {
+        attackerWeapon = weaponData[attacker.weapon];
+      } else {
+        attackerWeapon = weaponData[0];
+      }
     } else {
       var attacker = createMonster(attackerName);
     }
@@ -2305,27 +2912,30 @@ function createBattle(characters, battle) {
     }
 
     var meanDamages, minMaxDamages;
+    var calcDamages;
+    var skillId = 0;
 
     if (attackType === "physical") {
-      [meanDamages, minMaxDamages] = calcPhysicalDamages(
-        attacker,
-        victim,
-        battle.tableResult,
-        battle.mapping,
-        battle.constants.polymorphPowerTable,
-        battle.constants.marriageTable
-      );
-    } else if (attackType.startsWith("skill")) {
-      var skillId = parseInt(attackType.split("-")[1]);
-      [meanDamages, minMaxDamages] = calcSkillDamages(
-        attacker,
-        victim,
-        battle.tableResult,
-        battle.mapping,
-        battle.constants.skillPowerTable,
-        skillId
-      );
+      calcDamages = calcPhysicalDamages;
+    } else if (attackType.startsWith("attackSkill")) {
+      skillId = parseInt(attackType.split("attackSkill")[1]);
+
+      if (isMagicClass(attacker)) {
+        calcDamages = calcMagicSkillDamages;
+      } else {
+        calcDamages = calcPhysicalSkillDamages;
+      }
     }
+
+    [meanDamages, minMaxDamages] = calcDamages(
+      attacker,
+      attackerWeapon,
+      victim,
+      battle.tableResult,
+      battle.mapping,
+      battle.constants,
+      skillId
+    );
 
     battle.damageResult.textContent =
       attacker.name +
@@ -2343,25 +2953,19 @@ function createBattle(characters, battle) {
   });
 
   battle.attackerSelection.addEventListener("change", function (event) {
-    var name = event.target.value;
+    var attackerName = event.target.value;
     var attackTypeSelection = battle.attackTypeSelection;
 
-    if (isPseudoSaved(name)) {
-      //pass
+    if (isPseudoSaved(attackerName)) {
+      var attacker = characters.savedCharacters[attackerName];
+      filterAttackTypeSelection(attacker, attackTypeSelection);
     } else {
-      var optionsLength = attackTypeSelection.options.length;
-
-      if (optionsLength <= 1) {
-        return;
+      for (var option of attackTypeSelection.options) {
+        if (option.dataset.class) {
+          hideElement(option);
+        }
       }
-
-      for (
-        var optionIndex = optionsLength - 1;
-        optionIndex >= 2;
-        optionIndex--
-      ) {
-        attackTypeSelection.remove(optionIndex);
-      }
+      attackTypeSelection.selectedIndex = 0;
     }
   });
 }
@@ -2487,6 +3091,7 @@ function createDamageCalculatorInformation() {
     ),
     lowRankCheckbox: document.getElementById("low-rank"),
     playerRankChoice: document.getElementById("player-rank"),
+    skillContainer: document.getElementById("skill-container"),
   };
   characters.race = characters.characterCreation.race;
   characters.weapon = characters.characterCreation.weapon;
@@ -2502,10 +3107,15 @@ function createDamageCalculatorInformation() {
 
   characters.savedMonsters = savedMonsters;
 
+  var skillContainer = document.getElementById("skill-container");
+  characters.skillElementsToFilter =
+    skillContainer.querySelectorAll("[data-class]");
+
   var mapping = createMapping();
   var constants = createConstants();
 
   var battle = {
+    resetAttackType: false,
     battleForm: document.getElementById("create-battle"),
     attackerSelection: document.getElementById("attacker-selection"),
     attackTypeSelection: document.getElementById("attack-type-selection"),
