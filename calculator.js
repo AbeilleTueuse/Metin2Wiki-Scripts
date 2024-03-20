@@ -1452,6 +1452,7 @@ function calcSkillDamageWithSecondaryBonuses(
 
   damages -= battleValues.defense;
 
+  damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
 
   if (damagesType.criticalHit) {
@@ -1462,7 +1463,7 @@ function calcSkillDamageWithSecondaryBonuses(
     damages +=
       battleValues.piercingHitDefense + Math.min(0, minPiercingDamages);
   }
-  
+
   damages = floorMultiplication(damages, battleValues.skillDamageCoeff);
   damages = floorMultiplication(
     damages,
@@ -1571,9 +1572,9 @@ function skillChanceReduction(value) {
 
 function magicResistanceToCoeff(magicResistance) {
   if (magicResistance) {
-    return 2000 / (6 * magicResistance + 1000) - 1
+    return 2000 / (6 * magicResistance + 1000) - 1;
   }
-  return 1
+  return 1;
 }
 
 function createPhysicalBattleValues(
@@ -2129,6 +2130,7 @@ function createSkillBattleValues(
 
 function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
   var weaponBonus = 0;
+  var skillWard = 0;
   var skillBonus = 0;
 
   if (skillInfo.hasOwnProperty("weaponBonus")) {
@@ -2143,7 +2145,12 @@ function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
     skillBonus = skillInfo.skillBonus;
   }
 
+  if (skillInfo.skillWard) {
+    skillWard = skillInfo.skillWard;
+  }
+
   battleValues.weaponBonusCoeff = 1 + weaponBonus / 100;
+  battleValues.skillWardCoeff = 1 - skillWard / 100;
   battleValues.skillBonusCoeff = 1 + skillBonus / 100;
 }
 
@@ -2266,7 +2273,13 @@ function calcPhysicalDamages(
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
-function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
+function getSkillFormula(
+  skillPowerTable,
+  skillId,
+  attacker,
+  attackFactor,
+  victim
+) {
   var skillFormula;
   var skillInfo = {};
 
@@ -2281,6 +2294,8 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
     attacker["attackSkill" + skillId],
     skillPowerTable
   );
+
+  var improvedBySkillBonus = false;
 
   if (attackerClass === "body") {
     switch (skillId) {
@@ -2301,6 +2316,7 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
             1
           );
         };
+        improvedBySkillBonus = true;
         break;
       // Accélération
       case 5:
@@ -2333,7 +2349,7 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
             1
           );
         };
-        skillInfo.skillBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Attaque de la paume
       case 2:
@@ -2439,6 +2455,7 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
             1
           );
         };
+        improvedBySkillBonus = true;
         break;
       // Tourbillon du dragon
       case 2:
@@ -2494,6 +2511,7 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
           );
         };
         skillInfo.weaponBonus = [4, 10];
+        improvedBySkillBonus = true;
         break;
       // Rugissement du dragon
       case 3:
@@ -2514,7 +2532,11 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
       case 1:
         skillFormula = function (mav) {
           return floorMultiplication(
-            60 + 5 * lv + (8 * int + 2 * dex + 8 * mav + 10 * int) * attackFactor * skillPower,
+            60 +
+              5 * lv +
+              (8 * int + 2 * dex + 8 * mav + 10 * int) *
+                attackFactor *
+                skillPower,
             1
           );
         };
@@ -2524,22 +2546,29 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
       case 2:
         skillFormula = function (mav) {
           return floorMultiplication(
-            40 + 4 * lv + (13 * int + 2 * str + 10 * mav + 10.5 * int) * attackFactor * skillPower,
+            40 +
+              4 * lv +
+              (13 * int + 2 * str + 10 * mav + 10.5 * int) *
+                attackFactor *
+                skillPower,
             1
           );
         };
         skillInfo.weaponBonus = [6, 10];
+        improvedBySkillBonus = true;
         break;
       // Griffe de foudre
       case 3:
         skillFormula = function (mav) {
           return floorMultiplication(
-            50 + 5 * lv + (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
+            50 +
+              5 * lv +
+              (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
             1
           );
         };
         break;
-      }
+    }
   } else if (attackerClass === "lycan") {
     switch (skillId) {
       // Déchiqueter
@@ -2561,6 +2590,7 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
           );
         };
         skillInfo.weaponBonus = [5, 35];
+        improvedBySkillBonus = true;
         break;
       // Bond de loup
       case 3:
@@ -2584,13 +2614,16 @@ function getSkillFormula(skillPowerTable, skillId, attacker, attackFactor) {
     }
   }
 
-  if (skillInfo.skillBonus) {
-    var skillBonusPower = getSkillPower(
-      attacker.skillBonus,
-      skillPowerTable
-    );
+  if (improvedBySkillBonus) {
+    skillInfo.skillBonus =
+      16 * getSkillPower(attacker.skillBonus, skillPowerTable);
 
-    skillInfo.skillBonus = 16 * skillBonusPower;
+    var skillWardChoice = victim.skillWardChoice;
+
+    if (skillWardChoice && skillWardChoice === attackerClass) {
+      skillInfo.skillWard =
+        24 * getSkillPower(victim.skillWard, skillPowerTable);
+    }
   }
 
   return [skillFormula, skillInfo];
@@ -2634,7 +2667,8 @@ function calcPhysicalSkillDamages(
     constants.skillPowerTable,
     skillId,
     attacker,
-    attackFactor
+    attackFactor,
+    victim
   );
 
   updateBattleValues(battleValues, skillInfo, attackerWeapon);
@@ -2761,7 +2795,8 @@ function calcMagicSkillDamages(
     constants.skillPowerTable,
     skillId,
     attacker,
-    attackFactor
+    attackFactor,
+    victim
   );
 
   updateBattleValues(battleValues, skillInfo, attackerWeapon);
