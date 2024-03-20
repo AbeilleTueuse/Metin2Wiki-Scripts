@@ -2062,6 +2062,7 @@ function createSkillBattleValues(
     attackValueMarriage = 0;
     defense = 0;
     magicResistance = victim.magicResistance;
+    weaponDefense = 0;
   }
 
   var battleValues = {
