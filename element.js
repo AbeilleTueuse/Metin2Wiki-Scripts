@@ -25,7 +25,8 @@ function createElement(
   elementsNS,
   allowedProperties,
   elementDataset,
-  elementType
+  elementType,
+  skillValues
 ) {
   if (elementsNS.indexOf(elementType) !== -1) {
     var newElement = document.createElementNS(
@@ -44,6 +45,15 @@ function createElement(
     newElement.appendChild(childdNodes[childIndex].cloneNode(true));
   }
 
+  if (newElement.dataset.add === "skill") {
+    for (var index = 0; index < skillValues.length; index++) {
+      var option = document.createElement("option");
+      option.value = index;
+      option.textContent = skillValues[index];
+      newElement.appendChild(option);
+    }
+  }
+
   return newElement;
 }
 
@@ -51,7 +61,8 @@ function replaceElement(
   elementsToReplace,
   allowedElements,
   elementsNS,
-  allowedProperties
+  allowedProperties,
+  skillValues
 ) {
   var elementDataset = elementsToReplace.dataset;
   var elementType = elementDataset.element;
@@ -62,7 +73,8 @@ function replaceElement(
       elementsNS,
       allowedProperties,
       elementDataset,
-      elementType
+      elementType,
+      skillValues
     );
 
     elementsToReplace.parentNode.replaceChild(newElement, elementsToReplace);
@@ -145,6 +157,50 @@ function addCollapsible(toggleButton) {
     "title",
   ];
 
+  var skillValues = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10",
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6",
+    "G7",
+    "G8",
+    "G9",
+    "G10",
+    "P",
+  ];
+
   var elementsToReplace = document.querySelector("div[data-element]");
 
   while (elementsToReplace) {
@@ -152,7 +208,8 @@ function addCollapsible(toggleButton) {
       elementsToReplace,
       allowedElements,
       elementsNS,
-      allowedProperties
+      allowedProperties,
+      skillValues
     );
     elementsToReplace = document.querySelector("div[data-element]");
   }
