@@ -1454,6 +1454,7 @@ function calcSkillDamageWithSecondaryBonuses(
 
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
+  damages = floorMultiplication(damages, battleValues.specificSkillBonusCoeff);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -1882,6 +1883,7 @@ function createSkillBattleValues(
   victim,
   mapping,
   marriageTable,
+  skillId,
   magicSkill
 ) {
   var adjustCoeff = 0;
@@ -1900,6 +1902,7 @@ function createSkillBattleValues(
   var defense = victim.defense;
   var magicResistance = 0;
   var weaponDefense = 0;
+  var specificSkillBonus = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
   var skillDamage = 0;
@@ -2005,6 +2008,7 @@ function createSkillBattleValues(
       }
     }
 
+    specificSkillBonus = attacker["skillBonus" + skillId];
     skillDamage += attacker.skillDamage;
     rankBonus = getRankBonus(attacker);
     damageBonus = attacker.damageBonus;
@@ -2087,6 +2091,7 @@ function createSkillBattleValues(
     piercingHitDefense: victim.defense,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
+    specificSkillBonusCoeff: 1 + specificSkillBonus / 100,
     skillDamageCoeff: 1 + skillDamage / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
@@ -2643,7 +2648,8 @@ function calcPhysicalSkillDamages(
     attackerWeapon,
     victim,
     mapping,
-    constants.marriageTable
+    constants.marriageTable,
+    skillId
   );
 
   var sumDamages = 0;
@@ -2777,6 +2783,7 @@ function calcMagicSkillDamages(
     victim,
     mapping,
     constants.marriageTable,
+    skillId,
     true
   );
 
