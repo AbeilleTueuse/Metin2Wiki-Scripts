@@ -1401,6 +1401,7 @@ function calcDamageWithSecondaryBonuses(
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
+  damages = floorMultiplication(damages, battleValues.blessingBonusCoeff);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -1540,19 +1541,20 @@ function computeHorse(attacker) {
 }
 
 function getRankBonus(attacker) {
-  if (attacker.lowRank === "on") {
-    switch (attacker.playerRank) {
-      case "aggressive":
-        return 1;
-      case "fraudulent":
-        return 2;
-      case "malicious":
-        return 3;
-      case "cruel":
-        return 5;
-    }
+  if (attacker.lowRank !== "on") {
+    return 0;
   }
-  return 0;
+
+  switch (attacker.playerRank) {
+    case "aggressive":
+      return 1;
+    case "fraudulent":
+      return 2;
+    case "malicious":
+      return 3;
+    case "cruel":
+      return 5;
+  }
 }
 
 function skillChanceReduction(value) {
@@ -1575,7 +1577,8 @@ function createPhysicalBattleValues(
   victim,
   mapping,
   polymorphPowerTable,
-  marriageTable
+  marriageTable,
+  skillPowerTable
 ) {
   var missPercentage = 0;
   var attackValuePercent = 0;
@@ -1593,6 +1596,7 @@ function createPhysicalBattleValues(
   var damageMultiplier = 1;
   var magicResistance = 0;
   var weaponDefense = 0;
+  var blessingBonus = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var criticalHitPercentageMarriage = 0;
   var piercingHitPercentage = attacker.piercingHit;
@@ -1653,6 +1657,7 @@ function createPhysicalBattleValues(
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
 
+      blessingBonus = calcBlessingBonus(skillPowerTable, victim);
       averageDamageResistance = victim.averageDamageResistance;
     } else {
       if (attacker.loveNecklace === "on") {
@@ -1748,10 +1753,12 @@ function createPhysicalBattleValues(
       if (attacker.attack == 0) {
         missPercentage = victim.meleeBlock;
         averageDamageResistance = victim.averageDamageResistance;
+        blessingBonus = calcBlessingBonus(skillPowerTable, victim);
       } else if (attacker.attack == 1) {
         missPercentage = victim.arrowBlock;
         weaponDefense = victim.arrowDefense;
         averageDamageResistance = victim.averageDamageResistance;
+        blessingBonus = calcBlessingBonus(skillPowerTable, victim);
       } else {
         missPercentage = victim.arrowBlock;
         skillDamageResistance = victim.skillDamageResistance;
@@ -1808,6 +1815,7 @@ function createPhysicalBattleValues(
     defenseMarriage: defenseMarriage,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
+    blessingBonusCoeff: 1 - blessingBonus / 100,
     extraPiercingHitCoeff: 1 + extraPiercingHitPercentage / 200,
     averageDamageCoeff: 1 + averageDamage / 100,
     averageDamageResistanceCoeff:
@@ -2164,7 +2172,8 @@ function calcPhysicalDamages(
     victim,
     mapping,
     constants.polymorphPowerTable,
-    constants.marriageTable
+    constants.marriageTable,
+    constants.skillPowerTable
   );
 
   var sumDamages = 0;
@@ -2269,15 +2278,29 @@ function calcPhysicalDamages(
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
-function blessingReduction(skillPowerTable, victim) {
+function calcBlessingBonus(skillPowerTable, victim) {
+  if (victim.blessingActivation !== "on") {
+    return 0;
+  }
+
   var int = victim.intBlessing;
   var dex = victim.dexBlessing;
   var skillPower = getSkillPower(victim["skillBlessing"], skillPowerTable);
 
-  return floorMultiplication(
-    (int * 0.3 + 5) * (2 * skillPower + 0.5) + (0.3 * dex) / (skillPower + 2.3),
+  if (!skillPower) {
+    return 0;
+  }
+
+  var blessingBonus = floorMultiplication(
+    ((int * 0.3 + 5) * (2 * skillPower + 0.5) + (0.3 * dex)) / (skillPower + 2.3),
     1
   );
+
+  if (victim.class === "dragon" && victim.blessingOnself === "on") {
+    blessingBonus = floorMultiplication(blessingBonus, 1.1);
+  }
+
+  return blessingBonus;
 }
 
 function getSkillFormula(
@@ -3027,7 +3050,10 @@ function createBattle(characters, battle) {
           hideElement(option);
         }
       }
-      attackTypeSelection.selectedIndex = 0;
+      
+      if (attackTypeSelection.selectedIndex !== 1) {
+        attackTypeSelection.selectedIndex = 0;
+      }
     }
   });
 }
