@@ -210,19 +210,19 @@ function filterUpgrade(
   }
 }
 
-function filterState(stateChoice, polymorphMonster) {
-  if (stateChoice.value === "polymorph") {
+function filterState(selectedState, polymorphMonster) {
+  if (selectedState === "polymorph") {
     showElement(polymorphMonster.parentElement);
   } else {
     hideElement(polymorphMonster.parentElement);
   }
 }
 
-function filterPlayerRank(lowRankCheckbox, playerRankChoice) {
-  if (lowRankCheckbox.checked) {
-    showElement(playerRankChoice.parentElement);
+function filterCheckbox(checkbox, element) {
+  if (checkbox.checked) {
+    showElement(element);
   } else {
-    hideElement(playerRankChoice.parentElement);
+    hideElement(element);
   }
 }
 
@@ -263,52 +263,40 @@ function filterAttackTypeSelection(attacker, attackTypeSelection) {
 }
 
 function filterForm(characters, battle) {
-  characters.characterCreation.addEventListener("change", function (event) {
+  var characterCreation = characters.characterCreation;
+
+  characterCreation.addEventListener("change", function (event) {
     var target = event.target;
     var targetName = target.name;
 
     switch (targetName) {
       case "race":
         var selectedRace = target.value;
-        filterClass(selectedRace, characters.classChoice);
-        filterWeapon(
-          selectedRace,
-          characters.weapon,
-          characters.weaponCategory
-        );
+        var classChoice = characterCreation.class;
+        var weapon = characterCreation.weapon;
+
+        filterClass(selectedRace, classChoice);
+        filterWeapon(selectedRace, weapon, characters.weaponCategory);
 
         var newWeapon = getSelectedWeapon(characters.weaponCategory);
-        handleWeaponDisplay(
-          characters.weaponDisplay,
-          newWeapon,
-          characters.weapon.value
-        );
+        handleWeaponDisplay(characters.weaponDisplay, newWeapon, weapon.value);
         filterUpgrade(
           selectedRace,
-          characters.weaponUpgrade,
-          characters.weapon.value,
+          characterCreation.weaponUpgrade,
+          weapon.value,
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
-        filterSkills(
-          characters.classChoice.value,
-          characters.skillElementsToFilter
-        );
+        filterSkills(classChoice.value, characters.skillElementsToFilter);
 
-        if (
-          characters.characterCreation.name.value ===
-          battle.attackerSelection.value
-        ) {
+        if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
         }
         break;
       case "class":
         filterSkills(target.value, characters.skillElementsToFilter);
 
-        if (
-          characters.characterCreation.name.value ===
-          battle.attackerSelection.value
-        ) {
+        if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
         }
         break;
@@ -316,27 +304,27 @@ function filterForm(characters, battle) {
         handleWeaponDisplay(
           characters.weaponDisplay,
           target,
-          characters.weapon.value
+          characterCreation.weapon.value
         );
         filterUpgrade(
-          characters.race.value,
-          characters.weaponUpgrade,
+          characterCreation.race.value,
+          characterCreation.weaponUpgrade,
           target.value,
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
         break;
       case "state":
-        filterState(target, characters.polymorphMonster);
-        if (
-          characters.characterCreation.name.value ===
-          battle.attackerSelection.value
-        ) {
+        filterState(target.value, characterCreation.polymorphMonster);
+        if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
         }
         break;
       case "lowRank":
-        filterPlayerRank(target, characters.playerRankChoice);
+        filterCheckbox(target, characterCreation.playerRank.parentElement);
+        break;
+      case "blessingActivation":
+        filterCheckbox(target, characters.blessingCreation);
         break;
     }
 
@@ -613,33 +601,36 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
     }
   }
   var selectedRace = characterCreation.race.value;
-  var selectedClass = characterCreation.class.value;
+  var classChoice = characterCreation.class;
+  var weapon = characterCreation.weapon;
 
-  filterClass(selectedRace, characters.classChoice, true);
-  filterWeapon(
-    selectedRace,
-    characters.weapon,
-    characters.weaponCategory,
-    true
-  );
+  filterClass(selectedRace, classChoice, true);
+  filterWeapon(selectedRace, weapon, characters.weaponCategory, true);
 
   var newWeapon = getSelectedWeapon(characters.weaponCategory);
-  handleWeaponDisplay(
-    characters.weaponDisplay,
-    newWeapon,
-    characters.weapon.value
-  );
+
+  handleWeaponDisplay(characters.weaponDisplay, newWeapon, weapon.value);
   filterUpgrade(
     selectedRace,
-    characters.weaponUpgrade,
-    characters.weapon.value,
+    characterCreation.weaponUpgrade,
+    weapon.value,
     characters.randomAttackValue,
     characters.randomMagicAttackValue,
-    formData.upgrade
+    formData.weaponUpgrade
   );
-  filterState(characters.stateChoice, characters.polymorphMonster);
-  filterPlayerRank(characters.lowRankCheckbox, characters.playerRankChoice);
-  filterSkills(selectedClass, characters.skillElementsToFilter);
+  filterState(
+    characterCreation.state.value,
+    characterCreation.polymorphMonster
+  );
+  filterCheckbox(
+    characterCreation.lowRank,
+    characterCreation.playerRank.parentElement
+  );
+  filterCheckbox(
+    characterCreation.blessingActivation,
+    characters.blessingCreation
+  );
+  filterSkills(classChoice.value, characters.skillElementsToFilter);
 }
 
 function handleClickOnCharacter(
@@ -2278,6 +2269,17 @@ function calcPhysicalDamages(
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
+function blessingReduction(skillPowerTable, victim) {
+  var int = victim.intBlessing;
+  var dex = victim.dexBlessing;
+  var skillPower = getSkillPower(victim["skillBlessing"], skillPowerTable);
+
+  return floorMultiplication(
+    (int * 0.3 + 5) * (2 * skillPower + 0.5) + (0.3 * dex) / (skillPower + 2.3),
+    1
+  );
+}
+
 function getSkillFormula(
   skillPowerTable,
   skillId,
@@ -3139,22 +3141,15 @@ function createDamageCalculatorInformation() {
     searchMonster: document.getElementById("search-monster"),
     monsterList: document.getElementById("monster-list"),
     saveButton: document.getElementById("save-button"),
-    classChoice: document.getElementById("class-choice"),
-    stateChoice: document.getElementById("state-choice"),
-    polymorphMonster: document.getElementById("polymorph-monster"),
     weaponCategory: document.getElementById("weapon-category"),
     weaponDisplay: document.getElementById("weapon-display"),
-    weaponUpgrade: document.getElementById("upgrade-choice"),
     randomAttackValue: document.getElementById("random-attack-value"),
     randomMagicAttackValue: document.getElementById(
       "random-magic-attack-value"
     ),
-    lowRankCheckbox: document.getElementById("low-rank"),
-    playerRankChoice: document.getElementById("player-rank"),
     skillContainer: document.getElementById("skill-container"),
+    blessingCreation: document.getElementById("blessing-creation"),
   };
-  characters.race = characters.characterCreation.race;
-  characters.weapon = characters.characterCreation.weapon;
 
   delete characters.newCharacterTemplate.dataset.click;
 
