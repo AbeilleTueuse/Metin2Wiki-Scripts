@@ -1201,7 +1201,7 @@ function calcMainAttackValue(attacker, attackerWeapon) {
   var rawWeaponAttackValue = 0;
 
   if (isPC(attacker)) {
-    var rawWeaponAttackValue = attackerWeapon[3][attacker.upgrade];
+    var rawWeaponAttackValue = attackerWeapon[3][attacker.weaponUpgrade];
 
     if (!rawWeaponAttackValue) {
       rawWeaponAttackValue = 0;
@@ -1240,7 +1240,7 @@ function calcSecondaryAttackValue(attacker, attackerWeapon) {
 
   if (isPC(attacker)) {
     if (isValueInArray("serpent", attackerWeapon[0].toLowerCase())) {
-      var rawAttackValue = attackerWeapon[3][attacker.upgrade];
+      var rawAttackValue = attackerWeapon[3][attacker.weaponUpgrade];
 
       minAttackValue = attacker.minAttackValueRandom - rawAttackValue;
       maxAttackValue = attacker.maxAttackValueRandom - rawAttackValue;
@@ -1308,7 +1308,7 @@ function calcMagicAttackValue(attacker, attackerWeapon) {
 
     maxMagicAttackValue = Math.max(minMagicAttackValue, maxMagicAttackValue);
   } else {
-    var rawWeaponAttackValue = attackerWeapon[3][attacker.upgrade];
+    var rawWeaponAttackValue = attackerWeapon[3][attacker.weaponUpgrade];
 
     if (!rawWeaponAttackValue) {
       rawWeaponAttackValue = 0;
