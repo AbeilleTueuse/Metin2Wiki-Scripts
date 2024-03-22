@@ -83,21 +83,24 @@ function replaceElement(
   }
 }
 
-function addCollapsible(toggleButton) {
-  toggleButton.setAttribute("tabindex", 0);
-  var collapsibleContent = toggleButton.nextElementSibling.nextElementSibling;
+function addCollapsible(collapsibleContainer) {
+  var toggleButton = collapsibleContainer.querySelector(".mw-collapsible-toggle");
+  var collapsibleContent = collapsibleContainer.querySelector(".mw-collapsible-content");
+  var collapsibleContentChild = collapsibleContent.firstElementChild;
   var expandedClass = "mw-collapsible-toggle-expanded";
   var isCollapsed = false;
+  
+  toggleButton.setAttribute("tabindex", 0);
+  
   toggleButton.addEventListener("click", function (event) {
     if (isCollapsed) {
       this.classList.remove(expandedClass);
-      collapsibleContent.style.maxHeight = null;
-      collapsibleContent.style.overflow = "hidden";
+      collapsibleContentChild.style.overflow = "hidden";
+      collapsibleContent.style.gridTemplateRows = "0fr";
     } else {
+      collapsibleContentChild.classList.remove("tabber-noactive");
       this.classList.add(expandedClass);
-      collapsibleContent.classList.remove("tabber-noactive");
-      collapsibleContent.style.maxHeight =
-        collapsibleContent.scrollHeight + 100 + "px";
+      collapsibleContent.style.gridTemplateRows = "1fr";
     }
     isCollapsed = !isCollapsed;
   });
@@ -108,9 +111,9 @@ function addCollapsible(toggleButton) {
   });
   collapsibleContent.addEventListener("transitionend", function (event) {
     if (isCollapsed) {
-      this.style.overflow = "visible";
+      collapsibleContentChild.style.overflow = "visible";
     } else {
-      this.classList.add("tabber-noactive");
+      collapsibleContentChild.classList.add("tabber-noactive");
     }
   });
 }
@@ -214,11 +217,11 @@ function addCollapsible(toggleButton) {
     elementsToReplace = document.querySelector("div[data-element]");
   }
 
-  var toggleButtons = document.querySelectorAll(
-    ".improved-collapsible.custom-js > .mw-collapsible-toggle"
+  var collapsibleContainers = document.querySelectorAll(
+    ".improved-collapsible.custom-js"
   );
 
-  for (var toggleButton of toggleButtons) {
-    addCollapsible(toggleButton);
+  for (var collapsibleContainer of collapsibleContainers) {
+    addCollapsible(collapsibleContainer);
   }
 })();
