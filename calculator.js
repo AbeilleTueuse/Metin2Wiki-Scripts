@@ -2292,7 +2292,7 @@ function calcBlessingBonus(skillPowerTable, victim) {
   }
 
   var blessingBonus = floorMultiplication(
-    ((int * 0.3 + 5) * (2 * skillPower + 0.5) + (0.3 * dex)) / (skillPower + 2.3),
+    ((int * 0.3 + 5) * (2 * skillPower + 0.5) + 0.3 * dex) / (skillPower + 2.3),
     1
   );
 
@@ -2421,6 +2421,26 @@ function getSkillFormula(
     }
   } else if (attackerClass === "blade_fight") {
     switch (skillId) {
+      // Embuscade
+      case 1:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk + (1.2 * atk + 600 + 4 * dex + 4 * str) * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [1, 50];
+        break;
+      // Attaque rapide
+      case 2:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk + (1.6 * atk + 250 + 7 * dex + 7 * str) * skillPower,
+            1
+          );
+        };
+        skillInfo.weaponBonus = [1, 35];
+        break;
       // Dague filante
       case 3:
         skillFormula = function (atk) {
@@ -2467,6 +2487,15 @@ function getSkillFormula(
         skillFormula = function (atk) {
           return floorMultiplication(
             atk + (1.7 * atk + 5 * dex + str) * skillPower,
+            1
+          );
+        };
+        break;
+      // Flèche de feu
+      case 3:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            1.5 * atk + (2.6 * atk + 0.9 * int + 200) * skillPower,
             1
           );
         };
@@ -3050,7 +3079,7 @@ function createBattle(characters, battle) {
           hideElement(option);
         }
       }
-      
+
       if (attackTypeSelection.selectedIndex !== 1) {
         attackTypeSelection.selectedIndex = 0;
       }
