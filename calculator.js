@@ -1555,13 +1555,15 @@ function getRankBonus(attacker) {
     case "cruel":
       return 5;
   }
+
+  return 0;
 }
 
 function skillChanceReduction(value) {
   if (value <= 9) {
     return Math.floor(value / 2);
   }
-  return 5 + Math.floor((value - 10) / 4);
+  return 5 + Math.floor((value - 10) / 4)
 }
 
 function magicResistanceToCoeff(magicResistance) {
@@ -1897,6 +1899,7 @@ function createSkillBattleValues(
   var monsterBonus = 0;
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var damageMultiplier = 1;
+  var useDamages = 1;
   var defense = victim.defense;
   var magicResistance = 0;
   var weaponDefense = 0;
@@ -1916,12 +1919,14 @@ function createSkillBattleValues(
     attackValuePercent = attacker.attackValuePercent;
     attackMeleeMagic = attacker.attackMeleeMagic;
 
-    var weaponType;
+    var weaponType = attackerWeapon[1];
     
     if (attacker.class === "archery") {
-      weaponType = 2;
-    } else {
-      weaponType = attackerWeapon[1];
+      if (weaponType !== 2) {
+        useDamages = 0;
+        weaponType = 2;
+      }
+      defense = 0;
     }
 
     var weaponDefenseName = mapping.defenseWeapon[weaponType];
@@ -1929,10 +1934,6 @@ function createSkillBattleValues(
 
     if (victim.hasOwnProperty(weaponDefenseName)) {
       weaponDefense = victim[weaponDefenseName];
-    }
-
-    if (attacker.class === "archery") {
-      defense = 0;
     }
 
     if (isPC(victim)) {
@@ -2089,6 +2090,7 @@ function createSkillBattleValues(
     stoneBonusCoeff: 1 + stoneBonus / 100,
     elementBonusCoeff: elementBonus,
     damageMultiplier: damageMultiplier,
+    useDamages: useDamages,
     defense: defense,
     piercingHitDefense: victim.defense,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
@@ -2883,6 +2885,8 @@ function calcPhysicalSkillDamages(
 
       if (damagesWithPrimaryBonuses <= 2) {
         for (var damages = 1; damages <= 5; damages++) {
+          damages *= battleValues.useDamages;
+
           var damagesWithFormula = skillFormula(damages);
 
           damagesWithFormula = floorMultiplication(
@@ -2905,6 +2909,8 @@ function calcPhysicalSkillDamages(
           sumDamages += (finalDamages * weight * damagesType.weight) / 5;
         }
       } else {
+        damagesWithPrimaryBonuses *= battleValues.useDamages;
+        
         var damagesWithFormula = skillFormula(damagesWithPrimaryBonuses);
 
         damagesWithFormula = floorMultiplication(
