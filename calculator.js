@@ -1563,7 +1563,7 @@ function skillChanceReduction(value) {
   if (value <= 9) {
     return Math.floor(value / 2);
   }
-  return 5 + Math.floor((value - 10) / 4)
+  return 5 + Math.floor((value - 10) / 4);
 }
 
 function magicResistanceToCoeff(magicResistance) {
@@ -1920,7 +1920,7 @@ function createSkillBattleValues(
     attackMeleeMagic = attacker.attackMeleeMagic;
 
     var weaponType = attackerWeapon[1];
-    
+
     if (attacker.class === "archery") {
       if (weaponType !== 2) {
         useDamages = 0;
@@ -2505,6 +2505,15 @@ function getSkillFormula(
           );
         };
         break;
+      // Étoiles brillantes
+      case 9:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            atk + (1.7 * atk + 500.5 + 6 * dex + 5 * lv) * skillPower,
+            1
+          );
+        };
+        break;
     }
   } else if (attackerClass === "archery") {
     switch (skillId) {
@@ -2552,11 +2561,22 @@ function getSkillFormula(
       case 6:
         skillFormula = function (atk) {
           return floorMultiplication(
-            (atk + (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) * 1.2,
+            (atk +
+              (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
+              1.2,
             1
           );
         };
         improvedByBonus = true;
+        break;
+      // Tir tempête
+      case 9:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            1.9 * atk + (2.6 * atk + 500.5) * skillPower,
+            1
+          );
+        };
         break;
     }
   } else if (attackerClass === "weaponary") {
@@ -2821,7 +2841,7 @@ function calcPhysicalSkillDamages(
     attackerWeapon,
     victim,
     mapping,
-    constants.marriageTable,
+    constants.marriageTable
   );
 
   var sumDamages = 0;
@@ -2910,7 +2930,7 @@ function calcPhysicalSkillDamages(
         }
       } else {
         damagesWithPrimaryBonuses *= battleValues.useDamages;
-        
+
         var damagesWithFormula = skillFormula(damagesWithPrimaryBonuses);
 
         damagesWithFormula = floorMultiplication(
