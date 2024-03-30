@@ -2162,6 +2162,10 @@ function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
     skillBonusByBonus = skillInfo.skillBonusByBonus;
   }
 
+  if (skillInfo.removeWeaponReduction) {
+    battleValues.weaponDefenseCoeff = 1;
+  }
+
   battleValues.weaponBonusCoeff = 1 + weaponBonus / 100;
   battleValues.skillWardCoeff = 1 - skillWard / 100;
   battleValues.skillBonusCoeff = 1 + skillBonus / 100;
@@ -2400,8 +2404,8 @@ function getSkillFormula(
             1
           );
         };
-        improvedBySkillBonus = true;
         improvedByBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Attaque de la paume
       case 2:
@@ -2464,6 +2468,7 @@ function getSkillFormula(
         };
         skillInfo.weaponBonus = [1, 50];
         improvedByBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Attaque rapide
       case 2:
@@ -2546,6 +2551,17 @@ function getSkillFormula(
           );
         };
         improvedByBonus = true;
+        improvedBySkillBonus = true;
+        break;
+      // Foulée de plume
+      case 4:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            (3 * dex + 200 + 2 * str + 2 * int) * skillPower,
+            1
+          );
+        };
+        skillInfo.removeWeaponReduction = true;
         break;
       // Flèche empoisonnée
       case 5:
@@ -2592,8 +2608,8 @@ function getSkillFormula(
             1
           );
         };
-        improvedBySkillBonus = true;
         improvedByBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Tourbillon du dragon
       case 2:
@@ -2623,6 +2639,7 @@ function getSkillFormula(
           );
         };
         improvedByBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Attaque de flammes
       // case 2:
@@ -2696,8 +2713,8 @@ function getSkillFormula(
           );
         };
         skillInfo.weaponBonus = [4, 10];
-        improvedBySkillBonus = true;
         improvedByBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Rugissement du dragon
       case 3:
@@ -2743,8 +2760,8 @@ function getSkillFormula(
           );
         };
         skillInfo.weaponBonus = [6, 10];
-        improvedBySkillBonus = true;
         improvedByBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Griffe de foudre
       case 3:
@@ -2781,8 +2798,8 @@ function getSkillFormula(
           );
         };
         skillInfo.weaponBonus = [5, 35];
-        improvedBySkillBonus = true;
         improvedByBonus = true;
+        improvedBySkillBonus = true;
         break;
       // Bond de loup
       case 3:
@@ -2898,6 +2915,7 @@ function calcPhysicalSkillDamages(
       var rawDamages =
         mainAttackValue +
         floorMultiplication(attackFactor, secondaryAttackValue);
+
       var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         rawDamages,
         battleValues
