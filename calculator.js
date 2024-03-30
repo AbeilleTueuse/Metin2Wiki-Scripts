@@ -3361,7 +3361,6 @@ function createDamageCalculatorInformation() {
     randomMagicAttackValue: document.getElementById(
       "random-magic-attack-value"
     ),
-    skillContainer: document.getElementById("skill-container"),
     blessingCreation: document.getElementById("blessing-creation"),
   };
 
