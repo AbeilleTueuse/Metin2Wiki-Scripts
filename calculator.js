@@ -561,7 +561,10 @@ function deleteMonster(characters, monsterName, element, battle) {
     characters.savedMonsters.indexOf(monsterName),
     1
   );
-  element.remove();
+
+  if (element) {
+    element.remove();
+  }
 
   updateSavedMonsters(characters.savedMonsters);
   removeBattleChoice(battle, monsterName);
@@ -1045,23 +1048,24 @@ function monsterManagement(characters, battle) {
   addMonsterNames(monsterList, characters.monsterListTemplate);
   filterNames(searchMonster, monsterList);
 
-  characters.savedMonsters.forEach(function (monsterName) {
-    handleNewMonster(
-      characters,
-      monsterTemplate,
-      monstersContainer,
-      battle,
-      monsterName,
-      monsterList
-    );
+  characters.savedMonsters.slice().forEach(function (monsterName) {
     var inputMonster = monsterList.querySelector(
       "input[name='" + monsterName + "']"
     );
 
     if (inputMonster) {
+      handleNewMonster(
+        characters,
+        monsterTemplate,
+        monstersContainer,
+        battle,
+        monsterName,
+        monsterList
+      );
       inputMonster.checked = true;
+      
     } else {
-      deleteMonster(characters, monsterName, newMonsterTemplate, battle);
+      deleteMonster(characters, monsterName, null, battle);
     }
   });
 
