@@ -1644,7 +1644,7 @@ function createPhysicalBattleValues(
 
       typeBonus = Math.max(
         0,
-        Math.max(1, attacker.humanBonus) - victim.humanResistance
+        Math.max(1, attacker.humanBonus - victim.humanResistance)
       );
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
@@ -1942,7 +1942,7 @@ function createSkillBattleValues(
     if (isPC(victim)) {
       typeBonus = Math.max(
         0,
-        Math.max(1, attacker.humanBonus) - victim.humanResistance
+        Math.max(1, attacker.humanBonus - victim.humanResistance)
       );
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
@@ -3490,7 +3490,36 @@ function loading() {
   loadStyle(cssSource);
 
   function main() {
-    monsterData = {'Loup de Tour infernale': [1, 0, 0, 120, -1, 120, 92, 68, 30, 193, 308, 100, 20, 16, 45, 45, 45, 45, 45, 45, 65, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 3.0], 'Débauché Tour infernale': [2, 0, 0, 120, 7, 130, 119, 130, 30, 221, 296, 110, 20, 20, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Berserker Tour infernale': [3, 0, 0, 121, -1, 130, 115, 128, 30, 221, 308, 110, 20, 20, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Sorcier Tour infernale': [4, 0, 2, 125, -1, 130, 67, 133, 31, 236, 312, 110, 30, 40, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Boucher Tour infernale': [4, 0, 0, 130, 7, 136, 121, 139, 33, 354, 410, 100, 20, 20, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Nigromant Tour infernale': [5, 0, 0, 135, -1, 133, 66, 143, 33, 346, 411, 456, 35, 20, 60, 60, 60, 60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 4.0], 'G. maître Tour infernale': [6, 0, 0, 135, -1, 133, 66, 143, 33, 346, 414, 456, 35, 20, 60, 60, 60, 60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 55, 0, 0, 0, 0, 0, 0, 0, 4.0]}
+    monsterData = {
+      "Loup de Tour infernale": [
+        1, 0, 0, 120, -1, 120, 92, 68, 30, 193, 308, 100, 20, 16, 45, 45, 45,
+        45, 45, 45, 65, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 3.0,
+      ],
+      "Débauché Tour infernale": [
+        2, 0, 0, 120, 7, 130, 119, 130, 30, 221, 296, 110, 20, 20, 45, 45, 45,
+        45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
+      ],
+      "Berserker Tour infernale": [
+        3, 0, 0, 121, -1, 130, 115, 128, 30, 221, 308, 110, 20, 20, 45, 45, 45,
+        45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
+      ],
+      "Sorcier Tour infernale": [
+        4, 0, 2, 125, -1, 130, 67, 133, 31, 236, 312, 110, 30, 40, 45, 45, 45,
+        45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
+      ],
+      "Boucher Tour infernale": [
+        4, 0, 0, 130, 7, 136, 121, 139, 33, 354, 410, 100, 20, 20, 45, 45, 45,
+        45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
+      ],
+      "Nigromant Tour infernale": [
+        5, 0, 0, 135, -1, 133, 66, 143, 33, 346, 411, 456, 35, 20, 60, 60, 60,
+        60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 4.0,
+      ],
+      "G. maître Tour infernale": [
+        6, 0, 0, 135, -1, 133, 66, 143, 33, 346, 414, 456, 35, 20, 60, 60, 60,
+        60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 55, 0, 0, 0, 0, 0, 0, 0, 4.0,
+      ],
+    };
     var [characters, battle] = createDamageCalculatorInformation();
 
     characterManagement(characters, battle);
