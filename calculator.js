@@ -1063,7 +1063,6 @@ function monsterManagement(characters, battle) {
         monsterList
       );
       inputMonster.checked = true;
-      
     } else {
       deleteMonster(characters, monsterName, null, battle);
     }
@@ -3105,7 +3104,46 @@ function calcMagicSkillDamages(
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
-function createMonster(name) {
+function changeMonsterValues(monster, instance, attacker) {
+  switch (instance) {
+    case "SungMahiTower":
+      var sungMahiFloor = 1;
+      var sungMahiStep = 1;
+      var rawDefense = 120;
+
+      if (isPC(attacker)) {
+        sungMahiFloor = attacker.sungMahiFloor;
+        sungMahiStep = attacker.sungMahiStep;
+      }
+
+      if (monster.rank === 5) {
+        monster.level = 121;
+        monster.dex = 75;
+        rawDefense += 1;
+      } else if (monster.rank === 6) {
+        monster.level = 123;
+        monster.dex = 75;
+        rawDefense += 1;
+      } else {
+        monster.level = 120;
+        monster.dex = 68;
+      }
+      monster.vit = 100;
+      monster.rawDefense = rawDefense + (sungMahiStep - 1) * 6;
+      monster.fistDefense = 0;
+      monster.swordDefense = 0;
+      monster.twoHandedSwordDefense = 0;
+      monster.daggerDefense = 0;
+      monster.bellDefense = 0;
+      monster.fanDefense = 0;
+      monster.arrowDefense = 0;
+      monster.clawDefense = 0;
+      monster.magicResistance = 0;
+      monster.fireResistance = -20;
+  }
+}
+
+function createMonster(name, attacker) {
   var data = monsterData[name];
 
   var monster = {
@@ -3121,7 +3159,7 @@ function createMonster(name) {
     int: data[8],
     minAttackValue: data[9],
     maxAttackValue: data[10],
-    defense: data[11] + data[3] + data[7],
+    rawDefense: data[11],
     criticalHit: data[12],
     piercingHit: data[13],
     fistDefense: data[14],
@@ -3147,6 +3185,14 @@ function createMonster(name) {
     earthResistance: data[34],
     damageMultiplier: data[35],
   };
+
+  monster.instance = 0;
+
+  if (attacker && monster.instance === 0) {
+    changeMonsterValues(monster, "SungMahiTower", attacker);
+  }
+
+  monster.defense = monster.rawDefense + monster.level + monster.vit;
 
   return monster;
 }
@@ -3185,7 +3231,7 @@ function createBattle(characters, battle) {
     if (isPseudoSaved(victimName)) {
       var victim = copyObject(characters.savedCharacters[victimName]);
     } else {
-      var victim = createMonster(victimName);
+      var victim = createMonster(victimName, attacker);
     }
 
     var meanDamages, minMaxDamages;
@@ -3444,6 +3490,7 @@ function loading() {
   loadStyle(cssSource);
 
   function main() {
+    monsterData = {'Loup de Tour infernale': [1, 0, 0, 120, -1, 120, 92, 68, 30, 193, 308, 100, 20, 16, 45, 45, 45, 45, 45, 45, 65, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 3.0], 'Débauché Tour infernale': [2, 0, 0, 120, 7, 130, 119, 130, 30, 221, 296, 110, 20, 20, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Berserker Tour infernale': [3, 0, 0, 121, -1, 130, 115, 128, 30, 221, 308, 110, 20, 20, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Sorcier Tour infernale': [4, 0, 2, 125, -1, 130, 67, 133, 31, 236, 312, 110, 30, 40, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Boucher Tour infernale': [4, 0, 0, 130, 7, 136, 121, 139, 33, 354, 410, 100, 20, 20, 45, 45, 45, 45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0], 'Nigromant Tour infernale': [5, 0, 0, 135, -1, 133, 66, 143, 33, 346, 411, 456, 35, 20, 60, 60, 60, 60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 4.0], 'G. maître Tour infernale': [6, 0, 0, 135, -1, 133, 66, 143, 33, 346, 414, 456, 35, 20, 60, 60, 60, 60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 55, 0, 0, 0, 0, 0, 0, 0, 4.0]}
     var [characters, battle] = createDamageCalculatorInformation();
 
     characterManagement(characters, battle);
