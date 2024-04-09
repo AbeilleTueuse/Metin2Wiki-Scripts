@@ -1426,7 +1426,7 @@ function calcDamageWithSecondaryBonuses(
   );
 
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
-  damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
+  damages = Math.max(0, damages + battleValues.defensePercent);
   damages += Math.min(
     300,
     floorMultiplication(damages, battleValues.damageBonusCoeff)
@@ -1467,7 +1467,7 @@ function calcSkillDamageWithSecondaryBonuses(
   );
 
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
-  damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
+  damages = Math.max(0, damages + battleValues.defensePercent);
   damages += Math.min(
     300,
     floorMultiplication(damages, battleValues.damageBonusCoeff)
@@ -1642,10 +1642,7 @@ function createPhysicalBattleValues(
         victim.meleeArrowBlock -
         (missPercentage * victim.meleeArrowBlock) / 100;
 
-      typeBonus = Math.max(
-        0,
-        Math.max(1, attacker.humanBonus - victim.humanResistance)
-      );
+      typeBonus = Math.max(1, attacker.humanBonus - victim.humanResistance);
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
@@ -1827,7 +1824,7 @@ function createPhysicalBattleValues(
       1 - Math.min(99, averageDamageResistance) / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
-    defensePercent: defensePercent,
+    defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: damageBonus / 100,
     empireMalusCoeff: 1 - empireMalus / 100,
   };
@@ -1940,10 +1937,7 @@ function createSkillBattleValues(
     }
 
     if (isPC(victim)) {
-      typeBonus = Math.max(
-        0,
-        Math.max(1, attacker.humanBonus - victim.humanResistance)
-      );
+      typeBonus = Math.max(1, attacker.humanBonus - victim.humanResistance);
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
@@ -2101,7 +2095,7 @@ function createSkillBattleValues(
     skillDamageCoeff: 1 + skillDamage / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
-    defensePercent: defensePercent,
+    defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: damageBonus / 100,
     empireMalusCoeff: 1 - empireMalus / 100,
   };
