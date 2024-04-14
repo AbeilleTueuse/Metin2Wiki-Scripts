@@ -29,6 +29,10 @@ function copyObject(object) {
   return copy;
 }
 
+function compareNumbers(a, b) {
+  return a - b;
+}
+
 function floorMultiplication(firstFactor, secondFactor) {
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
@@ -1562,6 +1566,52 @@ function getRankBonus(attacker) {
   return 0;
 }
 
+function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
+  var elementMalus = 0;
+  var elementBonusDifferences = [];
+
+  for (var index = 0; index < elementBonus.length; index++) {
+    if (!attacker[mapping.elementBonus[index]]) {
+      continue;
+    }
+    var elementDifference =
+      attacker[mapping.elementBonus[index]] -
+      victim[mapping.elementResistance[index]];
+
+    if (!elementDifference) {
+      continue;
+    }
+
+    if (elementDifference < 0) {
+      elementMalus -= elementDifference;
+    } else {
+      elementBonusDifferences.push(elementDifference);
+    }
+  }
+
+  if (elementBonusDifferences.length) {
+    elementBonusDifferences.sort(compareNumbers);
+
+    for (
+      var index = 0;
+      index < elementBonusDifferences.length - 1;
+      index++
+    ) {
+      var currentDifferent = elementBonusDifferences[index];
+
+      if (elementMalus >= currentDifferent) {
+        elementMalus -= currentDifferent;
+      } else {
+        elementBonus[index] = (currentDifferent - elementMalus) / 1000;
+        elementMalus = 0;
+      }
+    }
+    elementBonus[index] = elementBonusDifferences[index] / 1000;
+  }
+
+  return elementBonus;
+}
+
 function skillChanceReduction(value) {
   if (value <= 9) {
     return Math.floor(value / 2);
@@ -1646,14 +1696,7 @@ function createPhysicalBattleValues(
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
-      for (var index = 0; index <= 5; index++) {
-        elementBonus[index] =
-          Math.max(
-            0,
-            attacker[mapping.elementBonus[index]] -
-              victim[mapping.elementResistance[index]]
-          ) / 1000;
-      }
+      elementBonus = calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
@@ -1686,7 +1729,7 @@ function createPhysicalBattleValues(
         );
       }
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -1742,7 +1785,7 @@ function createPhysicalBattleValues(
 
       monsterResistance = victim.monsterResistance;
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -1941,14 +1984,7 @@ function createSkillBattleValues(
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
-      for (var index = 0; index <= 5; index++) {
-        elementBonus[index] =
-          Math.max(
-            0,
-            attacker[mapping.elementBonus[index]] -
-              victim[mapping.elementResistance[index]]
-          ) / 1000;
-      }
+      elementBonus = calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
@@ -1980,7 +2016,7 @@ function createSkillBattleValues(
         );
       }
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -2027,7 +2063,7 @@ function createSkillBattleValues(
       }
       monsterResistance = victim.monsterResistance;
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -3180,11 +3216,11 @@ function createMonster(name, attacker) {
     damageMultiplier: data[35],
   };
 
-  monster.instance = 0;
+  // monster.instance = 0;
 
-  if (attacker && monster.instance === 0) {
-    changeMonsterValues(monster, "SungMahiTower", attacker);
-  }
+  // if (attacker && monster.instance === 0) {
+  //   changeMonsterValues(monster, "SungMahiTower", attacker);
+  // }
 
   monster.defense = monster.rawDefense + monster.level + monster.vit;
 
@@ -3484,36 +3520,6 @@ function loading() {
   loadStyle(cssSource);
 
   function main() {
-    monsterData = {
-      "Loup de Tour infernale": [
-        1, 0, 0, 120, -1, 120, 92, 68, 30, 193, 308, 100, 20, 16, 45, 45, 45,
-        45, 45, 45, 65, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 3.0,
-      ],
-      "Débauché Tour infernale": [
-        2, 0, 0, 120, 7, 130, 119, 130, 30, 221, 296, 110, 20, 20, 45, 45, 45,
-        45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
-      ],
-      "Berserker Tour infernale": [
-        3, 0, 0, 121, -1, 130, 115, 128, 30, 221, 308, 110, 20, 20, 45, 45, 45,
-        45, 45, 45, 45, 45, -30, 0, 15, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
-      ],
-      "Sorcier Tour infernale": [
-        4, 0, 2, 125, -1, 130, 67, 133, 31, 236, 312, 110, 30, 40, 45, 45, 45,
-        45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
-      ],
-      "Boucher Tour infernale": [
-        4, 0, 0, 130, 7, 136, 121, 139, 33, 354, 410, 100, 20, 20, 45, 45, 45,
-        45, 45, 45, 45, 45, -30, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4.0,
-      ],
-      "Nigromant Tour infernale": [
-        5, 0, 0, 135, -1, 133, 66, 143, 33, 346, 411, 456, 35, 20, 60, 60, 60,
-        60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 4.0,
-      ],
-      "G. maître Tour infernale": [
-        6, 0, 0, 135, -1, 133, 66, 143, 33, 346, 414, 456, 35, 20, 60, 60, 60,
-        60, 60, 60, 60, 60, -30, 0, 0, 0, 0, 55, 0, 0, 0, 0, 0, 0, 0, 4.0,
-      ],
-    };
     var [characters, battle] = createDamageCalculatorInformation();
 
     characterManagement(characters, battle);
