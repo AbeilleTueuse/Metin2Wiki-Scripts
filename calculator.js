@@ -29,6 +29,10 @@ function copyObject(object) {
   return copy;
 }
 
+function compareNumbers(a, b) {
+  return a - b;
+}
+
 function floorMultiplication(firstFactor, secondFactor) {
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
@@ -561,7 +565,10 @@ function deleteMonster(characters, monsterName, element, battle) {
     characters.savedMonsters.indexOf(monsterName),
     1
   );
-  element.remove();
+
+  if (element) {
+    element.remove();
+  }
 
   updateSavedMonsters(characters.savedMonsters);
   removeBattleChoice(battle, monsterName);
@@ -1045,23 +1052,23 @@ function monsterManagement(characters, battle) {
   addMonsterNames(monsterList, characters.monsterListTemplate);
   filterNames(searchMonster, monsterList);
 
-  characters.savedMonsters.forEach(function (monsterName) {
-    handleNewMonster(
-      characters,
-      monsterTemplate,
-      monstersContainer,
-      battle,
-      monsterName,
-      monsterList
-    );
+  characters.savedMonsters.slice().forEach(function (monsterName) {
     var inputMonster = monsterList.querySelector(
       "input[name='" + monsterName + "']"
     );
 
     if (inputMonster) {
+      handleNewMonster(
+        characters,
+        monsterTemplate,
+        monstersContainer,
+        battle,
+        monsterName,
+        monsterList
+      );
       inputMonster.checked = true;
     } else {
-      deleteMonster(characters, monsterName, newMonsterTemplate, battle);
+      deleteMonster(characters, monsterName, null, battle);
     }
   });
 
@@ -1423,7 +1430,7 @@ function calcDamageWithSecondaryBonuses(
   );
 
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
-  damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
+  damages = Math.max(0, damages + battleValues.defensePercent);
   damages += Math.min(
     300,
     floorMultiplication(damages, battleValues.damageBonusCoeff)
@@ -1464,7 +1471,7 @@ function calcSkillDamageWithSecondaryBonuses(
   );
 
   damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
-  damages = Math.max(0, damages + Math.floor(battleValues.defensePercent));
+  damages = Math.max(0, damages + battleValues.defensePercent);
   damages += Math.min(
     300,
     floorMultiplication(damages, battleValues.damageBonusCoeff)
@@ -1559,6 +1566,52 @@ function getRankBonus(attacker) {
   return 0;
 }
 
+function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
+  var elementMalus = 0;
+  var elementBonusDifferences = [];
+
+  for (var index = 0; index < elementBonus.length; index++) {
+    if (!attacker[mapping.elementBonus[index]]) {
+      continue;
+    }
+    var elementDifference =
+      attacker[mapping.elementBonus[index]] -
+      victim[mapping.elementResistance[index]];
+
+    if (!elementDifference) {
+      continue;
+    }
+
+    if (elementDifference < 0) {
+      elementMalus -= elementDifference;
+    } else {
+      elementBonusDifferences.push(elementDifference);
+    }
+  }
+
+  if (elementBonusDifferences.length) {
+    elementBonusDifferences.sort(compareNumbers);
+
+    for (
+      var index = 0;
+      index < elementBonusDifferences.length - 1;
+      index++
+    ) {
+      var currentDifferent = elementBonusDifferences[index];
+
+      if (elementMalus >= currentDifferent) {
+        elementMalus -= currentDifferent;
+      } else {
+        elementBonus[index] = (currentDifferent - elementMalus) / 1000;
+        elementMalus = 0;
+      }
+    }
+    elementBonus[index] = elementBonusDifferences[index] / 1000;
+  }
+
+  return elementBonus;
+}
+
 function skillChanceReduction(value) {
   if (value <= 9) {
     return Math.floor(value / 2);
@@ -1639,21 +1692,11 @@ function createPhysicalBattleValues(
         victim.meleeArrowBlock -
         (missPercentage * victim.meleeArrowBlock) / 100;
 
-      typeBonus = Math.max(
-        0,
-        Math.max(1, attacker.humanBonus) - victim.humanResistance
-      );
+      typeBonus = Math.max(1, attacker.humanBonus - victim.humanResistance);
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
-      for (var index = 0; index <= 5; index++) {
-        elementBonus[index] =
-          Math.max(
-            0,
-            attacker[mapping.elementBonus[index]] -
-              victim[mapping.elementResistance[index]]
-          ) / 1000;
-      }
+      elementBonus = calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
@@ -1686,7 +1729,7 @@ function createPhysicalBattleValues(
         );
       }
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -1742,7 +1785,7 @@ function createPhysicalBattleValues(
 
       monsterResistance = victim.monsterResistance;
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -1824,7 +1867,7 @@ function createPhysicalBattleValues(
       1 - Math.min(99, averageDamageResistance) / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
-    defensePercent: defensePercent,
+    defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: damageBonus / 100,
     empireMalusCoeff: 1 - empireMalus / 100,
   };
@@ -1937,21 +1980,11 @@ function createSkillBattleValues(
     }
 
     if (isPC(victim)) {
-      typeBonus = Math.max(
-        0,
-        Math.max(1, attacker.humanBonus) - victim.humanResistance
-      );
+      typeBonus = Math.max(1, attacker.humanBonus - victim.humanResistance);
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
-      for (var index = 0; index <= 5; index++) {
-        elementBonus[index] =
-          Math.max(
-            0,
-            attacker[mapping.elementBonus[index]] -
-              victim[mapping.elementResistance[index]]
-          ) / 1000;
-      }
+      elementBonus = calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
@@ -1983,7 +2016,7 @@ function createSkillBattleValues(
         );
       }
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -2030,7 +2063,7 @@ function createSkillBattleValues(
       }
       monsterResistance = victim.monsterResistance;
 
-      for (var index = 0; index <= 5; index++) {
+      for (var index = 0; index < elementBonus.length; index++) {
         var elementBonusName = mapping.elementBonus[index];
         var elementResistanceName = mapping.elementResistance[index];
 
@@ -2098,7 +2131,7 @@ function createSkillBattleValues(
     skillDamageCoeff: 1 + skillDamage / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
-    defensePercent: defensePercent,
+    defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: damageBonus / 100,
     empireMalusCoeff: 1 - empireMalus / 100,
   };
@@ -3101,7 +3134,46 @@ function calcMagicSkillDamages(
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
-function createMonster(name) {
+function changeMonsterValues(monster, instance, attacker) {
+  switch (instance) {
+    case "SungMahiTower":
+      var sungMahiFloor = 1;
+      var sungMahiStep = 1;
+      var rawDefense = 120;
+
+      if (isPC(attacker)) {
+        sungMahiFloor = attacker.sungMahiFloor;
+        sungMahiStep = attacker.sungMahiStep;
+      }
+
+      if (monster.rank === 5) {
+        monster.level = 121;
+        monster.dex = 75;
+        rawDefense += 1;
+      } else if (monster.rank === 6) {
+        monster.level = 123;
+        monster.dex = 75;
+        rawDefense += 1;
+      } else {
+        monster.level = 120;
+        monster.dex = 68;
+      }
+      monster.vit = 100;
+      monster.rawDefense = rawDefense + (sungMahiStep - 1) * 6;
+      monster.fistDefense = 0;
+      monster.swordDefense = 0;
+      monster.twoHandedSwordDefense = 0;
+      monster.daggerDefense = 0;
+      monster.bellDefense = 0;
+      monster.fanDefense = 0;
+      monster.arrowDefense = 0;
+      monster.clawDefense = 0;
+      monster.magicResistance = 0;
+      monster.fireResistance = -20;
+  }
+}
+
+function createMonster(name, attacker) {
   var data = monsterData[name];
 
   var monster = {
@@ -3117,7 +3189,7 @@ function createMonster(name) {
     int: data[8],
     minAttackValue: data[9],
     maxAttackValue: data[10],
-    defense: data[11] + data[3] + data[7],
+    rawDefense: data[11],
     criticalHit: data[12],
     piercingHit: data[13],
     fistDefense: data[14],
@@ -3143,6 +3215,14 @@ function createMonster(name) {
     earthResistance: data[34],
     damageMultiplier: data[35],
   };
+
+  // monster.instance = 0;
+
+  // if (attacker && monster.instance === 0) {
+  //   changeMonsterValues(monster, "SungMahiTower", attacker);
+  // }
+
+  monster.defense = monster.rawDefense + monster.level + monster.vit;
 
   return monster;
 }
@@ -3181,7 +3261,7 @@ function createBattle(characters, battle) {
     if (isPseudoSaved(victimName)) {
       var victim = copyObject(characters.savedCharacters[victimName]);
     } else {
-      var victim = createMonster(victimName);
+      var victim = createMonster(victimName, attacker);
     }
 
     var meanDamages, minMaxDamages;
