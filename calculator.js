@@ -970,7 +970,12 @@ function handleNewMonster(
   var spanInput = newMonsterTemplate.querySelector("span.input");
   var deleteSvg = newMonsterTemplate.querySelector("svg");
 
-  spanInput.textContent = monsterName;
+  var link = document.createElement("a");
+  link.href = mw.util.getUrl(monsterName);
+  link.title = monsterName;
+  link.textContent = monsterName;
+
+  spanInput.appendChild(link);
   monstersContainer.appendChild(newMonsterTemplate);
 
   newMonsterTemplate.setAttribute("tabindex", "0");
