@@ -1637,7 +1637,7 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
       Math.max(minElementMalus, minElementMalus - elementDifference)
     );
   }
-  console.log(elementBonus)
+  console.log(elementBonus);
 }
 
 function skillChanceReduction(value) {
@@ -3542,7 +3542,7 @@ function loading() {
 
 (function () {
   var javascriptSource =
-    "/index.php?title=Utilisateur:Ankhseram/test.js&action=raw&ctype=text/javascript";
+    "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
   var cssSource =
     "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
 
