@@ -37,6 +37,14 @@ function floorMultiplication(firstFactor, secondFactor) {
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
 
+function floorMultiplicationWithNegative(firstFactor, secondFactor) {
+  if (secondFactor < 0) {
+    return -floorMultiplication(firstFactor, -secondFactor);
+  } else {
+    return floorMultiplication(firstFactor, secondFactor);
+  }
+}
+
 function numberFormat(number, precision) {
   return Math.round(number * 10 ** precision) / 10 ** precision;
 }
@@ -96,6 +104,11 @@ function clearTableResult(tableResult) {
   for (var rowIndex = tableHeaderRowCount; rowIndex < rowCount; rowIndex++) {
     tableResult.deleteRow(tableHeaderRowCount);
   }
+}
+
+function getMonsterName(monsterVnum) {
+  var monsterAttributes = monsterData[monsterVnum];
+  return monsterAttributes[monsterAttributes.length - 1];
 }
 
 function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
@@ -559,10 +572,10 @@ function deleteCharacter(characters, pseudo, element, battle) {
   }
 }
 
-function deleteMonster(characters, monsterName, element, battle) {
+function deleteMonster(characters, monsterVnum, element, battle) {
   battle.battleForm.reset();
   characters.savedMonsters.splice(
-    characters.savedMonsters.indexOf(monsterName),
+    characters.savedMonsters.indexOf(monsterVnum),
     1
   );
 
@@ -571,7 +584,7 @@ function deleteMonster(characters, monsterName, element, battle) {
   }
 
   updateSavedMonsters(characters.savedMonsters);
-  removeBattleChoice(battle, monsterName);
+  removeBattleChoice(battle, monsterVnum);
 }
 
 function handleStyle(characters, selectedElement) {
@@ -963,12 +976,13 @@ function handleNewMonster(
   monsterTemplate,
   monstersContainer,
   battle,
-  monsterName,
+  monsterVnum,
   monsterList
 ) {
   var newMonsterTemplate = monsterTemplate.cloneNode(true);
   var spanInput = newMonsterTemplate.querySelector("span.input");
   var deleteSvg = newMonsterTemplate.querySelector("svg");
+  var monsterName = getMonsterName(monsterVnum);
 
   var link = document.createElement("a");
   link.href = mw.util.getUrl(monsterName);
@@ -979,13 +993,13 @@ function handleNewMonster(
   monstersContainer.appendChild(newMonsterTemplate);
 
   newMonsterTemplate.setAttribute("tabindex", "0");
-  newMonsterTemplate.setAttribute("data-name", monsterName);
+  newMonsterTemplate.setAttribute("data-name", monsterVnum);
   monstersContainer.appendChild(newMonsterTemplate);
 
   deleteSvg.addEventListener("click", function (event) {
-    deleteMonster(characters, monsterName, newMonsterTemplate, battle);
+    deleteMonster(characters, monsterVnum, newMonsterTemplate, battle);
     var inputMonster = monsterList.querySelector(
-      "input[name='" + monsterName + "']"
+      "input[name='" + monsterVnum + "']"
     );
     inputMonster.checked = false;
   });
@@ -1006,26 +1020,26 @@ function monsterManagement(characters, battle) {
   }
 
   function addMonsterNames(monsterList) {
-    var monsterIndex = 0;
+    var lastMonsterAttributeIndex = monsterData[101].length - 1;
 
-    for (var monsterName in monsterData) {
+    for (var monsterVnum in monsterData) {
       var li = document.createElement("li");
       var label = document.createElement("label");
       var input = document.createElement("input");
-      var textNode = document.createTextNode(monsterName);
+      var textNode = document.createTextNode(
+        monsterData[monsterVnum][lastMonsterAttributeIndex]
+      );
 
-      label.htmlFor = "monster" + monsterIndex;
-      input.id = "monster" + monsterIndex;
+      label.htmlFor = "monster" + monsterVnum;
+      input.id = "monster" + monsterVnum;
       input.type = "checkbox";
 
-      input.name = monsterName;
+      input.name = monsterVnum;
 
       label.appendChild(input);
       label.appendChild(textNode);
       li.appendChild(label);
       monsterList.appendChild(li);
-
-      monsterIndex++;
     }
   }
 
@@ -1057,9 +1071,9 @@ function monsterManagement(characters, battle) {
   addMonsterNames(monsterList, characters.monsterListTemplate);
   filterNames(searchMonster, monsterList);
 
-  characters.savedMonsters.slice().forEach(function (monsterName) {
+  characters.savedMonsters.slice().forEach(function (monsterVnum) {
     var inputMonster = monsterList.querySelector(
-      "input[name='" + monsterName + "']"
+      "input[name='" + monsterVnum + "']"
     );
 
     if (inputMonster) {
@@ -1068,12 +1082,12 @@ function monsterManagement(characters, battle) {
         monsterTemplate,
         monstersContainer,
         battle,
-        monsterName,
+        monsterVnum,
         monsterList
       );
       inputMonster.checked = true;
     } else {
-      deleteMonster(characters, monsterName, null, battle);
+      deleteMonster(characters, monsterVnum, null, battle);
     }
   });
 
@@ -1083,9 +1097,9 @@ function monsterManagement(characters, battle) {
 
   monsterListForm.addEventListener("change", function (event) {
     var target = event.target;
-    var monsterName = target.name;
+    var monsterVnum = target.name;
 
-    if (monsterName === "search-monster") {
+    if (monsterVnum === "search-monster") {
       return;
     }
 
@@ -1095,18 +1109,18 @@ function monsterManagement(characters, battle) {
         monsterTemplate,
         monstersContainer,
         battle,
-        monsterName,
+        monsterVnum,
         monsterList
       );
 
-      characters.savedMonsters.push(monsterName);
+      characters.savedMonsters.push(monsterVnum);
       updateSavedMonsters(characters.savedMonsters);
-      addBattleChoice(battle, monsterName, true);
+      addBattleChoice(battle, monsterVnum, true);
     } else {
       var currentMonsterTemplate = monstersContainer.querySelector(
-        "[data-name='" + monsterName + "']"
+        "[data-name='" + monsterVnum + "']"
       );
-      deleteMonster(characters, monsterName, currentMonsterTemplate, battle);
+      deleteMonster(characters, monsterVnum, currentMonsterTemplate, battle);
     }
   });
 }
@@ -1129,10 +1143,10 @@ function removeBattleChoice(battle, name) {
 }
 
 function addBattleChoice(battle, name, isMonster = false) {
-  function createOption(text) {
+  function createOption(text, vnum) {
     var option = document.createElement("option");
     option.textContent = text;
-    option.value = text;
+    option.value = vnum;
 
     if (!isMonster) {
       option.classList.add("notranslate");
@@ -1141,13 +1155,19 @@ function addBattleChoice(battle, name, isMonster = false) {
     return option;
   }
 
-  if (isMonster && monsterData[name][1]) {
-    // pass
-  } else {
-    battle.attackerSelection.appendChild(createOption(name));
+  var vnum = name;
+
+  if (isMonster) {
+    name = getMonsterName(name);
   }
 
-  battle.victimSelection.appendChild(createOption(name));
+  if (isMonster && monsterData[vnum][1]) {
+    // pass
+  } else {
+    battle.attackerSelection.appendChild(createOption(name, vnum));
+  }
+
+  battle.victimSelection.appendChild(createOption(name, vnum));
 }
 
 function updateBattleChoice(characters, battle) {
@@ -1158,8 +1178,8 @@ function updateBattleChoice(characters, battle) {
     addBattleChoice(battle, pseudo);
   }
 
-  characters.savedMonsters.forEach(function (monsterName) {
-    addBattleChoice(battle, monsterName, true);
+  characters.savedMonsters.forEach(function (monsterVnum) {
+    addBattleChoice(battle, monsterVnum, true);
   });
 }
 
@@ -1396,7 +1416,10 @@ function calcDamageWithPrimaryBonuses(damages, battleValues) {
 
   var elementDamages = 0;
   for (var elementBonusCoeff of battleValues.elementBonusCoeff) {
-    elementDamages += floorMultiplication(damages, elementBonusCoeff);
+    elementDamages += floorMultiplicationWithNegative(
+      damages,
+      elementBonusCoeff
+    );
   }
   damages += elementDamages;
 
@@ -1573,48 +1596,36 @@ function getRankBonus(attacker) {
 
 function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
   var elementMalus = 0;
-  var elementBonusDifferences = [];
+  var savedElementDifferences = [];
 
   for (var index = 0; index < elementBonus.length; index++) {
     if (!attacker[mapping.elementBonus[index]]) {
       continue;
     }
+
     var elementDifference =
       attacker[mapping.elementBonus[index]] -
       victim[mapping.elementResistance[index]];
 
-    if (!elementDifference) {
-      continue;
-    }
-
-    if (elementDifference < 0) {
-      elementMalus -= elementDifference;
-    } else {
-      elementBonusDifferences.push(elementDifference);
-    }
+    savedElementDifferences.push(elementDifference);
+    elementMalus += Math.min(0, elementDifference);
   }
 
-  if (elementBonusDifferences.length) {
-    elementBonusDifferences.sort(compareNumbers);
+  if (savedElementDifferences.length) {
+    savedElementDifferences.sort(compareNumbers);
 
-    for (
-      var index = 0;
-      index < elementBonusDifferences.length - 1;
-      index++
-    ) {
-      var currentDifferent = elementBonusDifferences[index];
+    for (var index = 0; index < savedElementDifferences.length - 1; index++) {
+      var elementDifference = savedElementDifferences[index];
 
-      if (elementMalus >= currentDifferent) {
-        elementMalus -= currentDifferent;
-      } else {
-        elementBonus[index] = (currentDifferent - elementMalus) / 1000;
-        elementMalus = 0;
-      }
+      elementBonus[index] = Math.max(elementMalus, elementDifference) / 1000;
+      elementMalus = Math.min(
+        0,
+        Math.max(elementMalus, elementMalus - elementDifference)
+      );
     }
-    elementBonus[index] = elementBonusDifferences[index] / 1000;
-  }
 
-  return elementBonus;
+    elementBonus[index] = savedElementDifferences[index] / 1000;
+  }
 }
 
 function skillChanceReduction(value) {
@@ -1701,7 +1712,7 @@ function createPhysicalBattleValues(
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
-      elementBonus = calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
+      calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
@@ -1989,7 +2000,7 @@ function createSkillBattleValues(
       raceBonus = attacker[mapping.raceBonus[victim.race]];
       raceResistance = victim[mapping.raceResistance[attacker.race]];
 
-      elementBonus = calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
+      calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
       if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
@@ -3178,47 +3189,47 @@ function changeMonsterValues(monster, instance, attacker) {
   }
 }
 
-function createMonster(name, attacker) {
-  var data = monsterData[name];
+function createMonster(monsterVnum, attacker) {
+  var monsterAttributes = monsterData[monsterVnum];
 
   var monster = {
-    name: name,
-    rank: data[0],
-    race: data[1],
-    attack: data[2],
-    level: data[3],
-    type: data[4],
-    str: data[5],
-    dex: data[6],
-    vit: data[7],
-    int: data[8],
-    minAttackValue: data[9],
-    maxAttackValue: data[10],
-    rawDefense: data[11],
-    criticalHit: data[12],
-    piercingHit: data[13],
-    fistDefense: data[14],
-    swordDefense: data[15],
-    twoHandedSwordDefense: data[16],
-    daggerDefense: data[17],
-    bellDefense: data[18],
-    fanDefense: data[19],
-    arrowDefense: data[20],
-    clawDefense: data[21],
-    fireResistance: data[22],
-    lightningResistance: data[23],
-    magicResistance: data[24],
-    windResistance: data[25],
-    lightningBonus: data[26],
-    fireBonus: data[27],
-    iceBonus: data[28],
-    windBonus: data[29],
-    earthBonus: data[30],
-    darknessBonus: data[31],
-    darknessResistance: data[32],
-    iceResistance: data[33],
-    earthResistance: data[34],
-    damageMultiplier: data[35],
+    name: monsterAttributes[36],
+    rank: monsterAttributes[0],
+    race: monsterAttributes[1],
+    attack: monsterAttributes[2],
+    level: monsterAttributes[3],
+    type: monsterAttributes[4],
+    str: monsterAttributes[5],
+    dex: monsterAttributes[6],
+    vit: monsterAttributes[7],
+    int: monsterAttributes[8],
+    minAttackValue: monsterAttributes[9],
+    maxAttackValue: monsterAttributes[10],
+    rawDefense: monsterAttributes[11],
+    criticalHit: monsterAttributes[12],
+    piercingHit: monsterAttributes[13],
+    fistDefense: monsterAttributes[14],
+    swordDefense: monsterAttributes[15],
+    twoHandedSwordDefense: monsterAttributes[16],
+    daggerDefense: monsterAttributes[17],
+    bellDefense: monsterAttributes[18],
+    fanDefense: monsterAttributes[19],
+    arrowDefense: monsterAttributes[20],
+    clawDefense: monsterAttributes[21],
+    fireResistance: monsterAttributes[22],
+    lightningResistance: monsterAttributes[23],
+    magicResistance: monsterAttributes[24],
+    windResistance: monsterAttributes[25],
+    lightningBonus: monsterAttributes[26],
+    fireBonus: monsterAttributes[27],
+    iceBonus: monsterAttributes[28],
+    windBonus: monsterAttributes[29],
+    earthBonus: monsterAttributes[30],
+    darknessBonus: monsterAttributes[31],
+    darknessResistance: monsterAttributes[32],
+    iceResistance: monsterAttributes[33],
+    earthResistance: monsterAttributes[34],
+    damageMultiplier: monsterAttributes[35],
   };
 
   // monster.instance = 0;
@@ -3518,7 +3529,7 @@ function loading() {
 
 (function () {
   var javascriptSource =
-    "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
+    "/index.php?title=Utilisateur:Ankhseram/test.js&action=raw&ctype=text/javascript";
   var cssSource =
     "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
 
