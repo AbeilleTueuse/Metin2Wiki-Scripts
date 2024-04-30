@@ -30,7 +30,7 @@ function copyObject(object) {
 }
 
 function compareNumbers(a, b) {
-  return a - b;
+  return b - a;
 }
 
 function floorMultiplication(firstFactor, secondFactor) {
@@ -1595,8 +1595,10 @@ function getRankBonus(attacker) {
 }
 
 function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
-  var elementMalus = 0;
+  var minElementMalus = 0;
+  var maxDifference = 0;
   var savedElementDifferences = [];
+  var elementBonusIndex = 0;
 
   for (var index = 0; index < elementBonus.length; index++) {
     if (!attacker[mapping.elementBonus[index]]) {
@@ -1607,25 +1609,35 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
       attacker[mapping.elementBonus[index]] -
       victim[mapping.elementResistance[index]];
 
-    savedElementDifferences.push(elementDifference);
-    elementMalus += Math.min(0, elementDifference);
-  }
-
-  if (savedElementDifferences.length) {
-    savedElementDifferences.sort(compareNumbers);
-
-    for (var index = 0; index < savedElementDifferences.length - 1; index++) {
-      var elementDifference = savedElementDifferences[index];
-
-      elementBonus[index] = Math.max(elementMalus, elementDifference) / 1000;
-      elementMalus = Math.min(
-        0,
-        Math.max(elementMalus, elementMalus - elementDifference)
-      );
+    if (elementDifference >= 0) {
+      elementBonus[elementBonusIndex] = elementDifference / 1000;
+      minElementMalus -= elementDifference;
+      maxDifference = Math.max(maxDifference, elementDifference);
+      elementBonusIndex++;
+    } else {
+      savedElementDifferences.push(elementDifference);
     }
-
-    elementBonus[index] = savedElementDifferences[index] / 1000;
   }
+
+  if (!savedElementDifferences.length) {
+    return;
+  }
+
+  minElementMalus += maxDifference;
+  savedElementDifferences.sort(compareNumbers);
+
+  for (var index = 0; index < savedElementDifferences.length; index++) {
+    var elementDifference = savedElementDifferences[index];
+
+    elementBonus[elementBonusIndex + index] =
+      Math.max(minElementMalus, elementDifference) / 1000;
+
+    minElementMalus = Math.min(
+      0,
+      Math.max(minElementMalus, minElementMalus - elementDifference)
+    );
+  }
+  console.log(elementBonus)
 }
 
 function skillChanceReduction(value) {
@@ -1718,6 +1730,7 @@ function createPhysicalBattleValues(
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
 
+      criticalHitPercentage = 0;
       blessingBonus = calcBlessingBonus(skillPowerTable, victim);
       averageDamageResistance = victim.averageDamageResistance;
     } else {
