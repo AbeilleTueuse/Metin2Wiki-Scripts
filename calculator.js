@@ -175,8 +175,20 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponValue) {
   var newText = document.createElement("span");
   var oldImage = weaponDisplay.firstChild;
   var oldText = oldImage.nextElementSibling;
+  var weaponName = weaponData[weaponValue][0];
 
-  newText.textContent = " " + weaponData[weaponValue][0] + " ";
+  if (weaponValue == 0) {
+    newText.textContent = " " + weaponName + " ";
+  } else {
+    var weaponLink = document.createElement("a");
+    weaponLink.href = mw.util.getUrl(weaponName);
+    weaponLink.title = weaponName;
+    weaponLink.textContent = weaponName;
+
+    newText.appendChild(document.createTextNode(" "));
+    newText.appendChild(weaponLink);
+    newText.appendChild(document.createTextNode(" "));
+  }
 
   weaponDisplay.replaceChild(newImage, oldImage);
   weaponDisplay.replaceChild(newText, oldText);
