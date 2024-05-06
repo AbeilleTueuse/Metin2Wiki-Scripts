@@ -45,8 +45,12 @@ function floorMultiplicationWithNegative(firstFactor, secondFactor) {
   }
 }
 
-function numberFormat(number, precision) {
-  return Math.round(number * 10 ** precision) / 10 ** precision;
+function numberDisplay(number, precision) {
+  return (
+    Math.round(number * 10 ** precision) / 10 ** precision
+  )
+    .toString()
+    .replace(".", ",");
 }
 
 function addKeyValue(object, key, value) {
@@ -86,9 +90,7 @@ function addToTableResult(tableResult, damagesWeighted, minMaxDamages) {
 
     var secondCell = newRow.insertCell(1);
     secondCell.textContent =
-      numberFormat(damagesWeighted[damages] * 100, 3)
-        .toString()
-        .replace(".", ",") + " %";
+      numberDisplay(damagesWeighted[damages] * 100, 3) + " %";
   }
 
   damages = parseInt(damages);
@@ -175,20 +177,8 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponValue) {
   var newText = document.createElement("span");
   var oldImage = weaponDisplay.firstChild;
   var oldText = oldImage.nextElementSibling;
-  var weaponName = weaponData[weaponValue][0];
 
-  if (weaponValue == 0) {
-    newText.textContent = " " + weaponName + " ";
-  } else {
-    var weaponLink = document.createElement("a");
-    weaponLink.href = mw.util.getUrl(weaponName);
-    weaponLink.title = weaponName;
-    weaponLink.textContent = weaponName;
-
-    newText.appendChild(document.createTextNode(" "));
-    newText.appendChild(weaponLink);
-    newText.appendChild(document.createTextNode(" "));
-  }
+  newText.textContent = " " + weaponData[weaponValue][0] + " ";
 
   weaponDisplay.replaceChild(newImage, oldImage);
   weaponDisplay.replaceChild(newText, oldText);
@@ -742,8 +732,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
+          pseudo +
+          " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -2515,7 +2505,7 @@ function getSkillFormula(
         skillFormula = function (atk) {
           return floorMultiplication(
             (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-              1.1,
+            1.1,
             1
           );
         };
@@ -2653,7 +2643,7 @@ function getSkillFormula(
           return floorMultiplication(
             (atk +
               (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
-              1.2,
+            1.2,
             1
           );
         };
@@ -2676,9 +2666,9 @@ function getSkillFormula(
         skillFormula = function (atk) {
           return floorMultiplication(
             atk +
-              2 * lv +
-              2 * int +
-              (2 * atk + 4 * str + 14 * int) * skillPower,
+            2 * lv +
+            2 * int +
+            (2 * atk + 4 * str + 14 * int) * skillPower,
             1
           );
         };
@@ -2690,9 +2680,9 @@ function getSkillFormula(
         skillFormula = function (atk) {
           return floorMultiplication(
             1.1 * atk +
-              2 * lv +
-              2 * int +
-              (1.5 * atk + str + 12 * int) * skillPower,
+            2 * lv +
+            2 * int +
+            (1.5 * atk + str + 12 * int) * skillPower,
             1
           );
         };
@@ -2706,9 +2696,9 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             40 +
-              5 * lv +
-              2 * int +
-              (13 * int + 6 * mav + 75) * attackFactor * skillPower,
+            5 * lv +
+            2 * int +
+            (13 * int + 6 * mav + 75) * attackFactor * skillPower,
             1
           );
         };
@@ -2730,9 +2720,9 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             30 +
-              2 * lv +
-              2 * int +
-              (7 * int + 6 * mav + 350) * attackFactor * skillPower,
+            2 * lv +
+            2 * int +
+            (7 * int + 6 * mav + 350) * attackFactor * skillPower,
             1
           );
         };
@@ -2751,10 +2741,10 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                attackFactor *
-                skillPower,
+            6 * lv +
+            (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+            attackFactor *
+            skillPower,
             1
           );
         };
@@ -2768,8 +2758,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             70 +
-              5 * lv +
-              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+            5 * lv +
+            (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
             1
           );
         };
@@ -2781,8 +2771,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             60 +
-              5 * lv +
-              (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
+            5 * lv +
+            (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
             1
           );
         };
@@ -2795,8 +2785,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             70 +
-              3 * lv +
-              (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
+            3 * lv +
+            (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
             1
           );
         };
@@ -2811,10 +2801,10 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             60 +
-              5 * lv +
-              (8 * int + 2 * dex + 8 * mav + 10 * int) *
-                attackFactor *
-                skillPower,
+            5 * lv +
+            (8 * int + 2 * dex + 8 * mav + 10 * int) *
+            attackFactor *
+            skillPower,
             1
           );
         };
@@ -2826,10 +2816,10 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             40 +
-              4 * lv +
-              (13 * int + 2 * str + 10 * mav + 10.5 * int) *
-                attackFactor *
-                skillPower,
+            4 * lv +
+            (13 * int + 2 * str + 10 * mav + 10.5 * int) *
+            attackFactor *
+            skillPower,
             1
           );
         };
@@ -2842,8 +2832,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             50 +
-              5 * lv +
-              (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
+            5 * lv +
+            (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
             1
           );
         };
@@ -3334,7 +3324,7 @@ function createBattle(characters, battle) {
     battle.damageResult.textContent =
       attacker.name +
       " inflige " +
-      numberFormat(meanDamages, 1) +
+      numberDisplay(meanDamages, 1) +
       " dégâts en moyenne à " +
       victim.name +
       " (minimum : " +
