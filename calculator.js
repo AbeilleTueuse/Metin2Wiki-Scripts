@@ -45,8 +45,10 @@ function floorMultiplicationWithNegative(firstFactor, secondFactor) {
   }
 }
 
-function numberFormat(number, precision) {
-  return Math.round(number * 10 ** precision) / 10 ** precision;
+function numberDisplay(number, precision) {
+  return (Math.round(number * 10 ** precision) / 10 ** precision)
+    .toString()
+    .replace(".", ",");
 }
 
 function addKeyValue(object, key, value) {
@@ -86,9 +88,7 @@ function addToTableResult(tableResult, damagesWeighted, minMaxDamages) {
 
     var secondCell = newRow.insertCell(1);
     secondCell.textContent =
-      numberFormat(damagesWeighted[damages] * 100, 3)
-        .toString()
-        .replace(".", ",") + " %";
+      numberDisplay(damagesWeighted[damages] * 100, 3) + " %";
   }
 
   damages = parseInt(damages);
@@ -1123,6 +1123,29 @@ function monsterManagement(characters, battle) {
       deleteMonster(characters, monsterVnum, currentMonsterTemplate, battle);
     }
   });
+
+  addEventListener("storage", function (event) {
+    if (event.key === "newMonsterCalculator") {
+      var monsterVnum = Number(event.newValue);
+
+      if (!monsterVnum) {
+        return;
+      }
+
+      var inputMonster = monsterList.querySelector(
+        "input[name='" + Math.abs(monsterVnum) + "']"
+      );
+
+      if (inputMonster) {
+        if (
+          (monsterVnum > 0 && !inputMonster.checked) ||
+          (monsterVnum < 0 && inputMonster.checked)
+        ) {
+          inputMonster.click();
+        }
+      }
+    }
+  });
 }
 
 function removeBattleChoice(battle, name) {
@@ -1637,7 +1660,6 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
       Math.max(minElementMalus, minElementMalus - elementDifference)
     );
   }
-  console.log(elementBonus);
 }
 
 function skillChanceReduction(value) {
@@ -3322,7 +3344,7 @@ function createBattle(characters, battle) {
     battle.damageResult.textContent =
       attacker.name +
       " inflige " +
-      numberFormat(meanDamages, 1) +
+      numberDisplay(meanDamages, 1) +
       " dégâts en moyenne à " +
       victim.name +
       " (minimum : " +
