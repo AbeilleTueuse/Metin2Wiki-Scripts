@@ -476,11 +476,8 @@ function getSavedMonsters() {
   return [];
 }
 
-function updateSavedMonsters(savedMonsters) {
-  localStorage.setItem(
-    "savedMonstersCalculator",
-    JSON.stringify(savedMonsters)
-  );
+function writeMonster(monsterVnum) {
+  localStorage.setItem("newMonsterCalculator", monsterVnum);
 }
 
 function handleDamageSimulator(cardInformation) {
@@ -510,9 +507,14 @@ function handleDamageSimulator(cardInformation) {
     }
 
     var addMonsterClone = addMonster.cloneNode(true);
-    addMonsterClone.dataset.monsterId = nameToVnum[cardName];
+    var monsterVnum = nameToVnum[cardName];
 
+    addMonsterClone.dataset.monsterId = monsterVnum;
     card.lastElementChild.appendChild(addMonsterClone);
+
+    if (savedMonsters.indexOf(monsterVnum) !== -1) {
+        addMonsterClone.firstChild.classList.add("svg-delete-monster");
+    }
   }
 
   addMonster.remove();
@@ -523,25 +525,29 @@ function handleDamageSimulator(cardInformation) {
     var target = event.target.closest(".add-monster");
 
     if (target) {
-      var monsterId = target.dataset.monsterId;
+      var savedMonsters = getSavedMonsters();
+      var monsterVnum = target.dataset.monsterId;
       target = target.firstChild;
 
       if (target.classList.contains("svg-delete-monster")) {
         // delete monster
         target.firstChild.textContent = addMonsterText;
-        var monsterIndex = savedMonsters.indexOf(monsterId);
-        
+
+        var monsterIndex = savedMonsters.indexOf(monsterVnum);
+
         if (monsterIndex !== -1) {
-          savedMonsters.splice(monsterIndex, 1);
-          updateSavedMonsters(savedMonsters);
+          writeMonster("-" + monsterVnum);
+        } else {
+          writeMonster(0);
         }
       } else {
         // add monster
         target.firstChild.textContent = deleteMonsterText;
 
-        if (savedMonsters.indexOf(monsterId) === -1) {
-          savedMonsters.push(monsterId);
-          updateSavedMonsters(savedMonsters);
+        if (savedMonsters.indexOf(monsterVnum) === -1) {
+          writeMonster(monsterVnum);
+        } else {
+          writeMonster(0);
         }
       }
 
