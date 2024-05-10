@@ -393,8 +393,9 @@ function getCardInformation(filterParameters) {
   ) {
     var card = listToFilterChildren[cardIndex];
     var cardInformation = {};
-    var cardName = card.querySelector("[data-name]").textContent;
-    cardInformation.name = toNormalForm(cardName);
+    var cardNameElement = card.querySelector("[data-name]");
+    cardInformation.name = toNormalForm(cardNameElement.textContent);
+    cardInformation.trueName = cardNameElement.firstChild.title;
 
     if (filterLevelsNames) {
       var levelsElement = card.querySelector(levelsSelector);
@@ -466,20 +467,87 @@ function observeLanguageChange(cardInformation) {
   observer.observe(filterName, { attributes: true });
 }
 
+function getSavedMonsters() {
+  var savedMonsters = localStorage.getItem("savedMonstersCalculator");
+
+  if (savedMonsters) {
+    return JSON.parse(savedMonsters);
+  }
+  return [];
+}
+
+function updateSavedMonsters(savedMonsters) {
+  localStorage.setItem(
+    "savedMonstersCalculator",
+    JSON.stringify(savedMonsters)
+  );
+}
+
 function handleDamageSimulator(cardInformation) {
   var addMonster = document.getElementById("add-monster");
-  var addMonsterClone = addMonster.cloneNode();
-  addMonster.remove();
-
   var cardToEdit = cardInformation.listToFilter.children;
   var cardData = cardInformation.data;
+  var savedMonsters = getSavedMonsters();
+
+  addMonster.removeAttribute("id");
+  addMonster = addMonster.parentElement;
+  addMonster.classList.remove("tabber-noactive");
+
+  var nameToVnum = {};
+  var monsterParametersLength = monsterData[101].length;
+
+  for (monsterVnum in monsterData) {
+    nameToVnum[monsterData[monsterVnum][monsterParametersLength - 1]] =
+      monsterVnum;
+  }
 
   for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
     var card = cardToEdit[cardIndex];
-    var cardParameters = cardData[cardIndex];
-    console.log(card);
-    console.log(cardParameters);
+    var cardName = cardData[cardIndex].trueName;
+
+    if (!nameToVnum.hasOwnProperty(cardName)) {
+      continue;
+    }
+
+    var addMonsterClone = addMonster.cloneNode(true);
+    addMonsterClone.dataset.monsterId = nameToVnum[cardName];
+
+    card.lastElementChild.appendChild(addMonsterClone);
   }
+
+  addMonster.remove();
+  var addMonsterText = "Ajouter ce monstre au simulateur de dégâts";
+  var deleteMonsterText = "Supprimer ce monstre du simulateur de dégâts";
+
+  document.addEventListener("click", function (event) {
+    var target = event.target.closest(".add-monster");
+
+    if (target) {
+      var monsterId = target.dataset.monsterId;
+      target = target.firstChild;
+
+      if (target.classList.contains("svg-delete-monster")) {
+        // delete monster
+        target.firstChild.textContent = addMonsterText;
+        var monsterIndex = savedMonsters.indexOf(monsterId);
+        
+        if (monsterIndex !== -1) {
+          savedMonsters.splice(monsterIndex, 1);
+          updateSavedMonsters(savedMonsters);
+        }
+      } else {
+        // add monster
+        target.firstChild.textContent = deleteMonsterText;
+
+        if (savedMonsters.indexOf(monsterId) === -1) {
+          savedMonsters.push(monsterId);
+          updateSavedMonsters(savedMonsters);
+        }
+      }
+
+      target.classList.toggle("svg-delete-monster");
+    }
+  });
 }
 
 function filterWithUrl(filterInformation, cardInformation) {
@@ -505,7 +573,14 @@ function filterWithUrl(filterInformation, cardInformation) {
         }
       }
     } else if (key === "simulator" && value === "1") {
-      handleDamageSimulator(cardInformation);
+      var javascriptSource =
+        "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
+      var cssSource =
+        "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
+      loadStyle(cssSource);
+      loadScript(javascriptSource, function () {
+        handleDamageSimulator(cardInformation);
+      });
     } else {
       var splitKey = key.split("-")[0];
       if (Object.keys(filterInformation.range).indexOf(splitKey) !== -1) {
@@ -558,6 +633,31 @@ function filterWithUrl(filterInformation, cardInformation) {
       processParameter(key, value, filters);
     }
   }
+}
+
+function loadScript(src, callback) {
+  var script = document.createElement("script");
+  script.src = src;
+
+  function onComplete() {
+    if (script.parentNode) {
+      script.parentNode.removeChild(script);
+    }
+    callback();
+  }
+
+  document.head.appendChild(script);
+
+  script.onload = onComplete;
+  script.onerror = onComplete;
+}
+
+function loadStyle(src) {
+  var link = document.createElement("link");
+  link.href = src;
+  link.rel = "stylesheet";
+
+  document.head.appendChild(link);
 }
 
 (function () {
