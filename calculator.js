@@ -487,14 +487,8 @@ function uploadCharacter(
   charactersContainer,
   battle
 ) {
-  var fileInput = document.createElement("input");
-
-  fileInput.type = "file";
-  fileInput.accept = ".txt";
-  fileInput.multiple = true;
-  fileInput.click();
-
-  fileInput.addEventListener("change", function (event) {
+  characters.characterInput.addEventListener("change", function (event) {
+    
     var selectedFiles = event.target.files;
     var selectFilesLength = selectedFiles.length;
 
@@ -949,8 +943,26 @@ function characterManagement(characters, battle) {
     }
   });
 
-  characters.uploadCharacter.addEventListener("click", function (event) {
-    uploadCharacter(characters, characterTemplate, charactersContainer, battle);
+  characters.characterInput.accept = ".txt";
+  characters.characterInput.multiple = true;
+  uploadCharacter(characters, characterTemplate, charactersContainer, battle);
+
+  characters.dropZone.addEventListener("click", function(event) {
+    characters.characterInput.click();
+  });
+
+  characters.dropZone.addEventListener("dragover", function(event) {
+    event.preventDefault();
+    characters.dropZone.classList.add("drop-zone--over");
+  });
+
+  characters.dropZone.addEventListener("drop", function(event) {
+    console.log(event);
+    event.preventDefault();
+
+    if (event.dataTransfer.files.length) {
+      characters.characterInput.files = event.dataTransfer.files;
+    }
   });
 
   characters.characterCreation.addEventListener("change", function () {
@@ -1459,6 +1471,7 @@ function calcDamageWithSecondaryBonuses(
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
+  damages = floorMultiplication(damages, battleValues.tigerStrengthCoeff);
   damages = floorMultiplication(damages, battleValues.blessingBonusCoeff);
 
   if (damagesType.criticalHit) {
@@ -1505,6 +1518,7 @@ function calcSkillDamageWithSecondaryBonuses(
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusByBonusCoeff);
+  damages = floorMultiplication(damages, battleValues.tigerStrengthCoeff);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -1701,6 +1715,7 @@ function createPhysicalBattleValues(
   var damageMultiplier = 1;
   var magicResistance = 0;
   var weaponDefense = 0;
+  var tigerStrength = 0;
   var blessingBonus = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var criticalHitPercentageMarriage = 0;
@@ -1778,6 +1793,10 @@ function createPhysicalBattleValues(
           marriageTable,
           "harmonyEarrings"
         );
+      }
+
+      if (attacker.tigerStrength === "on") {
+        tigerStrength = 40;
       }
 
       for (var index = 0; index < elementBonus.length; index++) {
@@ -1911,6 +1930,7 @@ function createPhysicalBattleValues(
     defenseMarriage: defenseMarriage,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
+    tigerStrengthCoeff: 1 + tigerStrength / 100,
     blessingBonusCoeff: 1 - blessingBonus / 100,
     extraPiercingHitCoeff: 1 + extraPiercingHitPercentage / 200,
     averageDamageCoeff: 1 + averageDamage / 100,
@@ -1997,6 +2017,7 @@ function createSkillBattleValues(
   var defense = victim.defense;
   var magicResistance = 0;
   var weaponDefense = 0;
+  var tigerStrength = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
   var skillDamage = 0;
@@ -2065,6 +2086,10 @@ function createSkillBattleValues(
           marriageTable,
           "harmonyEarrings"
         );
+      }
+
+      if (attacker.tigerStrength === "on") {
+        tigerStrength = 40;
       }
 
       for (var index = 0; index < elementBonus.length; index++) {
@@ -2176,6 +2201,7 @@ function createSkillBattleValues(
     damageMultiplier: damageMultiplier,
     useDamages: useDamages,
     defense: defense,
+    tigerStrengthCoeff: 1 + tigerStrength / 100,
     piercingHitDefense: victim.defense,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
@@ -3475,7 +3501,8 @@ function createDamageCalculatorInformation() {
     currentCharacter: null,
     characterCreation: document.getElementById("character-creation"),
     addNewCharacterButton: document.getElementById("add-new-character"),
-    uploadCharacter: document.getElementById("upload-character"),
+    dropZone: document.getElementById("character-drop-zone"),
+    characterInput: document.getElementById("character-input"),
     newCharacterTemplate: document.getElementById("new-character-template")
       .children[0],
     charactersContainer: document.getElementById("characters-container"),
