@@ -175,8 +175,20 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponValue) {
   var newText = document.createElement("span");
   var oldImage = weaponDisplay.firstChild;
   var oldText = oldImage.nextElementSibling;
+  var weaponName = weaponData[weaponValue][0];
 
-  newText.textContent = " " + weaponData[weaponValue][0] + " ";
+  if (weaponValue == 0) {
+    newText.textContent = " " + weaponName + " ";
+  } else {
+    var weaponLink = document.createElement("a");
+    weaponLink.href = mw.util.getUrl(weaponName);
+    weaponLink.title = weaponName;
+    weaponLink.textContent = weaponName;
+
+    newText.appendChild(document.createTextNode(" "));
+    newText.appendChild(weaponLink);
+    newText.appendChild(document.createTextNode(" "));
+  }
 
   weaponDisplay.replaceChild(newImage, oldImage);
   weaponDisplay.replaceChild(newText, oldText);
@@ -482,75 +494,115 @@ function downloadCharacter(character) {
 }
 
 function uploadCharacter(
+  selectedFiles,
   characters,
   characterTemplate,
   charactersContainer,
   battle
 ) {
-  var fileInput = document.createElement("input");
+  var selectFilesLength = selectedFiles.length;
 
-  fileInput.type = "file";
-  fileInput.accept = ".txt";
-  fileInput.multiple = true;
-  fileInput.click();
+  for (var fileIndex = 0; fileIndex < selectFilesLength; fileIndex++) {
+    var selectedFile = selectedFiles[fileIndex];
 
-  fileInput.addEventListener("change", function (event) {
-    var selectedFiles = event.target.files;
-    var selectFilesLength = selectedFiles.length;
+    if (selectedFile.type === "text/plain") {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var fileContent = e.target.result;
+        try {
+          var characterDataObject = JSON.parse(fileContent);
+          var characterPseudo = characterDataObject.name;
 
-    hideElement(characters.characterCreation);
+          if (characterPseudo) {
+            hideElement(characters.characterCreation);
+            characterPseudo = validPseudo(characterPseudo);
+            [characterDataObject, characterPseudo] = addUniquePseudo(
+              characterDataObject,
+              Object.keys(characters.savedCharacters)
+            );
+            var selectedCharacter = handleNewCharacter(
+              characters,
+              characterTemplate,
+              charactersContainer,
+              battle,
+              characterPseudo
+            )[0];
 
-    for (var fileIndex = 0; fileIndex < selectFilesLength; fileIndex++) {
-      var selectedFile = selectedFiles[fileIndex];
-
-      if (selectedFile.type === "text/plain") {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          var fileContent = e.target.result;
-          try {
-            var characterDataObject = JSON.parse(fileContent);
-            var characterPseudo = characterDataObject.name;
-
-            if (characterPseudo) {
-              characterPseudo = validPseudo(characterPseudo);
-              [characterDataObject, characterPseudo] = addUniquePseudo(
+            if (selectFilesLength === 1) {
+              updateForm(
                 characterDataObject,
-                Object.keys(characters.savedCharacters)
-              );
-              var selectedCharacter = handleNewCharacter(
-                characters,
-                characterTemplate,
-                charactersContainer,
-                battle,
-                characterPseudo
-              )[0];
-
-              if (selectFilesLength === 1) {
-                updateForm(
-                  characterDataObject,
-                  characters.characterCreation,
-                  characters,
-                  selectedCharacter
-                );
-              }
-
-              saveCharacter(
-                characters.savedCharacters,
                 characters.characterCreation,
-                battle,
-                true,
-                characterDataObject
+                characters,
+                selectedCharacter
               );
             }
-          } catch (error) {
-            if (error.name === "TypeError") {
-              // delete the character
-            }
+
+            saveCharacter(
+              characters.savedCharacters,
+              characters.characterCreation,
+              battle,
+              true,
+              characterDataObject
+            );
           }
-        };
-        reader.readAsText(selectedFile);
-      }
+        } catch (error) {
+          if (error.name === "TypeError") {
+            // delete the character
+          }
+        }
+      };
+      reader.readAsText(selectedFile);
     }
+  }
+}
+
+function handleUploadCharacter(
+  characters,
+  characterTemplate,
+  charactersContainer,
+  battle
+) {
+  var characterInput = characters.characterInput;
+  var dropZone = characters.dropZone;
+
+  characterInput.accept = ".txt";
+  characterInput.multiple = true;
+
+  dropZone.addEventListener("click", function () {
+    characterInput.click();
+  });
+
+  dropZone.addEventListener("dragover", function (event) {
+    event.preventDefault();
+    dropZone.classList.add("drop-zone--dragover");
+  });
+
+  ["dragleave", "dragend"].forEach(function(type) {
+    dropZone.addEventListener(type, function() {
+      dropZone.classList.remove("drop-zone--dragover");
+    });
+  });
+
+  dropZone.addEventListener("drop", function (event) {
+    event.preventDefault();
+    uploadCharacter(
+      event.dataTransfer.files,
+      characters,
+      characterTemplate,
+      charactersContainer,
+      battle
+    );
+    dropZone.classList.remove("drop-zone--dragover");
+  });
+
+  characterInput.addEventListener("change", function (event) {
+    uploadCharacter(
+      event.target.files,
+      characters,
+      characterTemplate,
+      charactersContainer,
+      battle
+    );
   });
 }
 
@@ -569,6 +621,7 @@ function deleteCharacter(characters, pseudo, element, battle) {
     saveButtonGreen(characters);
     characters.unsavedChanges = false;
     hideElement(characters.characterCreation);
+    showElement(characters.characterCreation.previousElementSibling);
   }
 }
 
@@ -600,6 +653,7 @@ function handleStyle(characters, selectedElement) {
 
 function updateForm(formData, characterCreation, characters, selectedElement) {
   saveButtonGreen(characters);
+  hideElement(characterCreation.previousElementSibling);
   showElement(characterCreation);
   handleStyle(characters, selectedElement);
 
@@ -949,9 +1003,12 @@ function characterManagement(characters, battle) {
     }
   });
 
-  characters.uploadCharacter.addEventListener("click", function (event) {
-    uploadCharacter(characters, characterTemplate, charactersContainer, battle);
-  });
+  handleUploadCharacter(
+    characters,
+    characterTemplate,
+    charactersContainer,
+    battle
+  );
 
   characters.characterCreation.addEventListener("change", function () {
     saveButtonOrange(characters);
@@ -1066,6 +1123,11 @@ function monsterManagement(characters, battle) {
   var monsterList = characters.monsterList;
   var searchMonster = characters.searchMonster;
   var monsterListForm = characters.monsterListForm;
+
+  document
+    .getElementById("monster-link")
+    .querySelector("a")
+    .setAttribute("target", "_blank");
 
   handleDropdown(searchMonster, monsterList);
   addMonsterNames(monsterList, characters.monsterListTemplate);
@@ -1459,6 +1521,7 @@ function calcDamageWithSecondaryBonuses(
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
+  damages = floorMultiplication(damages, battleValues.tigerStrengthCoeff);
   damages = floorMultiplication(damages, battleValues.blessingBonusCoeff);
 
   if (damagesType.criticalHit) {
@@ -1505,6 +1568,7 @@ function calcSkillDamageWithSecondaryBonuses(
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusByBonusCoeff);
+  damages = floorMultiplication(damages, battleValues.tigerStrengthCoeff);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -1701,6 +1765,7 @@ function createPhysicalBattleValues(
   var damageMultiplier = 1;
   var magicResistance = 0;
   var weaponDefense = 0;
+  var tigerStrength = 0;
   var blessingBonus = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var criticalHitPercentageMarriage = 0;
@@ -1778,6 +1843,10 @@ function createPhysicalBattleValues(
           marriageTable,
           "harmonyEarrings"
         );
+      }
+
+      if (attacker.tigerStrength === "on") {
+        tigerStrength = 40;
       }
 
       for (var index = 0; index < elementBonus.length; index++) {
@@ -1911,6 +1980,7 @@ function createPhysicalBattleValues(
     defenseMarriage: defenseMarriage,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
+    tigerStrengthCoeff: 1 + tigerStrength / 100,
     blessingBonusCoeff: 1 - blessingBonus / 100,
     extraPiercingHitCoeff: 1 + extraPiercingHitPercentage / 200,
     averageDamageCoeff: 1 + averageDamage / 100,
@@ -1997,6 +2067,7 @@ function createSkillBattleValues(
   var defense = victim.defense;
   var magicResistance = 0;
   var weaponDefense = 0;
+  var tigerStrength = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
   var skillDamage = 0;
@@ -2065,6 +2136,10 @@ function createSkillBattleValues(
           marriageTable,
           "harmonyEarrings"
         );
+      }
+
+      if (attacker.tigerStrength === "on") {
+        tigerStrength = 40;
       }
 
       for (var index = 0; index < elementBonus.length; index++) {
@@ -2176,6 +2251,7 @@ function createSkillBattleValues(
     damageMultiplier: damageMultiplier,
     useDamages: useDamages,
     defense: defense,
+    tigerStrengthCoeff: 1 + tigerStrength / 100,
     piercingHitDefense: victim.defense,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
@@ -3475,7 +3551,8 @@ function createDamageCalculatorInformation() {
     currentCharacter: null,
     characterCreation: document.getElementById("character-creation"),
     addNewCharacterButton: document.getElementById("add-new-character"),
-    uploadCharacter: document.getElementById("upload-character"),
+    dropZone: document.getElementById("character-drop-zone"),
+    characterInput: document.getElementById("character-input"),
     newCharacterTemplate: document.getElementById("new-character-template")
       .children[0],
     charactersContainer: document.getElementById("characters-container"),
