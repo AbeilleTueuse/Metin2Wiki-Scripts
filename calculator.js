@@ -1093,6 +1093,8 @@ function monsterManagement(characters, battle) {
   var searchMonster = characters.searchMonster;
   var monsterListForm = characters.monsterListForm;
 
+  document.getElementById("monster-link").querySelector("a").setAttribute("target", "_blank");
+
   handleDropdown(searchMonster, monsterList);
   addMonsterNames(monsterList, characters.monsterListTemplate);
   filterNames(searchMonster, monsterList);
