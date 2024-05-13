@@ -563,6 +563,7 @@ function deleteCharacter(characters, pseudo, element, battle) {
     saveButtonGreen(characters);
     characters.unsavedChanges = false;
     hideElement(characters.characterCreation);
+    showElement(characters.characterCreation.previousElementSibling);
   }
 }
 
@@ -594,6 +595,7 @@ function handleStyle(characters, selectedElement) {
 
 function updateForm(formData, characterCreation, characters, selectedElement) {
   saveButtonGreen(characters);
+  hideElement(characterCreation.previousElementSibling);
   showElement(characterCreation);
   handleStyle(characters, selectedElement);
 
