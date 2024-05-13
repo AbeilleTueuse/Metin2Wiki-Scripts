@@ -494,69 +494,115 @@ function downloadCharacter(character) {
 }
 
 function uploadCharacter(
+  selectedFiles,
   characters,
   characterTemplate,
   charactersContainer,
   battle
 ) {
-  characters.characterInput.addEventListener("change", function (event) {
-    
-    var selectedFiles = event.target.files;
-    var selectFilesLength = selectedFiles.length;
+  var selectFilesLength = selectedFiles.length;
 
-    hideElement(characters.characterCreation);
+  for (var fileIndex = 0; fileIndex < selectFilesLength; fileIndex++) {
+    var selectedFile = selectedFiles[fileIndex];
 
-    for (var fileIndex = 0; fileIndex < selectFilesLength; fileIndex++) {
-      var selectedFile = selectedFiles[fileIndex];
+    if (selectedFile.type === "text/plain") {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var fileContent = e.target.result;
+        try {
+          var characterDataObject = JSON.parse(fileContent);
+          var characterPseudo = characterDataObject.name;
 
-      if (selectedFile.type === "text/plain") {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          var fileContent = e.target.result;
-          try {
-            var characterDataObject = JSON.parse(fileContent);
-            var characterPseudo = characterDataObject.name;
+          if (characterPseudo) {
+            hideElement(characters.characterCreation);
+            characterPseudo = validPseudo(characterPseudo);
+            [characterDataObject, characterPseudo] = addUniquePseudo(
+              characterDataObject,
+              Object.keys(characters.savedCharacters)
+            );
+            var selectedCharacter = handleNewCharacter(
+              characters,
+              characterTemplate,
+              charactersContainer,
+              battle,
+              characterPseudo
+            )[0];
 
-            if (characterPseudo) {
-              characterPseudo = validPseudo(characterPseudo);
-              [characterDataObject, characterPseudo] = addUniquePseudo(
+            if (selectFilesLength === 1) {
+              updateForm(
                 characterDataObject,
-                Object.keys(characters.savedCharacters)
-              );
-              var selectedCharacter = handleNewCharacter(
-                characters,
-                characterTemplate,
-                charactersContainer,
-                battle,
-                characterPseudo
-              )[0];
-
-              if (selectFilesLength === 1) {
-                updateForm(
-                  characterDataObject,
-                  characters.characterCreation,
-                  characters,
-                  selectedCharacter
-                );
-              }
-
-              saveCharacter(
-                characters.savedCharacters,
                 characters.characterCreation,
-                battle,
-                true,
-                characterDataObject
+                characters,
+                selectedCharacter
               );
             }
-          } catch (error) {
-            if (error.name === "TypeError") {
-              // delete the character
-            }
+
+            saveCharacter(
+              characters.savedCharacters,
+              characters.characterCreation,
+              battle,
+              true,
+              characterDataObject
+            );
           }
-        };
-        reader.readAsText(selectedFile);
-      }
+        } catch (error) {
+          if (error.name === "TypeError") {
+            // delete the character
+          }
+        }
+      };
+      reader.readAsText(selectedFile);
     }
+  }
+}
+
+function handleUploadCharacter(
+  characters,
+  characterTemplate,
+  charactersContainer,
+  battle
+) {
+  var characterInput = characters.characterInput;
+  var dropZone = characters.dropZone;
+
+  characterInput.accept = ".txt";
+  characterInput.multiple = true;
+
+  dropZone.addEventListener("click", function () {
+    characterInput.click();
+  });
+
+  dropZone.addEventListener("dragover", function (event) {
+    event.preventDefault();
+    dropZone.classList.add("drop-zone--dragover");
+  });
+
+  ["dragleave", "dragend"].forEach(function(type) {
+    dropZone.addEventListener(type, function() {
+      dropZone.classList.remove("drop-zone--dragover");
+    });
+  });
+
+  dropZone.addEventListener("drop", function (event) {
+    event.preventDefault();
+    uploadCharacter(
+      event.dataTransfer.files,
+      characters,
+      characterTemplate,
+      charactersContainer,
+      battle
+    );
+    dropZone.classList.remove("drop-zone--dragover");
+  });
+
+  characterInput.addEventListener("change", function (event) {
+    uploadCharacter(
+      event.target.files,
+      characters,
+      characterTemplate,
+      charactersContainer,
+      battle
+    );
   });
 }
 
@@ -957,27 +1003,12 @@ function characterManagement(characters, battle) {
     }
   });
 
-  characters.characterInput.accept = ".txt";
-  characters.characterInput.multiple = true;
-  uploadCharacter(characters, characterTemplate, charactersContainer, battle);
-
-  characters.dropZone.addEventListener("click", function(event) {
-    characters.characterInput.click();
-  });
-
-  characters.dropZone.addEventListener("dragover", function(event) {
-    event.preventDefault();
-    characters.dropZone.classList.add("drop-zone--over");
-  });
-
-  characters.dropZone.addEventListener("drop", function(event) {
-    console.log(event);
-    event.preventDefault();
-
-    if (event.dataTransfer.files.length) {
-      characters.characterInput.files = event.dataTransfer.files;
-    }
-  });
+  handleUploadCharacter(
+    characters,
+    characterTemplate,
+    charactersContainer,
+    battle
+  );
 
   characters.characterCreation.addEventListener("change", function () {
     saveButtonOrange(characters);
@@ -1093,7 +1124,10 @@ function monsterManagement(characters, battle) {
   var searchMonster = characters.searchMonster;
   var monsterListForm = characters.monsterListForm;
 
-  document.getElementById("monster-link").querySelector("a").setAttribute("target", "_blank");
+  document
+    .getElementById("monster-link")
+    .querySelector("a")
+    .setAttribute("target", "_blank");
 
   handleDropdown(searchMonster, monsterList);
   addMonsterNames(monsterList, characters.monsterListTemplate);
