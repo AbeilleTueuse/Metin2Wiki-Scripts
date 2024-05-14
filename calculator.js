@@ -451,18 +451,12 @@ function saveCharacter(
   }
 }
 
-function saveButtonGreen(characters, animation) {
-  if (animation) {
-    characters.saveButton.classList.add("save-animation");
-  } else {
-    characters.saveButton.classList.remove("save-animation");
-  }
-  characters.saveButton.classList.remove("unsaved-character");
+function saveButtonGreen(saveButton) {
+  saveButton.classList.remove("unsaved-character");
 }
 
-function saveButtonOrange(characters) {
-  characters.saveButton.classList.remove("save-animation");
-  characters.saveButton.classList.add("unsaved-character");
+function saveButtonOrange(saveButton) {
+  saveButton.classList.add("unsaved-character");
 }
 
 function characterCreationListener(characters, battle) {
@@ -475,7 +469,7 @@ function characterCreationListener(characters, battle) {
         characters.characterCreation,
         battle
       );
-      saveButtonGreen(characters, true);
+      saveButtonGreen(characters.saveButton);
       characters.unsavedChanges = false;
     }
   });
@@ -619,7 +613,7 @@ function deleteCharacter(characters, pseudo, element, battle) {
     !Object.keys(characters.savedCharacters).length ||
     characters.characterCreation.name.value === pseudo
   ) {
-    saveButtonGreen(characters);
+    saveButtonGreen(characters.saveButton);
     characters.unsavedChanges = false;
     hideElement(characters.characterCreation);
     showElement(characters.characterCreation.previousElementSibling);
@@ -653,7 +647,7 @@ function handleStyle(characters, selectedElement) {
 }
 
 function updateForm(formData, characterCreation, characters, selectedElement) {
-  saveButtonGreen(characters);
+  saveButtonGreen(characters.saveButton);
   hideElement(characterCreation.previousElementSibling);
   showElement(characterCreation);
   handleStyle(characters, selectedElement);
@@ -772,7 +766,7 @@ function handleClickOnCharacter(
               battle,
               pseudo
             );
-            saveButtonGreen(characters);
+            saveButtonGreen(characters.saveButton);
             characters.unsavedChanges = false;
           }
         }
@@ -998,7 +992,7 @@ function characterManagement(characters, battle) {
           charactersContainer,
           battle
         );
-        saveButtonGreen(characters);
+        saveButtonGreen(characters.saveButton);
         characters.unsavedChanges = false;
       }
     }
@@ -1012,7 +1006,7 @@ function characterManagement(characters, battle) {
   );
 
   characters.characterCreation.addEventListener("change", function () {
-    saveButtonOrange(characters);
+    saveButtonOrange(characters.saveButton);
     characters.unsavedChanges = true;
   });
 
