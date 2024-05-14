@@ -567,6 +567,7 @@ function handleUploadCharacter(
 
   characterInput.accept = ".txt";
   characterInput.multiple = true;
+  dropZone.setAttribute("tabindex", "0");
 
   dropZone.addEventListener("click", function () {
     characterInput.click();
