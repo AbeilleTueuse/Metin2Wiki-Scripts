@@ -457,12 +457,12 @@ function saveButtonGreen(characters, animation) {
   } else {
     characters.saveButton.classList.remove("save-animation");
   }
-  characters.saveButton.classList.remove("unsaved-button");
+  characters.saveButton.classList.remove("unsaved-character");
 }
 
 function saveButtonOrange(characters) {
   characters.saveButton.classList.remove("save-animation");
-  characters.saveButton.classList.add("unsaved-button");
+  characters.saveButton.classList.add("unsaved-character");
 }
 
 function characterCreationListener(characters, battle) {
@@ -3563,7 +3563,7 @@ function createDamageCalculatorInformation() {
     monsterListForm: document.getElementById("monster-list-form"),
     searchMonster: document.getElementById("search-monster"),
     monsterList: document.getElementById("monster-list"),
-    saveButton: document.getElementById("save-button"),
+    saveButton: document.getElementById("save-character"),
     weaponCategory: document.getElementById("weapon-category"),
     weaponDisplay: document.getElementById("weapon-display"),
     randomAttackValue: document.getElementById("random-attack-value"),
