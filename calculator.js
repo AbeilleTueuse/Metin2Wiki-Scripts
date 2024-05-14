@@ -451,18 +451,12 @@ function saveCharacter(
   }
 }
 
-function saveButtonGreen(characters, animation) {
-  if (animation) {
-    characters.saveButton.classList.add("save-animation");
-  } else {
-    characters.saveButton.classList.remove("save-animation");
-  }
-  characters.saveButton.classList.remove("unsaved-button");
+function saveButtonGreen(saveButton) {
+  saveButton.classList.remove("unsaved-character");
 }
 
-function saveButtonOrange(characters) {
-  characters.saveButton.classList.remove("save-animation");
-  characters.saveButton.classList.add("unsaved-button");
+function saveButtonOrange(saveButton) {
+  saveButton.classList.add("unsaved-character");
 }
 
 function characterCreationListener(characters, battle) {
@@ -475,7 +469,7 @@ function characterCreationListener(characters, battle) {
         characters.characterCreation,
         battle
       );
-      saveButtonGreen(characters, true);
+      saveButtonGreen(characters.saveButton);
       characters.unsavedChanges = false;
     }
   });
@@ -567,6 +561,7 @@ function handleUploadCharacter(
 
   characterInput.accept = ".txt";
   characterInput.multiple = true;
+  dropZone.setAttribute("tabindex", "0");
 
   dropZone.addEventListener("click", function () {
     characterInput.click();
@@ -618,7 +613,7 @@ function deleteCharacter(characters, pseudo, element, battle) {
     !Object.keys(characters.savedCharacters).length ||
     characters.characterCreation.name.value === pseudo
   ) {
-    saveButtonGreen(characters);
+    saveButtonGreen(characters.saveButton);
     characters.unsavedChanges = false;
     hideElement(characters.characterCreation);
     showElement(characters.characterCreation.previousElementSibling);
@@ -652,7 +647,7 @@ function handleStyle(characters, selectedElement) {
 }
 
 function updateForm(formData, characterCreation, characters, selectedElement) {
-  saveButtonGreen(characters);
+  saveButtonGreen(characters.saveButton);
   hideElement(characterCreation.previousElementSibling);
   showElement(characterCreation);
   handleStyle(characters, selectedElement);
@@ -771,7 +766,7 @@ function handleClickOnCharacter(
               battle,
               pseudo
             );
-            saveButtonGreen(characters);
+            saveButtonGreen(characters.saveButton);
             characters.unsavedChanges = false;
           }
         }
@@ -997,7 +992,7 @@ function characterManagement(characters, battle) {
           charactersContainer,
           battle
         );
-        saveButtonGreen(characters);
+        saveButtonGreen(characters.saveButton);
         characters.unsavedChanges = false;
       }
     }
@@ -1011,7 +1006,7 @@ function characterManagement(characters, battle) {
   );
 
   characters.characterCreation.addEventListener("change", function () {
-    saveButtonOrange(characters);
+    saveButtonOrange(characters.saveButton);
     characters.unsavedChanges = true;
   });
 
@@ -3562,7 +3557,7 @@ function createDamageCalculatorInformation() {
     monsterListForm: document.getElementById("monster-list-form"),
     searchMonster: document.getElementById("search-monster"),
     monsterList: document.getElementById("monster-list"),
-    saveButton: document.getElementById("save-button"),
+    saveButton: document.getElementById("save-character"),
     weaponCategory: document.getElementById("weapon-category"),
     weaponDisplay: document.getElementById("weapon-display"),
     randomAttackValue: document.getElementById("random-attack-value"),
