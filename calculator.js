@@ -476,7 +476,6 @@ function characterCreationListener(characters, battle) {
 
   document.addEventListener("keydown", function (event) {
     if (event.ctrlKey && event.key === "s") {
-      console.log(characters.currentCharacter)
       event.preventDefault();
       characters.saveButton.click();
     }
