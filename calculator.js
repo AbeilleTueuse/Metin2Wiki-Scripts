@@ -3357,7 +3357,13 @@ function createMonster(monsterVnum, attacker) {
 }
 
 function addPotentialErrorInformation(errorInformation, attacker, victim) {
-  // pass
+  if (isPC(attacker)) {
+    if (isRiding(attacker) && attacker.horsePoint === 0) {
+      showElement(errorInformation["horse-level"]);
+    } else {
+      hideElement(errorInformation["horse-level"]);
+    }
+  }
 }
 
 function createBattle(characters, battle) {
@@ -3604,12 +3610,19 @@ function createDamageCalculatorInformation() {
     attackTypeSelection: document.getElementById("attack-type-selection"),
     victimSelection: document.getElementById("victim-selection"),
     damageResult: document.getElementById("result-damage"),
-    errorInformation: document.getElementById("error-information").querySelectorAll("[data-error]"),
+    errorInformation: {},
     tableContainer: document.getElementById("result-table-container"),
     tableResult: document.getElementById("result-table").children[0],
     mapping: mapping,
     constants: constants,
   };
+
+  var errorElements = document.getElementById("error-information").querySelectorAll("li[data-error]");
+
+  for (var index = 0; index < errorElements.length; index++) {
+    var errorElement = errorElements[index];
+    battle.errorInformation[errorElement.dataset.error] = errorElement;
+  }
 
   return [characters, battle];
 }
