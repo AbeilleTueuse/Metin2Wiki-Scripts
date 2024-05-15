@@ -3356,6 +3356,10 @@ function createMonster(monsterVnum, attacker) {
   return monster;
 }
 
+function addPotentialErrorInformation(errorInformation, attacker, victim) {
+  // pass
+}
+
 function createBattle(characters, battle) {
   function isPseudoSaved(pseudo) {
     return characters.savedCharacters.hasOwnProperty(pseudo);
@@ -3431,6 +3435,7 @@ function createBattle(characters, battle) {
       minMaxDamages.max +
       ").";
 
+    addPotentialErrorInformation(battle.errorInformation, attacker, victim);
     showElement(battle.tableContainer);
   });
 
@@ -3599,6 +3604,7 @@ function createDamageCalculatorInformation() {
     attackTypeSelection: document.getElementById("attack-type-selection"),
     victimSelection: document.getElementById("victim-selection"),
     damageResult: document.getElementById("result-damage"),
+    errorInformation: document.getElementById("error-information").querySelectorAll("[data-error]"),
     tableContainer: document.getElementById("result-table-container"),
     tableResult: document.getElementById("result-table").children[0],
     mapping: mapping,
