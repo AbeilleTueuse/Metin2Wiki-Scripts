@@ -1512,7 +1512,8 @@ function calcDamageWithSecondaryBonuses(
   damages,
   battleValues,
   damagesType,
-  minPiercingDamages
+  minPiercingDamages,
+  damagesWithPrimaryBonuses
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
@@ -1525,7 +1526,7 @@ function calcDamageWithSecondaryBonuses(
 
   if (damagesType.piercingHit) {
     damages += battleValues.defense + Math.min(0, minPiercingDamages);
-    damages = floorMultiplication(damages, battleValues.extraPiercingHitCoeff);
+    damages += floorMultiplication(damagesWithPrimaryBonuses, battleValues.extraPiercingHitCoeff);
   }
 
   damages = floorMultiplication(damages, battleValues.averageDamageCoeff);
@@ -1977,7 +1978,7 @@ function createPhysicalBattleValues(
     weaponDefenseCoeff: 1 - weaponDefense / 100,
     tigerStrengthCoeff: 1 + tigerStrength / 100,
     blessingBonusCoeff: 1 - blessingBonus / 100,
-    extraPiercingHitCoeff: 1 + extraPiercingHitPercentage / 200,
+    extraPiercingHitCoeff: extraPiercingHitPercentage / 200,
     averageDamageCoeff: 1 + averageDamage / 100,
     averageDamageResistanceCoeff:
       1 - Math.min(99, averageDamageResistance) / 100,
@@ -2402,15 +2403,15 @@ function calcPhysicalDamages(
         battleValues
       );
 
-      damagesWithPrimaryBonuses -=
-        battleValues.defense + battleValues.defenseMarriage;
+      var minPiercingDamages = damagesWithPrimaryBonuses - battleValues.defense + battleValues.defenseMarriage;
 
-      if (damagesWithPrimaryBonuses <= 2) {
+      if (minPiercingDamages <= 2) {
         for (var damages = 1; damages <= 5; damages++) {
           var finalDamages = calcDamageWithSecondaryBonuses(
             damages,
             battleValues,
             damagesType,
+            minPiercingDamages,
             damagesWithPrimaryBonuses
           );
 
@@ -2423,9 +2424,10 @@ function calcPhysicalDamages(
         }
       } else {
         var finalDamages = calcDamageWithSecondaryBonuses(
-          damagesWithPrimaryBonuses,
+          minPiercingDamages,
           battleValues,
           damagesType,
+          minPiercingDamages,
           damagesWithPrimaryBonuses
         );
 
