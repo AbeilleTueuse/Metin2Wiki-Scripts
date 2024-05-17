@@ -479,6 +479,13 @@ function characterCreationListener(characters, battle) {
       characters.unsavedChanges = false;
     }
   });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.ctrlKey && event.key === "s") {
+      event.preventDefault();
+      characters.saveButton.click();
+    }
+  });
 }
 
 function downloadCharacter(character) {
@@ -787,8 +794,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
+          pseudo +
+          " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -2651,7 +2658,7 @@ function getSkillFormula(
         skillFormula = function (atk) {
           return floorMultiplication(
             (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-              1.1,
+            1.1,
             1
           );
         };
@@ -2789,7 +2796,7 @@ function getSkillFormula(
           return floorMultiplication(
             (atk +
               (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
-              1.2,
+            1.2,
             1
           );
         };
@@ -2812,9 +2819,9 @@ function getSkillFormula(
         skillFormula = function (atk) {
           return floorMultiplication(
             atk +
-              2 * lv +
-              2 * int +
-              (2 * atk + 4 * str + 14 * int) * skillPower,
+            2 * lv +
+            2 * int +
+            (2 * atk + 4 * str + 14 * int) * skillPower,
             1
           );
         };
@@ -2826,9 +2833,9 @@ function getSkillFormula(
         skillFormula = function (atk) {
           return floorMultiplication(
             1.1 * atk +
-              2 * lv +
-              2 * int +
-              (1.5 * atk + str + 12 * int) * skillPower,
+            2 * lv +
+            2 * int +
+            (1.5 * atk + str + 12 * int) * skillPower,
             1
           );
         };
@@ -2842,9 +2849,9 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             40 +
-              5 * lv +
-              2 * int +
-              (13 * int + 6 * mav + 75) * attackFactor * skillPower,
+            5 * lv +
+            2 * int +
+            (13 * int + 6 * mav + 75) * attackFactor * skillPower,
             1
           );
         };
@@ -2866,9 +2873,9 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             30 +
-              2 * lv +
-              2 * int +
-              (7 * int + 6 * mav + 350) * attackFactor * skillPower,
+            2 * lv +
+            2 * int +
+            (7 * int + 6 * mav + 350) * attackFactor * skillPower,
             1
           );
         };
@@ -2887,10 +2894,10 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                attackFactor *
-                skillPower,
+            6 * lv +
+            (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+            attackFactor *
+            skillPower,
             1
           );
         };
@@ -2904,8 +2911,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             70 +
-              5 * lv +
-              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+            5 * lv +
+            (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
             1
           );
         };
@@ -2917,8 +2924,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             60 +
-              5 * lv +
-              (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
+            5 * lv +
+            (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
             1
           );
         };
@@ -2931,8 +2938,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             70 +
-              3 * lv +
-              (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
+            3 * lv +
+            (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
             1
           );
         };
@@ -2947,10 +2954,10 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             60 +
-              5 * lv +
-              (8 * int + 2 * dex + 8 * mav + 10 * int) *
-                attackFactor *
-                skillPower,
+            5 * lv +
+            (8 * int + 2 * dex + 8 * mav + 10 * int) *
+            attackFactor *
+            skillPower,
             1
           );
         };
@@ -2962,10 +2969,10 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             40 +
-              4 * lv +
-              (13 * int + 2 * str + 10 * mav + 10.5 * int) *
-                attackFactor *
-                skillPower,
+            4 * lv +
+            (13 * int + 2 * str + 10 * mav + 10.5 * int) *
+            attackFactor *
+            skillPower,
             1
           );
         };
@@ -2978,8 +2985,8 @@ function getSkillFormula(
         skillFormula = function (mav) {
           return floorMultiplication(
             50 +
-              5 * lv +
-              (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
+            5 * lv +
+            (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
             1
           );
         };
@@ -3404,6 +3411,16 @@ function createMonster(monsterVnum, attacker) {
   return monster;
 }
 
+function addPotentialErrorInformation(errorInformation, attacker, victim) {
+  if (isPC(attacker)) {
+    if (isRiding(attacker) && attacker.horsePoint === 0) {
+      showElement(errorInformation["horse-level"]);
+    } else {
+      hideElement(errorInformation["horse-level"]);
+    }
+  }
+}
+
 function createBattle(characters, battle) {
   function isPseudoSaved(pseudo) {
     return characters.savedCharacters.hasOwnProperty(pseudo);
@@ -3479,6 +3496,7 @@ function createBattle(characters, battle) {
       minMaxDamages.max +
       ").";
 
+    addPotentialErrorInformation(battle.errorInformation, attacker, victim);
     showElement(battle.tableContainer);
   });
 
@@ -3649,11 +3667,19 @@ function createDamageCalculatorInformation() {
     attackTypeSelection: document.getElementById("attack-type-selection"),
     victimSelection: document.getElementById("victim-selection"),
     damageResult: document.getElementById("result-damage"),
+    errorInformation: {},
     tableContainer: document.getElementById("result-table-container"),
     tableResult: document.getElementById("result-table").children[0],
     mapping: mapping,
     constants: constants,
   };
+
+  var errorElements = document.getElementById("error-information").querySelectorAll("li[data-error]");
+
+  for (var index = 0; index < errorElements.length; index++) {
+    var errorElement = errorElements[index];
+    battle.errorInformation[errorElement.dataset.error] = errorElement;
+  }
 
   return [characters, battle];
 }
