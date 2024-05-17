@@ -1564,6 +1564,9 @@ function calcDamageWithSecondaryBonuses(
   damages = floorMultiplication(damages, battleValues.sungMaStrBonusCoeff);
   damages -= floorMultiplication(damages, battleValues.sungmaStrMalusCoeff);
 
+  damages = floorMultiplication(damages, battleValues.whiteDragonElixirCoeff);
+  damages = floorMultiplication(damages, battleValues.steelDragonElixirCoeff);
+
   return damages;
 }
 
@@ -1607,6 +1610,9 @@ function calcSkillDamageWithSecondaryBonuses(
   damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
   damages = floorMultiplication(damages, battleValues.sungMaStrBonusCoeff);
   damages -= floorMultiplication(damages, battleValues.sungmaStrMalusCoeff);
+
+  damages = floorMultiplication(damages, battleValues.whiteDragonElixirCoeff);
+  damages = floorMultiplication(damages, battleValues.steelDragonElixirCoeff);
 
   return damages;
 }
@@ -1796,6 +1802,8 @@ function createPhysicalBattleValues(
   var empireMalus = 0;
   var sungMaStrBonus = 0;
   var sungmaStrMalus = 0;
+  var whiteDragonElixir = 0;
+  var steelDragonElixir = 0;
 
   computePolymorphPoint(attacker, victim, polymorphPowerTable);
   computeHorse(attacker);
@@ -1811,6 +1819,10 @@ function createPhysicalBattleValues(
 
     if (victim.hasOwnProperty(weaponDefenseName)) {
       weaponDefense = victim[weaponDefenseName];
+    }
+
+    if (attacker.whiteDragonElixir === "on") {
+      whiteDragonElixir = 10;
     }
 
     if (isPC(victim)) {
@@ -1988,6 +2000,10 @@ function createPhysicalBattleValues(
     } else {
       defensePercent = (-2 * victim.defense * victim.defensePercent) / 100;
     }
+
+    if (victim.steelDragonElixir === "on") {
+      steelDragonElixir = 10;
+    }
   }
 
   missPercentage = Math.min(100, missPercentage);
@@ -2024,6 +2040,8 @@ function createPhysicalBattleValues(
     empireMalusCoeff: 1 - empireMalus / 100,
     sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
     sungmaStrMalusCoeff: sungmaStrMalus,
+    whiteDragonElixirCoeff: 1 + whiteDragonElixir / 100,
+    steelDragonElixirCoeff: 1 - steelDragonElixir / 100
   };
 
   criticalHitPercentage = Math.min(
@@ -2111,6 +2129,8 @@ function createSkillBattleValues(
   var empireMalus = 0;
   var sungMaStrBonus = 0;
   var sungmaStrMalus = 0;
+  var whiteDragonElixir = 0;
+  var steelDragonElixir = 0;
 
   computePolymorphPoint(attacker, victim);
   computeHorse(attacker);
@@ -2134,6 +2154,10 @@ function createSkillBattleValues(
 
     if (victim.hasOwnProperty(weaponDefenseName)) {
       weaponDefense = victim[weaponDefenseName];
+    }
+
+    if (attacker.whiteDragonElixir === "on") {
+      whiteDragonElixir = 10;
     }
 
     if (isPC(victim)) {
@@ -2271,6 +2295,10 @@ function createSkillBattleValues(
     } else {
       defensePercent = (-2 * victim.defense * victim.defensePercent) / 100;
     }
+
+    if (victim.steelDragonElixir === "on") {
+      steelDragonElixir = 10;
+    }
   }
 
   if (magicSkill) {
@@ -2311,6 +2339,8 @@ function createSkillBattleValues(
     empireMalusCoeff: 1 - empireMalus / 100,
     sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
     sungmaStrMalusCoeff: sungmaStrMalus,
+    whiteDragonElixirCoeff: 1 + whiteDragonElixir / 100,
+    steelDragonElixirCoeff: 1 - steelDragonElixir / 100
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
