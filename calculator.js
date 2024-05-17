@@ -352,8 +352,14 @@ function filterForm(characters, battle) {
       case "lowRank":
         filterCheckbox(target, characterCreation.playerRank.parentElement);
         break;
-      case "blessingActivation":
+      case "isBlessed":
         filterCheckbox(target, characters.blessingCreation);
+        break;
+      case "onYohara":
+        filterCheckbox(target, characters.yoharaCreation);
+        break;
+      case "isMarried":
+        filterCheckbox(target, characters.marriageCreation);
         break;
     }
 
@@ -572,8 +578,8 @@ function handleUploadCharacter(
     dropZone.classList.add("drop-zone--dragover");
   });
 
-  ["dragleave", "dragend"].forEach(function(type) {
-    dropZone.addEventListener(type, function() {
+  ["dragleave", "dragend"].forEach(function (type) {
+    dropZone.addEventListener(type, function () {
       dropZone.classList.remove("drop-zone--dragover");
     });
   });
@@ -695,10 +701,12 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
     characterCreation.lowRank,
     characterCreation.playerRank.parentElement
   );
+  filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
   filterCheckbox(
-    characterCreation.blessingActivation,
+    characterCreation.isBlessed,
     characters.blessingCreation
   );
+  filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
   filterSkills(classChoice.value, characters.skillElementsToFilter);
 }
 
@@ -1526,7 +1534,10 @@ function calcDamageWithSecondaryBonuses(
 
   if (damagesType.piercingHit) {
     damages += battleValues.defense + Math.min(0, minPiercingDamages);
-    damages += floorMultiplication(damagesWithPrimaryBonuses, battleValues.extraPiercingHitCoeff);
+    damages += floorMultiplication(
+      damagesWithPrimaryBonuses,
+      battleValues.extraPiercingHitCoeff
+    );
   }
 
   damages = floorMultiplication(damages, battleValues.averageDamageCoeff);
@@ -1546,6 +1557,8 @@ function calcDamageWithSecondaryBonuses(
     floorMultiplication(damages, battleValues.damageBonusCoeff)
   );
   damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
+  damages = floorMultiplication(damages, battleValues.sungMaStrBonusCoeff);
+  damages -= floorMultiplication(damages, battleValues.sungmaStrMalusCoeff);
 
   return damages;
 }
@@ -1588,6 +1601,8 @@ function calcSkillDamageWithSecondaryBonuses(
     floorMultiplication(damages, battleValues.damageBonusCoeff)
   );
   damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
+  damages = floorMultiplication(damages, battleValues.sungMaStrBonusCoeff);
+  damages -= floorMultiplication(damages, battleValues.sungmaStrMalusCoeff);
 
   return damages;
 }
@@ -1775,6 +1790,8 @@ function createPhysicalBattleValues(
   var defensePercent = 0;
   var damageBonus = 0;
   var empireMalus = 0;
+  var sungMaStrBonus = 0;
+  var sungmaStrMalus = 0;
 
   computePolymorphPoint(attacker, victim, polymorphPowerTable);
   computeHorse(attacker);
@@ -1817,28 +1834,30 @@ function createPhysicalBattleValues(
       blessingBonus = calcBlessingBonus(skillPowerTable, victim);
       averageDamageResistance = victim.averageDamageResistance;
     } else {
-      if (attacker.loveNecklace === "on") {
-        attackValueMarriage = getMarriageBonusValue(
-          attacker,
-          marriageTable,
-          "loveNecklace"
-        );
-      }
+      if (attacker.isMarried === "on") {
+        if (attacker.loveNecklace === "on") {
+          attackValueMarriage = getMarriageBonusValue(
+            attacker,
+            marriageTable,
+            "loveNecklace"
+          );
+        }
 
-      if (attacker.loveEarrings === "on") {
-        criticalHitPercentageMarriage = getMarriageBonusValue(
-          attacker,
-          marriageTable,
-          "loveEarrings"
-        );
-      }
+        if (attacker.loveEarrings === "on") {
+          criticalHitPercentageMarriage = getMarriageBonusValue(
+            attacker,
+            marriageTable,
+            "loveEarrings"
+          );
+        }
 
-      if (attacker.harmonyEarrings === "on") {
-        piercingHitPercentageMarriage = getMarriageBonusValue(
-          attacker,
-          marriageTable,
-          "harmonyEarrings"
-        );
+        if (attacker.harmonyEarrings === "on") {
+          piercingHitPercentageMarriage = getMarriageBonusValue(
+            attacker,
+            marriageTable,
+            "harmonyEarrings"
+          );
+        }
       }
 
       if (attacker.tigerStrength === "on") {
@@ -1872,6 +1891,16 @@ function createPhysicalBattleValues(
       if (isBoss(victim)) {
         averageDamage += attacker.bossDamage;
       }
+
+      if (attacker.onYohara === "on") {
+        var sungmaStrDifference = attacker.sungmaStr - attacker.sungmaStrMalus;
+
+        if (sungmaStrDifference >= 0) {
+          sungMaStrBonus = sungmaStrDifference;
+        } else {
+          sungmaStrMalus = .5;
+        }
+      }
     }
 
     averageDamage += attacker.averageDamage;
@@ -1883,20 +1912,22 @@ function createPhysicalBattleValues(
     }
   } else {
     if (isPC(victim)) {
-      if (victim.harmonyBracelet === "on") {
-        monsterResistanceMarriage = getMarriageBonusValue(
-          victim,
-          marriageTable,
-          "harmonyBracelet"
-        );
-      }
+      if (victim.isMarried === "on") {
+        if (victim.harmonyBracelet === "on") {
+          monsterResistanceMarriage = getMarriageBonusValue(
+            victim,
+            marriageTable,
+            "harmonyBracelet"
+          );
+        }
 
-      if (victim.harmonyNecklace === "on") {
-        defenseMarriage = getMarriageBonusValue(
-          victim,
-          marriageTable,
-          "harmonyNecklace"
-        );
+        if (victim.harmonyNecklace === "on") {
+          defenseMarriage = getMarriageBonusValue(
+            victim,
+            marriageTable,
+            "harmonyNecklace"
+          );
+        }
       }
 
       monsterResistance = victim.monsterResistance;
@@ -1987,6 +2018,8 @@ function createPhysicalBattleValues(
     defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: damageBonus / 100,
     empireMalusCoeff: 1 - empireMalus / 100,
+    sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
+    sungmaStrMalusCoeff: sungmaStrMalus,
   };
 
   criticalHitPercentage = Math.min(
@@ -2072,6 +2105,8 @@ function createSkillBattleValues(
   var defensePercent = 0;
   var damageBonus = 0;
   var empireMalus = 0;
+  var sungMaStrBonus = 0;
+  var sungmaStrMalus = 0;
 
   computePolymorphPoint(attacker, victim);
   computeHorse(attacker);
@@ -2110,28 +2145,30 @@ function createSkillBattleValues(
 
       criticalHitPercentage = 0;
     } else {
-      if (attacker.loveNecklace === "on") {
-        attackValueMarriage = getMarriageBonusValue(
-          attacker,
-          marriageTable,
-          "loveNecklace"
-        );
-      }
+      if (attacker.isMarried === "on") {
+        if (attacker.loveNecklace === "on") {
+          attackValueMarriage = getMarriageBonusValue(
+            attacker,
+            marriageTable,
+            "loveNecklace"
+          );
+        }
 
-      if (attacker.loveEarrings === "on") {
-        criticalHitPercentage += getMarriageBonusValue(
-          attacker,
-          marriageTable,
-          "loveEarrings"
-        );
-      }
+        if (attacker.loveEarrings === "on") {
+          criticalHitPercentage += getMarriageBonusValue(
+            attacker,
+            marriageTable,
+            "loveEarrings"
+          );
+        }
 
-      if (attacker.harmonyEarrings === "on") {
-        piercingHitPercentage += getMarriageBonusValue(
-          attacker,
-          marriageTable,
-          "harmonyEarrings"
-        );
+        if (attacker.harmonyEarrings === "on") {
+          piercingHitPercentage += getMarriageBonusValue(
+            attacker,
+            marriageTable,
+            "harmonyEarrings"
+          );
+        }
       }
 
       if (attacker.tigerStrength === "on") {
@@ -2165,6 +2202,16 @@ function createSkillBattleValues(
       if (isBoss(victim)) {
         skillDamage += attacker.skillBossDamage;
       }
+
+      if (attacker.onYohara === "on") {
+        var sungmaStrDifference = attacker.sungmaStr - attacker.sungmaStrMalus;
+
+        if (sungmaStrDifference >= 0) {
+          sungMaStrBonus = sungmaStrDifference;
+        } else {
+          sungmaStrMalus = .5;
+        }
+      }
     }
 
     skillDamage += attacker.skillDamage;
@@ -2176,13 +2223,14 @@ function createSkillBattleValues(
     }
   } else {
     if (isPC(victim)) {
-      if (victim.harmonyBracelet === "on") {
+      if (victim.isMarried === "on" && victim.harmonyBracelet === "on") {
         monsterResistanceMarriage = getMarriageBonusValue(
           victim,
           marriageTable,
           "harmonyBracelet"
         );
       }
+
       monsterResistance = victim.monsterResistance;
 
       for (var index = 0; index < elementBonus.length; index++) {
@@ -2257,6 +2305,8 @@ function createSkillBattleValues(
     defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: damageBonus / 100,
     empireMalusCoeff: 1 - empireMalus / 100,
+    sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
+    sungmaStrMalusCoeff: sungmaStrMalus,
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
@@ -2403,7 +2453,10 @@ function calcPhysicalDamages(
         battleValues
       );
 
-      var minPiercingDamages = damagesWithPrimaryBonuses - battleValues.defense + battleValues.defenseMarriage;
+      var minPiercingDamages =
+        damagesWithPrimaryBonuses -
+        battleValues.defense +
+        battleValues.defenseMarriage;
 
       if (minPiercingDamages <= 2) {
         for (var damages = 1; damages <= 5; damages++) {
@@ -2451,7 +2504,7 @@ function calcPhysicalDamages(
 }
 
 function calcBlessingBonus(skillPowerTable, victim) {
-  if (victim.blessingActivation !== "on") {
+  if (victim.isBlessed !== "on") {
     return 0;
   }
 
@@ -3566,7 +3619,9 @@ function createDamageCalculatorInformation() {
     randomMagicAttackValue: document.getElementById(
       "random-magic-attack-value"
     ),
+    yoharaCreation: document.getElementById("yohara-creation"),
     blessingCreation: document.getElementById("blessing-creation"),
+    marriageCreation: document.getElementById("marriage-creation"),
   };
 
   delete characters.newCharacterTemplate.dataset.click;
