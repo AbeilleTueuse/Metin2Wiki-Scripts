@@ -3494,6 +3494,11 @@ function createBattle(characters, battle) {
   battle.battleForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
+    // auto save
+    if (characters.unsavedChanges) {
+      characters.saveButton.click();
+    }
+
     var battleInfo = new FormData(event.target);
     var attackerName = battleInfo.get("attacker");
     var attackType = battleInfo.get("attackTypeSelection");
