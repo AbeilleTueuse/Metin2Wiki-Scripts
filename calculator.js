@@ -382,7 +382,9 @@ function getSavedMonsters() {
   var savedMonsters = localStorage.getItem("savedMonstersCalculator");
 
   if (savedMonsters) {
-    return JSON.parse(savedMonsters);
+    return JSON.parse(savedMonsters).filter(function(num) {
+      return !isNaN(Number(num))
+    });
   }
   return [];
 }
