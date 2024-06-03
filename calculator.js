@@ -1842,7 +1842,7 @@ function createPhysicalBattleValues(
 
       calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
-      if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
+      if (weaponType !== 2 && attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
 
@@ -2167,7 +2167,7 @@ function createSkillBattleValues(
 
       calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
 
-      if (attacker.hasOwnProperty(weaponDefenseBreakName)) {
+      if (weaponType !== 2 && attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
 
@@ -2936,6 +2936,9 @@ function getSkillFormula(
       // Talisman volant
       case 1:
         skillFormula = function (mav) {
+          console.log(70 +
+            5 * lv +
+            (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower)
           return floorMultiplication(
             70 +
               5 * lv +
