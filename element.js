@@ -45,8 +45,12 @@ function createElement(
     newElement.appendChild(childdNodes[childIndex].cloneNode(true));
   }
 
-  if (newElement.dataset.add === "skill") {
-    for (var index = 0; index < skillValues.length; index++) {
+  var addAttribute = newElement.dataset.add;
+
+  if (addAttribute && addAttribute.startsWith("skill")) {
+    var maxLevel = Number(addAttribute.split("skill")[1]);
+
+    for (var index = 0; index <= maxLevel; index++) {
       var option = document.createElement("option");
       option.value = index;
       option.textContent = skillValues[index];

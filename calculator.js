@@ -270,24 +270,38 @@ function filterAttackTypeSelection(attacker, attackTypeSelection) {
   var selectedOption =
     attackTypeSelection.options[attackTypeSelection.selectedIndex];
 
-  for (var option of attackTypeSelection.options) {
-    optionClass = option.dataset.class;
+  for (var index = 2; index < attackTypeSelection.options.length; index++) {
+    var option = attackTypeSelection.options[index];
+    var optionClass = option.dataset.class;
+    var optionValue = option.value;
 
-    if (optionClass) {
-      if (
+    if (
+      (optionClass &&
         optionClass === attackerClass &&
-        attacker[option.value] &&
-        attacker.state !== "polymorph"
-      ) {
-        showElement(option);
-      } else {
-        hideElement(option);
+        attacker[optionValue] &&
+        !isPolymorph(attacker)) ||
+      (optionValue.startsWith("horseSkill") &&
+        isRiding(attacker) &&
+        attacker[optionValue])
+    ) {
+      showElement(option);
+    } else {
+      hideElement(option);
 
-        if (selectedOption === option) {
-          attackTypeSelection.selectedIndex = 0;
-        }
+      if (selectedOption === option) {
+        attackTypeSelection.selectedIndex = 0;
       }
     }
+  }
+}
+
+function filterAttackTypeSelectionMonster(attackTypeSelection) {
+  for (var index = 2; index < attackTypeSelection.options.length; index++) {
+    hideElement(attackTypeSelection.options[index]);
+  }
+
+  if (attackTypeSelection.selectedIndex !== 1) {
+    attackTypeSelection.selectedIndex = 0;
   }
 }
 
@@ -363,7 +377,10 @@ function filterForm(characters, battle) {
         break;
     }
 
-    if (targetName.startsWith("attackSkill")) {
+    if (
+      targetName.startsWith("attackSkill") ||
+      targetName.startsWith("horseSkill")
+    ) {
       battle.resetAttackType = true;
     }
   });
@@ -382,8 +399,8 @@ function getSavedMonsters() {
   var savedMonsters = localStorage.getItem("savedMonstersCalculator");
 
   if (savedMonsters) {
-    return JSON.parse(savedMonsters).filter(function(num) {
-      return !isNaN(Number(num))
+    return JSON.parse(savedMonsters).filter(function (num) {
+      return !isNaN(Number(num));
     });
   }
   return [];
@@ -2043,7 +2060,7 @@ function createPhysicalBattleValues(
     sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
     sungmaStrMalusCoeff: sungmaStrMalus,
     whiteDragonElixirCoeff: 1 + whiteDragonElixir / 100,
-    steelDragonElixirCoeff: 1 - steelDragonElixir / 100
+    steelDragonElixirCoeff: 1 - steelDragonElixir / 100,
   };
 
   criticalHitPercentage = Math.min(
@@ -2342,7 +2359,7 @@ function createSkillBattleValues(
     sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
     sungmaStrMalusCoeff: sungmaStrMalus,
     whiteDragonElixirCoeff: 1 + whiteDragonElixir / 100,
-    steelDragonElixirCoeff: 1 - steelDragonElixir / 100
+    steelDragonElixirCoeff: 1 - steelDragonElixir / 100,
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
@@ -2581,513 +2598,549 @@ function getSkillFormula(
   var int = attacker.int;
   var dex = attacker.dex;
 
-  var skillPower = getSkillPower(
-    attacker["attackSkill" + skillId],
-    skillPowerTable
-  );
+  if (skillId <= 9) {
+    var skillPower = getSkillPower(
+      attacker["attackSkill" + skillId],
+      skillPowerTable
+    );
 
-  var improvedBySkillBonus = false;
-  var improvedByBonus = false;
+    var improvedBySkillBonus = false;
+    var improvedByBonus = false;
 
-  if (attackerClass === "body") {
-    switch (skillId) {
-      // Triple lacération
-      case 1:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Moulinet à l'épée
-      case 2:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Accélération
-      case 5:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Volonté de vivre
-      case 6:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
-            1
-          );
-        };
-        break;
-      case 9:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            3 * atk + (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
-            1
-          );
-        };
-        break;
+    if (attackerClass === "body") {
+      switch (skillId) {
+        // Triple lacération
+        case 1:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Moulinet à l'épée
+        case 2:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Accélération
+        case 5:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Volonté de vivre
+        case 6:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
+              1
+            );
+          };
+          break;
+        case 9:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              3 * atk +
+                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
+              1
+            );
+          };
+          break;
+      }
+    } else if (attackerClass === "mental") {
+      switch (skillId) {
+        // Attaque de l'esprit
+        case 1:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Attaque de la paume
+        case 2:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Charge
+        case 3:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
+              1
+            );
+          };
+          break;
+        // Coup d'épée
+        case 5:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Orbe de l'épée
+        case 6:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
+                1.1,
+              1
+            );
+          };
+          break;
+        // Tremblement de terre
+        case 9:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              3 * atk +
+                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
+              1
+            );
+          };
+          break;
+      }
+    } else if (attackerClass === "blade_fight") {
+      switch (skillId) {
+        // Embuscade
+        case 1:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              atk + (1.2 * atk + 600 + 4 * dex + 4 * str) * skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [1, 50];
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Attaque rapide
+        case 2:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              atk + (1.6 * atk + 250 + 7 * dex + 7 * str) * skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [1, 35];
+          improvedByBonus = true;
+          break;
+        // Dague filante
+        case 3:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Brume empoisonnée
+        case 5:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Poison insidieux
+        case 6:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
+              1
+            );
+          };
+          break;
+        // Étoiles brillantes
+        case 9:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              atk + (1.7 * atk + 500.5 + 6 * dex + 5 * lv) * skillPower,
+              1
+            );
+          };
+          break;
+      }
+    } else if (attackerClass === "archery") {
+      switch (skillId) {
+        // Tir à répétition
+        // case 1:
+        //   skillFormula = function (atk) {
+        //     return floorMultiplication(
+        //       atk + 0.2 * atk * Math.floor(2 + 6 * skillPower) + (0.8 * atk + 8 * dex * attackFactor + 2 * int) * skillPower,
+        //       1
+        //     );
+        //   };
+        //   improvedByBonus = true;
+        //   break;
+        // Pluie de flèches
+        case 2:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              atk + (1.7 * atk + 5 * dex + str) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Flèche de feu
+        case 3:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              1.5 * atk + (2.6 * atk + 0.9 * int + 200) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Foulée de plume
+        case 4:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              (3 * dex + 200 + 2 * str + 2 * int) * skillPower,
+              1
+            );
+          };
+          skillInfo.removeWeaponReduction = true;
+          break;
+        // Flèche empoisonnée
+        case 5:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              atk +
+                (1.4 * atk + 150 + 7 * dex + 4 * str + 4 * int) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Coup étincelant
+        case 6:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              (atk +
+                (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
+                1.2,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+        // Tir tempête
+        case 9:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              1.9 * atk + (2.6 * atk + 500.5) * skillPower,
+              1
+            );
+          };
+          break;
+      }
+    } else if (attackerClass === "weaponary") {
+      switch (skillId) {
+        // Toucher brûlant
+        case 1:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              atk +
+                2 * lv +
+                2 * int +
+                (2 * atk + 4 * str + 14 * int) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Tourbillon du dragon
+        case 2:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              1.1 * atk +
+                2 * lv +
+                2 * int +
+                (1.5 * atk + str + 12 * int) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+      }
+    } else if (attackerClass === "black_magic") {
+      switch (skillId) {
+        // Attaque des ténèbres
+        case 1:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              40 +
+                5 * lv +
+                2 * int +
+                (13 * int + 6 * mav + 75) * attackFactor * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Attaque de flammes
+        // case 2:
+        //   skillFormula = function (mav) {
+        //     return floorMultiplication(
+        //       5 * lv + 2 * int + (7 * int + 8 * mav + 4 * str + 2 * vit + 190) * skillPower,
+        //       1
+        //     );
+        //   };
+        //   improvedByBonus = true;
+        //   break;
+        // Esprit de flammes
+        case 3:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              30 +
+                2 * lv +
+                2 * int +
+                (7 * int + 6 * mav + 350) * attackFactor * skillPower,
+              1
+            );
+          };
+          break;
+        // Frappe de l'esprit
+        // case 5:
+        //   skillFormula = function (mav) {
+        //     return floorMultiplication(
+        //       40 + 2 * lv + 2 * int + (2 * vit + 2 * dex + 13 * int + 6 * mav + 190) * attackFactor * skillPower,
+        //       1
+        //     );
+        //   };
+        //   break;
+        // Orbe des ténèbres
+        case 6:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              120 +
+                6 * lv +
+                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+      }
+    } else if (attackerClass === "dragon") {
+      switch (skillId) {
+        // Talisman volant
+        case 1:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              70 +
+                5 * lv +
+                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [4, 10];
+          improvedByBonus = true;
+          break;
+        // Dragon chassant
+        case 2:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              60 +
+                5 * lv +
+                (16 * int + 6 * dex + 6 * mav + 120) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [4, 10];
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Rugissement du dragon
+        case 3:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              70 +
+                3 * lv +
+                (20 * int + 3 * str + 10 * mav + 100) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [4, 10];
+          improvedByBonus = true;
+          break;
+      }
+    } else if (attackerClass === "heal") {
+      switch (skillId) {
+        // Jet de foudre
+        case 1:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              60 +
+                5 * lv +
+                (8 * int + 2 * dex + 8 * mav + 10 * int) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [6, 10];
+          improvedByBonus = true;
+          break;
+        // Invocation de foudre
+        case 2:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              40 +
+                4 * lv +
+                (13 * int + 2 * str + 10 * mav + 10.5 * int) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [6, 10];
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Griffe de foudre
+        case 3:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              50 +
+                5 * lv +
+                (8 * int + 2 * str + 8 * mav + 400.5) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+      }
+    } else if (attackerClass === "lycan") {
+      switch (skillId) {
+        // Déchiqueter
+        // case 1:
+        //   skillFormula = function (atk) {
+        //     return floorMultiplication(
+        //       1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
+        //       1
+        //     );
+        //   };
+        //   skillInfo.weaponBonus = [5, 54];
+        //   improvedByBonus = true;
+        //   break;
+        // Souffle de loup
+        case 2:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [5, 35];
+          improvedByBonus = true;
+          improvedBySkillBonus = true;
+          break;
+        // Bond de loup
+        case 3:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
+              1
+            );
+          };
+          skillInfo.weaponBonus = [5, 35];
+          improvedByBonus = true;
+          break;
+        // Griffe de loup
+        case 4:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
+              1
+            );
+          };
+          improvedByBonus = true;
+          break;
+      }
     }
-  } else if (attackerClass === "mental") {
-    switch (skillId) {
-      // Attaque de l'esprit
-      case 1:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Attaque de la paume
-      case 2:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Charge
-      case 3:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
-            1
-          );
-        };
-        break;
-      // Coup d'épée
-      case 5:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Orbe de l'épée
-      case 6:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-              1.1,
-            1
-          );
-        };
-        break;
-      // Tremblement de terre
-      case 9:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            3 * atk + (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
-            1
-          );
-        };
-        break;
-    }
-  } else if (attackerClass === "blade_fight") {
-    switch (skillId) {
-      // Embuscade
-      case 1:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            atk + (1.2 * atk + 600 + 4 * dex + 4 * str) * skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [1, 50];
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Attaque rapide
-      case 2:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            atk + (1.6 * atk + 250 + 7 * dex + 7 * str) * skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [1, 35];
-        improvedByBonus = true;
-        break;
-      // Dague filante
-      case 3:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Brume empoisonnée
-      case 5:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Poison insidieux
-      case 6:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
-            1
-          );
-        };
-        break;
-      // Étoiles brillantes
-      case 9:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            atk + (1.7 * atk + 500.5 + 6 * dex + 5 * lv) * skillPower,
-            1
-          );
-        };
-        break;
-    }
-  } else if (attackerClass === "archery") {
-    switch (skillId) {
-      // Tir à répétition
-      // case 1:
-      //   skillFormula = function (atk) {
-      //     return floorMultiplication(
-      //       atk + 0.2 * atk * Math.floor(2 + 6 * skillPower) + (0.8 * atk + 8 * dex * attackFactor + 2 * int) * skillPower,
-      //       1
-      //     );
-      //   };
-      //   improvedByBonus = true;
-      //   break;
-      // Pluie de flèches
-      case 2:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            atk + (1.7 * atk + 5 * dex + str) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Flèche de feu
-      case 3:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            1.5 * atk + (2.6 * atk + 0.9 * int + 200) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Foulée de plume
-      case 4:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            (3 * dex + 200 + 2 * str + 2 * int) * skillPower,
-            1
-          );
-        };
-        skillInfo.removeWeaponReduction = true;
-        break;
-      // Flèche empoisonnée
-      case 5:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            atk + (1.4 * atk + 150 + 7 * dex + 4 * str + 4 * int) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Coup étincelant
-      case 6:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            (atk +
-              (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
-              1.2,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-      // Tir tempête
-      case 9:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            1.9 * atk + (2.6 * atk + 500.5) * skillPower,
-            1
-          );
-        };
-        break;
-    }
-  } else if (attackerClass === "weaponary") {
-    switch (skillId) {
-      // Toucher brûlant
-      case 1:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            atk +
-              2 * lv +
-              2 * int +
-              (2 * atk + 4 * str + 14 * int) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Tourbillon du dragon
-      case 2:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            1.1 * atk +
-              2 * lv +
-              2 * int +
-              (1.5 * atk + str + 12 * int) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-    }
-  } else if (attackerClass === "black_magic") {
-    switch (skillId) {
-      // Attaque des ténèbres
-      case 1:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            40 +
-              5 * lv +
-              2 * int +
-              (13 * int + 6 * mav + 75) * attackFactor * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Attaque de flammes
-      // case 2:
-      //   skillFormula = function (mav) {
-      //     return floorMultiplication(
-      //       5 * lv + 2 * int + (7 * int + 8 * mav + 4 * str + 2 * vit + 190) * skillPower,
-      //       1
-      //     );
-      //   };
-      //   improvedByBonus = true;
-      //   break;
-      // Esprit de flammes
-      case 3:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            30 +
-              2 * lv +
-              2 * int +
-              (7 * int + 6 * mav + 350) * attackFactor * skillPower,
-            1
-          );
-        };
-        break;
-      // Frappe de l'esprit
-      // case 5:
-      //   skillFormula = function (mav) {
-      //     return floorMultiplication(
-      //       40 + 2 * lv + 2 * int + (2 * vit + 2 * dex + 13 * int + 6 * mav + 190) * attackFactor * skillPower,
-      //       1
-      //     );
-      //   };
-      //   break;
-      // Orbe des ténèbres
-      case 6:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                attackFactor *
-                skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-    }
-  } else if (attackerClass === "dragon") {
-    switch (skillId) {
-      // Talisman volant
-      case 1:
-        skillFormula = function (mav) {
-          console.log(70 +
-            5 * lv +
-            (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower)
-          return floorMultiplication(
-            70 +
-              5 * lv +
-              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [4, 10];
-        improvedByBonus = true;
-        break;
-      // Dragon chassant
-      case 2:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            60 +
-              5 * lv +
-              (16 * int + 6 * dex + 6 * mav + 120) * attackFactor * skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [4, 10];
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Rugissement du dragon
-      case 3:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            70 +
-              3 * lv +
-              (20 * int + 3 * str + 10 * mav + 100) * attackFactor * skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [4, 10];
-        improvedByBonus = true;
-        break;
-    }
-  } else if (attackerClass === "heal") {
-    switch (skillId) {
-      // Jet de foudre
-      case 1:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            60 +
-              5 * lv +
-              (8 * int + 2 * dex + 8 * mav + 10 * int) *
-                attackFactor *
-                skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [6, 10];
-        improvedByBonus = true;
-        break;
-      // Invocation de foudre
-      case 2:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            40 +
-              4 * lv +
-              (13 * int + 2 * str + 10 * mav + 10.5 * int) *
-                attackFactor *
-                skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [6, 10];
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Griffe de foudre
-      case 3:
-        skillFormula = function (mav) {
-          return floorMultiplication(
-            50 +
-              5 * lv +
-              (8 * int + 2 * str + 8 * mav + 400.5) * attackFactor * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-    }
-  } else if (attackerClass === "lycan") {
-    switch (skillId) {
-      // Déchiqueter
-      // case 1:
-      //   skillFormula = function (atk) {
-      //     return floorMultiplication(
-      //       1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
-      //       1
-      //     );
-      //   };
-      //   skillInfo.weaponBonus = [5, 54];
-      //   improvedByBonus = true;
-      //   break;
-      // Souffle de loup
-      case 2:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [5, 35];
-        improvedByBonus = true;
-        improvedBySkillBonus = true;
-        break;
-      // Bond de loup
-      case 3:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
-            1
-          );
-        };
-        skillInfo.weaponBonus = [5, 35];
-        improvedByBonus = true;
-        break;
-      // Griffe de loup
-      case 4:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
-            1
-          );
-        };
-        improvedByBonus = true;
-        break;
-    }
-  }
+    if (improvedBySkillBonus) {
+      skillInfo.skillBonus =
+        16 * getSkillPower(attacker.skillBonus, skillPowerTable);
 
-  if (improvedBySkillBonus) {
-    skillInfo.skillBonus =
-      16 * getSkillPower(attacker.skillBonus, skillPowerTable);
+      var skillWardChoice = victim.skillWardChoice;
 
-    var skillWardChoice = victim.skillWardChoice;
-
-    if (skillWardChoice && skillWardChoice === attackerClass) {
-      skillInfo.skillWard =
-        24 * getSkillPower(victim.skillWard, skillPowerTable);
+      if (skillWardChoice && skillWardChoice === attackerClass) {
+        skillInfo.skillWard =
+          24 * getSkillPower(victim.skillWard, skillPowerTable);
+      }
     }
-  }
 
-  if (improvedByBonus) {
-    skillInfo.skillBonusByBonus = attacker["skillBonus" + skillId];
+    if (improvedByBonus) {
+      skillInfo.skillBonusByBonus = attacker["skillBonus" + skillId];
+    }
+  } else {
+    var skillPower = getSkillPower(
+      attacker["horseSkill" + skillId],
+      skillPowerTable
+    );
+
+    switch (skillId) {
+      case 137:
+        skillFormula = function (atk) {
+          return floorMultiplication(atk + 2 * atk * skillPower, 1);
+        };
+        break;
+      case 138:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2.4 * (200 + 1.5 * lv) + 600 * skillPower,
+            1
+          );
+        };
+        break;
+      case 139:
+        skillFormula = function (atk) {
+          return floorMultiplication(
+            2 * (200 + 1.5 * lv) + 600 * skillPower,
+            1
+          );
+        };
+        break;
+    }
   }
 
   return [skillFormula, skillInfo];
@@ -3540,13 +3593,16 @@ function createBattle(characters, battle) {
     if (attackType === "physical") {
       calcDamages = calcPhysicalDamages;
     } else if (attackType.startsWith("attackSkill")) {
-      skillId = parseInt(attackType.split("attackSkill")[1]);
+      skillId = Number(attackType.split("attackSkill")[1]);
 
       if (isMagicClass(attacker)) {
         calcDamages = calcMagicSkillDamages;
       } else {
         calcDamages = calcPhysicalSkillDamages;
       }
+    } else if (attackType.startsWith("horseSkill")) {
+      skillId = Number(attackType.split("horseSkill")[1]);
+      calcDamages = calcPhysicalSkillDamages;
     }
 
     [meanDamages, minMaxDamages] = calcDamages(
@@ -3588,15 +3644,7 @@ function createBattle(characters, battle) {
       var attacker = characters.savedCharacters[attackerName];
       filterAttackTypeSelection(attacker, attackTypeSelection);
     } else {
-      for (var option of attackTypeSelection.options) {
-        if (option.dataset.class) {
-          hideElement(option);
-        }
-      }
-
-      if (attackTypeSelection.selectedIndex !== 1) {
-        attackTypeSelection.selectedIndex = 0;
-      }
+      filterAttackTypeSelectionMonster(attackTypeSelection);
     }
   });
 }
