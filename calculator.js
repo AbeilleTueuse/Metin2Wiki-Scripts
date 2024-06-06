@@ -277,12 +277,13 @@ function filterAttackTypeSelection(attacker, attackTypeSelection) {
 
     if (
       (optionClass &&
-        optionClass === attackerClass &&
         attacker[optionValue] &&
-        !isPolymorph(attacker)) ||
+        !isPolymorph(attacker) &&
+        attackerClass === optionClass) ||
       (optionValue.startsWith("horseSkill") &&
+        attacker[optionValue] &&
         isRiding(attacker) &&
-        attacker[optionValue])
+        (!optionClass || isValueInArray(attackerClass, optionClass)))
     ) {
       showElement(option);
     } else {
@@ -3119,11 +3120,13 @@ function getSkillFormula(
     );
 
     switch (skillId) {
+      // Combat équestre
       case 137:
         skillFormula = function (atk) {
           return floorMultiplication(atk + 2 * atk * skillPower, 1);
         };
         break;
+      // Charge à cheval
       case 138:
         skillFormula = function (atk) {
           return floorMultiplication(
@@ -3132,12 +3135,19 @@ function getSkillFormula(
           );
         };
         break;
+      // Vague de Pouvoir
       case 139:
         skillFormula = function (atk) {
           return floorMultiplication(
             2 * (200 + 1.5 * lv) + 600 * skillPower,
             1
           );
+        };
+        break;
+      // Grêle de flèches
+      case 140:
+        skillFormula = function (atk) {
+          return floorMultiplication(atk + 2 * atk * skillPower, 1);
         };
         break;
     }
