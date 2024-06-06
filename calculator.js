@@ -1313,6 +1313,10 @@ function isMagicClass(character) {
   return character.race === "shaman" || character.class === "black_magic";
 }
 
+function isDispell(character, skillId) {
+  return character.class === "weaponary" && skillId === 6;
+}
+
 function isPolymorph(character) {
   return character.state === "polymorph";
 }
@@ -2325,7 +2329,9 @@ function createSkillBattleValues(
     attackValuePercent = attacker.attackMagic;
     attackValueMarriage = 0;
     defense = 0;
-    magicResistance = victim.magicResistance;
+    if (!isDispell(attacker, 6)) {
+      magicResistance = victim.magicResistance;
+    }
     weaponDefense = 0;
   }
 
@@ -2890,6 +2896,18 @@ function getSkillFormula(
             );
           };
           improvedByBonus = true;
+          break;
+        // Contre-sort
+        case 6:
+          skillFormula = function (mav) {
+            return floorMultiplication(
+              40 +
+                5 * lv +
+                2 * int +
+                (10 * int + 7 * mav + 75) * attackFactor * skillPower,
+              1
+            );
+          };
           break;
       }
     } else if (attackerClass === "black_magic") {
@@ -3604,7 +3622,7 @@ function createBattle(characters, battle) {
     } else if (attackType.startsWith("attackSkill")) {
       skillId = Number(attackType.split("attackSkill")[1]);
 
-      if (isMagicClass(attacker)) {
+      if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
         calcDamages = calcMagicSkillDamages;
       } else {
         calcDamages = calcPhysicalSkillDamages;
