@@ -269,6 +269,7 @@ function filterAttackTypeSelection(attacker, attackTypeSelection) {
   var attackerClass = attacker.class;
   var selectedOption =
     attackTypeSelection.options[attackTypeSelection.selectedIndex];
+  var attackerIsNotPolymorph = !isPolymorph(attacker);
 
   for (var index = 2; index < attackTypeSelection.options.length; index++) {
     var option = attackTypeSelection.options[index];
@@ -276,14 +277,12 @@ function filterAttackTypeSelection(attacker, attackTypeSelection) {
     var optionValue = option.value;
 
     if (
-      (optionClass &&
-        attacker[optionValue] &&
-        !isPolymorph(attacker) &&
-        attackerClass === optionClass) ||
-      (optionValue.startsWith("horseSkill") &&
-        attacker[optionValue] &&
-        isRiding(attacker) &&
-        (!optionClass || isValueInArray(attackerClass, optionClass)))
+      attackerIsNotPolymorph &&
+      attacker[optionValue] &&
+      (attackerClass === optionClass ||
+        (optionValue.startsWith("horseSkill") &&
+          isRiding(attacker) &&
+          (!optionClass || isValueInArray(attackerClass, optionClass))))
     ) {
       showElement(option);
     } else {
