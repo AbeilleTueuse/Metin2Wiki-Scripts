@@ -45,6 +45,10 @@ function floorMultiplicationWithNegative(firstFactor, secondFactor) {
   }
 }
 
+function truncateNumber(number, precision) {
+  return Math.floor(number * 10 ** precision) / 10 ** precision
+}
+
 function numberDisplay(number, precision) {
   return (Math.round(number * 10 ** precision) / 10 ** precision)
     .toString()
@@ -1340,7 +1344,7 @@ function calcAttackFactor(attacker, victim) {
   var AR = (K1 + 210) / 300;
   var ER = (((2 * K2 + 5) / (K2 + 95)) * 3) / 10;
 
-  return AR - ER;
+  return truncateNumber(AR - ER, 8);
 }
 
 function calcMainAttackValue(attacker, attackerWeapon) {
@@ -2905,6 +2909,15 @@ function getSkillFormula(
                 5 * lv +
                 2 * int +
                 (10 * int + 7 * mav + 75) * attackFactor * skillPower,
+              1
+            );
+          };
+          break;
+        // Coup démoniaque
+        case 9:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              1.9 * atk + (2.6 * atk + 500.5) * skillPower,
               1
             );
           };
