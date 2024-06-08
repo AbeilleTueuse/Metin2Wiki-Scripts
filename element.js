@@ -133,6 +133,7 @@ function addCollapsible(collapsibleContainer) {
     "svg",
     "path",
     "title",
+    "canvas",
   ];
   var elementsNS = ["svg", "path", "title"];
   var allowedProperties = [
