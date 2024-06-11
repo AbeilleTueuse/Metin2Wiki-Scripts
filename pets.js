@@ -1,67 +1,35 @@
-const PETS = [
-  "monkey",
-  "spider",
-  "razador",
-  "nemere",
-  "dragonette",
-  "meley",
-  "azrael",
-  "executor",
-  "baashido",
-  "nessie",
-  "exedyar",
-  "alastor",
-  "boss",
-];
-
-const SKILLS_MAPPING = {
-  warrior: "anti G",
-  sura: "anti S",
-  ninja: "anti N",
-  shaman: "anti Sh",
-  lycan: "anti L",
-  berserker: "berserker",
-  antiMagic: "anti magie",
-  haste: "accélération",
-  drill: "drill",
-  restoration: "renouvellemnt",
-  vampirism: "vampire",
-  spiritualism: "fantômes",
-  bulwark: "obstable",
-  reflection: "miroir",
-  yang: "yang",
-  range: "portée",
-  immortal: "invincibilité",
-  panacea: "soins",
-  masterBrewer: "maître brasseur",
-  monster: "monstre",
-  eagleEye: "regard perçant",
-  drain: "sangsue",
-  feather: "poids plume",
+const MAPPING = {
+  skills: {
+    warrior: "anti G",
+    sura: "anti S",
+    ninja: "anti N",
+    shaman: "anti Sh",
+    lycan: "anti L",
+    berserker: "berserker",
+    antiMagic: "anti magie",
+    haste: "accélération",
+    drill: "drill",
+    restoration: "renouvellemnt",
+    vampirism: "vampire",
+    spiritualism: "fantômes",
+    bulwark: "obstable",
+    reflection: "miroir",
+    yang: "yang",
+    range: "portée",
+    immortal: "invincibilité",
+    panacea: "soins",
+    masterBrewer: "maître brasseur",
+    monster: "monstre",
+    eagleEye: "regard perçant",
+    drain: "sangsue",
+    feather: "poids plume",
+  },
+  types: ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"],
+  levels: [
+    81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+    100, 101, 102, 103, 104, 105,
+  ],
 };
-
-const PETS_MAPPING = {
-  monkey: "singe",
-  spider: "araignée",
-  razador: "razador",
-  nemere: "nemere",
-  dragonette: "dragon bleu",
-  meley: "meley",
-  azrael: "azraël",
-  executor: "bourreau",
-  baashido: "baashido",
-  nessie: "nessie",
-  exedyar: "exedyar",
-  alastor: "alastor",
-  boss: "mini commandant",
-};
-
-const LEVEL_MAPPING = [
-  81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
-  100, 101, 102, 103, 104, 104,
-];
-
-const TYPE_MAPPING = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"]
 
 const VALUES_1 = [
     9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
@@ -723,83 +691,126 @@ const BOOSTED_VALUES = {
 
 function insertTh(row, value) {
   const th = document.createElement("th");
-  th.textContent = value;
+
+  if (typeof value === "string") {
+    th.textContent = value;
+  } else {
+    th.appendChild(value);
+  }
+
   row.appendChild(th);
 }
 
-// function editTable(petValues, formData) {
-//   petValues.innerHTML = "";
+function createAxisTransformer(axisX, axisY, pet, skill, type, level) {
+  if (axisX === "pets" && axisY === "skills") {
+    return (value_x, value_y) => [value_x, value_y, type, level];
+  } else if (axisX === "pets" && axisY === "types") {
+    return (value_x, value_y) => [value_x, skill, value_y, level];
+  } else if (axisX === "pets" && axisY === "levels") {
+    return (value_x, value_y) => [value_x, skill, type, value_y];
+  } else if (axisX === "skills" && axisY === "pets") {
+    return (value_x, value_y) => [value_y, value_x, type, level];
+  } else if (axisX === "skills" && axisY === "types") {
+    return (value_x, value_y) => [pet, value_x, value_y, level];
+  } else if (axisX === "skills" && axisY === "levels") {
+    return (value_x, value_y) => [pet, value_x, type, value_y];
+  } else if (axisX === "types" && axisY === "pets") {
+    return (value_x, value_y) => [value_y, skill, value_x, level];
+  } else if (axisX === "types" && axisY === "skills") {
+    return (value_x, value_y) => [pet, value_y, value_x, level];
+  } else if (axisX === "types" && axisY === "levels") {
+    return (value_x, value_y) => [pet, level, value_x, value_y];
+  } else if (axisX === "levels" && axisY === "pets") {
+    return (value_x, value_y) => [value_y, skill, type, value_x];
+  } else if (axisX === "levels" && axisY === "skills") {
+    return (value_x, value_y) => [pet, value_y, type, value_x];
+  } else {
+    return (value_x, value_y) => [pet, type, value_y, value_x];
+  }
+}
 
-//   const header = petValues.createTHead();
-//   const body = petValues.createTBody();
-//   const headerRow = header.insertRow(0);
-//   const level = formData.get("level");
-//   const type = formData.get("type");
-
-//   insertTh(headerRow, "");
-
-//   Object.values(PETS).forEach((pet) => {
-//     insertTh(headerRow, PETS_MAPPING[pet]);
-//   });
-
-//   Object.entries(BASE_VALUES).forEach(([skill, values]) => {
-//     const bodyRow = body.insertRow();
-//     insertTh(bodyRow, SKILLS_MAPPING[skill]);
-
-//     Object.values(PETS).forEach((pet) => {
-//       const cell = bodyRow.insertCell();
-//       const boosted_values = BOOSTED_VALUES[pet][skill];
-
-//       if (boosted_values) {
-//         cell.textContent = boosted_values[type][level];
-//       } else {
-//         cell.textContent = values[level];
-//       }
-//     });
-//   });
-// }
-
-function editTable(petValues, formData) {
+function editTable(petValues, formData, mapping) {
   petValues.innerHTML = "";
 
   const header = petValues.createTHead();
   const body = petValues.createTBody();
   const headerRow = header.insertRow(0);
-  const skill = formData.get("skill");
-  const type = formData.get("type");
+
+  let pet = formData.get("pet");
+  let skill = formData.get("skill");
+  let type = formData.get("type");
+  let level = formData.get("level");
+
+  const axisX = formData.get("axisX");
+  const axisY = formData.get("axisY");
+
+  const axisTransformer = createAxisTransformer(
+    axisX,
+    axisY,
+    pet,
+    skill,
+    type,
+    level
+  );
 
   insertTh(headerRow, "");
 
-  Object.values(PETS).forEach((pet) => {
-    insertTh(headerRow, PETS_MAPPING[pet]);
+  Object.values(mapping[axisX]).forEach((value) => {
+    insertTh(headerRow, value);
   });
 
-  for (let petLevel = 81; petLevel <= 105; petLevel++) {
+  Object.entries(mapping[axisY]).forEach(([value_y, value_y_display]) => {
     const bodyRow = body.insertRow();
-    insertTh(bodyRow, petLevel);
+    insertTh(bodyRow, value_y_display);
 
-    Object.values(PETS).forEach((pet) => {
+    Object.keys(mapping[axisX]).forEach((value_x) => {
       const cell = bodyRow.insertCell();
-      const boosted_values = BOOSTED_VALUES[pet][skill];
 
-      if (boosted_values) {
-        cell.textContent = boosted_values[type][petLevel - 81];
-        cell.style.backgroundColor = "rgba(0, 0, 0, .1)";
+      [pet, skill, type, level] = axisTransformer(value_x, value_y);
+      const boostedValues = BOOSTED_VALUES[pet][skill];
+
+      if (boostedValues) {
+        cell.textContent = boostedValues[type][level];
+        cell.style.color = "red";
+        cell.style.fontWeight = "bold";
       } else {
-        cell.textContent = BASE_VALUES[skill][petLevel - 81];
+        cell.textContent = BASE_VALUES[skill][level];
       }
     });
-  }
+  });
+}
+
+function createMapping() {
+  const petDisplay = document.querySelectorAll("span[data-pet]");
+  const skillDisplay = document.querySelectorAll("span[data-skill]");
+
+  const display = {
+    pets: document.querySelectorAll("span[data-pets]"),
+    skills: document.querySelectorAll("span[data-skills]"),
+    types: document.querySelectorAll("span[data-types]"),
+    levels: document.querySelectorAll("span[data-levels]")
+  };
+
+  return Object.fromEntries(
+    Object.entries(display).map(([key, elements]) => [
+      key,
+      Array.from(elements).reduce((obj, element) => {
+        obj[element.getAttribute(`data-${key}`)] = element;
+        return obj;
+      }, {}),
+    ])
+  );
 }
 
 function main() {
   const editForm = document.getElementById("edit-table"),
     petValues = document.getElementById("pet-values");
+  const mapping = createMapping();
 
   editForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = new FormData(editForm);
-    editTable(petValues, formData);
+    editTable(petValues, formData, mapping);
   });
 }
 
