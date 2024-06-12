@@ -1,36 +1,3 @@
-const MAPPING = {
-  skills: {
-    warrior: "anti G",
-    sura: "anti S",
-    ninja: "anti N",
-    shaman: "anti Sh",
-    lycan: "anti L",
-    berserker: "berserker",
-    antiMagic: "anti magie",
-    haste: "accélération",
-    drill: "drill",
-    restoration: "renouvellemnt",
-    vampirism: "vampire",
-    spiritualism: "fantômes",
-    bulwark: "obstable",
-    reflection: "miroir",
-    yang: "yang",
-    range: "portée",
-    immortal: "invincibilité",
-    panacea: "soins",
-    masterBrewer: "maître brasseur",
-    monster: "monstre",
-    eagleEye: "regard perçant",
-    drain: "sangsue",
-    feather: "poids plume",
-  },
-  types: ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"],
-  levels: [
-    81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
-    100, 101, 102, 103, 104, 105,
-  ],
-};
-
 const VALUES_1 = [
     9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
     11, 11, 11, 12, 12,
@@ -702,27 +669,27 @@ function insertTh(row, value) {
 }
 
 function createAxisTransformer(axisX, axisY, pet, skill, type, level) {
-  if (axisX === "pets" && axisY === "skills") {
+  if (axisX === "pet" && axisY === "skill") {
     return (value_x, value_y) => [value_x, value_y, type, level];
-  } else if (axisX === "pets" && axisY === "types") {
+  } else if (axisX === "pet" && axisY === "type") {
     return (value_x, value_y) => [value_x, skill, value_y, level];
-  } else if (axisX === "pets" && axisY === "levels") {
+  } else if (axisX === "pet" && axisY === "level") {
     return (value_x, value_y) => [value_x, skill, type, value_y];
-  } else if (axisX === "skills" && axisY === "pets") {
+  } else if (axisX === "skill" && axisY === "pet") {
     return (value_x, value_y) => [value_y, value_x, type, level];
-  } else if (axisX === "skills" && axisY === "types") {
+  } else if (axisX === "skill" && axisY === "type") {
     return (value_x, value_y) => [pet, value_x, value_y, level];
-  } else if (axisX === "skills" && axisY === "levels") {
+  } else if (axisX === "skill" && axisY === "level") {
     return (value_x, value_y) => [pet, value_x, type, value_y];
-  } else if (axisX === "types" && axisY === "pets") {
+  } else if (axisX === "type" && axisY === "pet") {
     return (value_x, value_y) => [value_y, skill, value_x, level];
-  } else if (axisX === "types" && axisY === "skills") {
+  } else if (axisX === "type" && axisY === "skill") {
     return (value_x, value_y) => [pet, value_y, value_x, level];
-  } else if (axisX === "types" && axisY === "levels") {
+  } else if (axisX === "type" && axisY === "level") {
     return (value_x, value_y) => [pet, level, value_x, value_y];
-  } else if (axisX === "levels" && axisY === "pets") {
+  } else if (axisX === "level" && axisY === "pet") {
     return (value_x, value_y) => [value_y, skill, type, value_x];
-  } else if (axisX === "levels" && axisY === "skills") {
+  } else if (axisX === "level" && axisY === "skill") {
     return (value_x, value_y) => [pet, value_y, type, value_x];
   } else {
     return (value_x, value_y) => [pet, type, value_y, value_x];
@@ -781,14 +748,11 @@ function editTable(petValues, formData, mapping) {
 }
 
 function createMapping() {
-  const petDisplay = document.querySelectorAll("span[data-pet]");
-  const skillDisplay = document.querySelectorAll("span[data-skill]");
-
   const display = {
-    pets: document.querySelectorAll("span[data-pets]"),
-    skills: document.querySelectorAll("span[data-skills]"),
-    types: document.querySelectorAll("span[data-types]"),
-    levels: document.querySelectorAll("span[data-levels]")
+    pet: document.querySelectorAll("span[data-pet]"),
+    skill: document.querySelectorAll("span[data-skill]"),
+    type: document.querySelectorAll("span[data-type]"),
+    level: document.querySelectorAll("span[data-level]")
   };
 
   return Object.fromEntries(
