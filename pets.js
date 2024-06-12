@@ -686,7 +686,7 @@ function createAxisTransformer(axisX, axisY, pet, skill, type, level) {
   } else if (axisX === "type" && axisY === "skill") {
     return (value_x, value_y) => [pet, value_y, value_x, level];
   } else if (axisX === "type" && axisY === "level") {
-    return (value_x, value_y) => [pet, level, value_x, value_y];
+    return (value_x, value_y) => [pet, skill, value_x, value_y];
   } else if (axisX === "level" && axisY === "pet") {
     return (value_x, value_y) => [value_y, skill, type, value_x];
   } else if (axisX === "level" && axisY === "skill") {
@@ -694,6 +694,10 @@ function createAxisTransformer(axisX, axisY, pet, skill, type, level) {
   } else {
     return (value_x, value_y) => [pet, type, value_y, value_x];
   }
+}
+
+function toFrenchNumber(number) {
+  return number.toString().replace(".", ",");
 }
 
 function editTable(petValues, formData, mapping) {
@@ -732,16 +736,15 @@ function editTable(petValues, formData, mapping) {
 
     Object.keys(mapping[axisX]).forEach((value_x) => {
       const cell = bodyRow.insertCell();
-
       [pet, skill, type, level] = axisTransformer(value_x, value_y);
       const boostedValues = BOOSTED_VALUES[pet][skill];
 
       if (boostedValues) {
-        cell.textContent = boostedValues[type][level];
+        cell.textContent = toFrenchNumber(boostedValues[type][level]);
         cell.style.color = "red";
         cell.style.fontWeight = "bold";
       } else {
-        cell.textContent = BASE_VALUES[skill][level];
+        cell.textContent = toFrenchNumber(BASE_VALUES[skill][level]);
       }
     });
   });
@@ -752,7 +755,7 @@ function createMapping() {
     pet: document.querySelectorAll("span[data-pet]"),
     skill: document.querySelectorAll("span[data-skill]"),
     type: document.querySelectorAll("span[data-type]"),
-    level: document.querySelectorAll("span[data-level]")
+    level: document.querySelectorAll("span[data-level]"),
   };
 
   return Object.fromEntries(
@@ -768,8 +771,8 @@ function createMapping() {
 
 function main() {
   const editForm = document.getElementById("edit-table"),
-    petValues = document.getElementById("pet-values");
-  const mapping = createMapping();
+    petValues = document.getElementById("pet-values"),
+    mapping = createMapping();
 
   editForm.addEventListener("submit", (event) => {
     event.preventDefault();
