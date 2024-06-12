@@ -708,46 +708,42 @@ function toFrenchNumber(number) {
   return number.toString().replace(".", ",");
 }
 
-function handleInputDisplay(editForm, axisX, axisY, filterNames, target) {
+function checkAxis(editForm, targetName) {
+  const selectedIndex = editForm[targetName].selectedIndex;
+  const select = editForm[targetName];
+
+  if (selectedIndex) {
+    select.selectedIndex = selectedIndex - 1;
+  } else {
+    select.selectedIndex = selectedIndex + 1;
+  }
+
+  return select.value;
+}
+
+function handleInputDisplay(editForm, axisX, axisY, allAxis, target) {
   if (target && axisX === axisY) {
     const targetName = target.name;
 
     if (targetName === "axisX") {
-      const selectedIndex = editForm.axisY.selectedIndex;
-      const select = editForm.axisY;
-
-      if (selectedIndex) {
-        select.selectedIndex = selectedIndex - 1;
-      } else {
-        select.selectedIndex = selectedIndex + 1;
-      }
-      axisY = select.value;
-
+      axisY = checkAxis(editForm, targetName);
     } else if (targetName === "axisY") {
-      const selectedIndex = editForm.axisX.selectedIndex;
-      const select = editForm.axisX;
-
-      if (selectedIndex) {
-        select.selectedIndex = selectedIndex - 1;
-      } else {
-        select.selectedIndex = selectedIndex + 1;
-      }
-      axisX = select.value;
+      axisX = checkAxis(editForm, targetName);
     }
   }
 
-  filterNames.forEach(name => {
-    if (name !== axisX && name !== axisY) {
-      showElement(editForm[name])
+  allAxis.forEach((axis) => {
+    if (axis !== axisX && axis !== axisY) {
+      showElement(editForm[axis]);
     } else {
-      hideElement(editForm[name]);
+      hideElement(editForm[axis]);
     }
   });
 
   return [axisX, axisY];
 }
 
-function editTable(petValues, editForm, mapping, filterNames, target) {
+function editTable(petValues, editForm, mapping, allAxis, filter, target) {
   petValues.innerHTML = "";
 
   const header = petValues.createTHead();
@@ -763,7 +759,13 @@ function editTable(petValues, editForm, mapping, filterNames, target) {
   let axisX = formData.get("axisX");
   let axisY = formData.get("axisY");
 
-  [axisX, axisY] = handleInputDisplay(editForm, axisX, axisY, filterNames, target);
+  [axisX, axisY] = handleInputDisplay(
+    editForm,
+    axisX,
+    axisY,
+    allAxis,
+    target
+  );
 
   const axisTransformer = createAxisTransformer(
     axisX,
@@ -774,17 +776,35 @@ function editTable(petValues, editForm, mapping, filterNames, target) {
     level
   );
 
+  // const mappingAxisX = mapping[axisX].filter((element) => {
+  //   return !filter[axisX].includes(element);
+  // });
+  // const mappingAxisY = mapping[axisY].filter((element) => {
+  //   return !filter[axisY].includes(element);
+  // });
+
   insertTh(headerRow, "");
 
   Object.values(mapping[axisX]).forEach((value) => {
+    if (filter[axisX].includes(value)) {
+      return;
+    }
     insertTh(headerRow, value);
   });
 
   Object.entries(mapping[axisY]).forEach(([value_y, value_y_display]) => {
+    if (filter[axisY].includes(value_y)) {
+      return;
+    }
+
     const bodyRow = body.insertRow();
     insertTh(bodyRow, value_y_display);
 
     Object.keys(mapping[axisX]).forEach((value_x) => {
+      if (filter[axisX].includes(value_x)) {
+        return;
+      }
+
       const cell = bodyRow.insertCell();
       [pet, skill, type, level] = axisTransformer(value_x, value_y);
       const boostedValues = BOOSTED_VALUES[pet][skill];
@@ -823,16 +843,23 @@ function main() {
   const editForm = document.getElementById("edit-table"),
     petValues = document.getElementById("pet-values"),
     mapping = createMapping(),
-    filterNames = ["pet", "skill", "type", "level"];
+    allAxis = ["pet", "skill", "type", "level"];
 
-  editTable(petValues, editForm, mapping, filterNames);
+  const filter = {
+    pet: ["monkey", "meley"],
+    skill: ["sura", "berserker"],
+    type: [1, 4, 5, 6],
+    level: [0, 4, 5],
+  };
+
+  editTable(petValues, editForm, mapping, allAxis, filter);
 
   editForm.addEventListener("submit", (event) => {
     event.preventDefault();
   });
 
   editForm.addEventListener("change", (event) => {
-    editTable(petValues, editForm, mapping, filterNames, event.target);
+    editTable(petValues, editForm, mapping, allAxis, filter, event.target);
   });
 }
 
