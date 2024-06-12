@@ -656,6 +656,14 @@ const BOOSTED_VALUES = {
   },
 };
 
+function showElement(element) {
+  element.classList.remove("tabber-noactive");
+}
+
+function hideElement(element) {
+  element.classList.add("tabber-noactive");
+}
+
 function insertTh(row, value) {
   const th = document.createElement("th");
 
@@ -692,7 +700,7 @@ function createAxisTransformer(axisX, axisY, pet, skill, type, level) {
   } else if (axisX === "level" && axisY === "skill") {
     return (value_x, value_y) => [pet, value_y, type, value_x];
   } else {
-    return (value_x, value_y) => [pet, type, value_y, value_x];
+    return (value_x, value_y) => [pet, skill, value_y, value_x];
   }
 }
 
@@ -700,20 +708,62 @@ function toFrenchNumber(number) {
   return number.toString().replace(".", ",");
 }
 
-function editTable(petValues, formData, mapping) {
+function handleInputDisplay(editForm, axisX, axisY, filterNames, target) {
+  if (target && axisX === axisY) {
+    const targetName = target.name;
+
+    if (targetName === "axisX") {
+      const selectedIndex = editForm.axisY.selectedIndex;
+      const select = editForm.axisY;
+
+      if (selectedIndex) {
+        select.selectedIndex = selectedIndex - 1;
+      } else {
+        select.selectedIndex = selectedIndex + 1;
+      }
+      axisY = select.value;
+
+    } else if (targetName === "axisY") {
+      const selectedIndex = editForm.axisX.selectedIndex;
+      const select = editForm.axisX;
+
+      if (selectedIndex) {
+        select.selectedIndex = selectedIndex - 1;
+      } else {
+        select.selectedIndex = selectedIndex + 1;
+      }
+      axisX = select.value;
+    }
+  }
+
+  filterNames.forEach(name => {
+    if (name !== axisX && name !== axisY) {
+      showElement(editForm[name])
+    } else {
+      hideElement(editForm[name]);
+    }
+  });
+
+  return [axisX, axisY];
+}
+
+function editTable(petValues, editForm, mapping, filterNames, target) {
   petValues.innerHTML = "";
 
   const header = petValues.createTHead();
   const body = petValues.createTBody();
   const headerRow = header.insertRow(0);
 
+  const formData = new FormData(editForm);
   let pet = formData.get("pet");
   let skill = formData.get("skill");
   let type = formData.get("type");
   let level = formData.get("level");
 
-  const axisX = formData.get("axisX");
-  const axisY = formData.get("axisY");
+  let axisX = formData.get("axisX");
+  let axisY = formData.get("axisY");
+
+  [axisX, axisY] = handleInputDisplay(editForm, axisX, axisY, filterNames, target);
 
   const axisTransformer = createAxisTransformer(
     axisX,
@@ -772,12 +822,17 @@ function createMapping() {
 function main() {
   const editForm = document.getElementById("edit-table"),
     petValues = document.getElementById("pet-values"),
-    mapping = createMapping();
+    mapping = createMapping(),
+    filterNames = ["pet", "skill", "type", "level"];
+
+  editTable(petValues, editForm, mapping, filterNames);
 
   editForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const formData = new FormData(editForm);
-    editTable(petValues, formData, mapping);
+  });
+
+  editForm.addEventListener("change", (event) => {
+    editTable(petValues, editForm, mapping, filterNames, event.target);
   });
 }
 
