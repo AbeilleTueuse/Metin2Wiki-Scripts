@@ -743,21 +743,33 @@ function handleInputDisplay(editForm, axisX, axisY, allAxis, target) {
   return [axisX, axisY];
 }
 
+function filterObjectByKeys(obj, keysToRemove) {
+  if (!keysToRemove.length) {
+    return obj;
+  }
+
+  return Object.keys(obj)
+    .filter(key => !keysToRemove.includes(key))
+    .reduce((acc, key) => {
+      acc[key] = obj[key];
+      return acc;
+    }, {});
+}
+
 function editTable(petValues, editForm, mapping, allAxis, filter, target) {
   petValues.innerHTML = "";
 
-  const header = petValues.createTHead();
-  const body = petValues.createTBody();
-  const headerRow = header.insertRow(0);
+  const header = petValues.createTHead(),
+    body = petValues.createTBody(),
+    headerRow = header.insertRow(0),
+    formData = new FormData(editForm);
 
-  const formData = new FormData(editForm);
-  let pet = formData.get("pet");
-  let skill = formData.get("skill");
-  let type = formData.get("type");
-  let level = formData.get("level");
-
-  let axisX = formData.get("axisX");
-  let axisY = formData.get("axisY");
+  let pet = formData.get("pet"),
+    skill = formData.get("skill"),
+    type = formData.get("type"),
+    level = formData.get("level"),
+    axisX = formData.get("axisX"),
+    axisY = formData.get("axisY");
 
   [axisX, axisY] = handleInputDisplay(
     editForm,
@@ -776,22 +788,18 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
     level
   );
 
-  // const mappingAxisX = mapping[axisX].filter((element) => {
-  //   return !filter[axisX].includes(element);
-  // });
-  // const mappingAxisY = mapping[axisY].filter((element) => {
-  //   return !filter[axisY].includes(element);
-  // });
+  const filteredMappingX = filterObjectByKeys(mapping[axisX], filter[axisX]);
+  const filteredMappingY = filterObjectByKeys(mapping[axisY], filter[axisY]);
 
   insertFirstTh(headerRow);
 
-  Object.values(mapping[axisX]).forEach((value) => {
-    insertTh(headerRow, value);
+  Object.values(filteredMappingX).forEach((valueX) => {
+    insertTh(headerRow, valueX);
   });
 
-  const valuesX = Object.keys(mapping[axisX]);
+  const valuesX = Object.keys(filteredMappingX);
 
-  Object.entries(mapping[axisY]).forEach(([valueY, displayValueY]) => {
+  Object.entries(filteredMappingY).forEach(([valueY, displayValueY]) => {
     const bodyRow = body.insertRow();
     insertTh(bodyRow, displayValueY);
 
@@ -837,11 +845,17 @@ function main() {
     mapping = createMapping(),
     allAxis = ["pet", "skill", "type", "level"];
 
+  // const filter = {
+  //   pet: ["monkey", "meley"],
+  //   skill: ["sura", "berserker"],
+  //   type: ["1", "4", "5", "6"],
+  //   level: ["0", "4", "5"],
+  // };
   const filter = {
-    pet: ["monkey", "meley"],
-    skill: ["sura", "berserker"],
-    type: [1, 4, 5, 6],
-    level: [0, 4, 5],
+    pet: [],
+    skill: [],
+    type: [],
+    level: [],
   };
 
   editTable(petValues, editForm, mapping, allAxis, filter);
@@ -851,9 +865,7 @@ function main() {
   });
 
   editForm.addEventListener("change", (event) => {
-    console.time("a")
     editTable(petValues, editForm, mapping, allAxis, filter, event.target);
-    console.timeEnd("a")
   });
 }
 
