@@ -664,15 +664,15 @@ function hideElement(element) {
   element.classList.add("tabber-noactive");
 }
 
+function insertFirstTh(row) {
+  const th = document.createElement("th");
+  th.style.minWidth = "32px";
+  row.appendChild(th);
+}
+
 function insertTh(row, value) {
   const th = document.createElement("th");
-
-  if (typeof value === "string") {
-    th.textContent = value;
-  } else {
-    th.appendChild(value);
-  }
-
+  th.appendChild(value);
   row.appendChild(th);
 }
 
@@ -708,27 +708,27 @@ function toFrenchNumber(number) {
   return number.toString().replace(".", ",");
 }
 
-function checkAxis(editForm, targetName) {
-  const selectedIndex = editForm[targetName].selectedIndex;
-  const select = editForm[targetName];
+function changeAxis(editForm, otherAxis) {
+  const select = editForm[otherAxis];
+  const selectedIndex = select.selectedIndex;
 
   if (selectedIndex) {
     select.selectedIndex = selectedIndex - 1;
   } else {
     select.selectedIndex = selectedIndex + 1;
   }
-
+  
   return select.value;
 }
 
 function handleInputDisplay(editForm, axisX, axisY, allAxis, target) {
   if (target && axisX === axisY) {
-    const targetName = target.name;
+    const currentAxis = target.name;
 
-    if (targetName === "axisX") {
-      axisY = checkAxis(editForm, targetName);
-    } else if (targetName === "axisY") {
-      axisX = checkAxis(editForm, targetName);
+    if (currentAxis === "axisX") {
+      axisY = changeAxis(editForm, "axisY");
+    } else if (currentAxis === "axisY") {
+      axisX = changeAxis(editForm, "axisX");
     }
   }
 
@@ -783,28 +783,17 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
   //   return !filter[axisY].includes(element);
   // });
 
-  insertTh(headerRow, "");
+  insertFirstTh(headerRow);
 
   Object.values(mapping[axisX]).forEach((value) => {
-    if (filter[axisX].includes(value)) {
-      return;
-    }
     insertTh(headerRow, value);
   });
 
   Object.entries(mapping[axisY]).forEach(([value_y, value_y_display]) => {
-    if (filter[axisY].includes(value_y)) {
-      return;
-    }
-
     const bodyRow = body.insertRow();
     insertTh(bodyRow, value_y_display);
 
     Object.keys(mapping[axisX]).forEach((value_x) => {
-      if (filter[axisX].includes(value_x)) {
-        return;
-      }
-
       const cell = bodyRow.insertCell();
       [pet, skill, type, level] = axisTransformer(value_x, value_y);
       const boostedValues = BOOSTED_VALUES[pet][skill];
