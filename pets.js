@@ -1,7 +1,7 @@
 const VALUES_1 = [
-    9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
-    11, 11, 11, 12, 12,
-  ],
+  9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
+  11, 11, 11, 12, 12,
+],
   VALUES_2 = [
     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
   ],
@@ -237,15 +237,15 @@ const VALUES_1 = [
   ];
 
 const BOOSTED_VALUES_1 = [
-    VALUES_20,
-    VALUES_20,
-    VALUES_20,
-    VALUES_20,
-    VALUES_21,
-    VALUES_21,
-    VALUES_21,
-    VALUES_21,
-  ],
+  VALUES_20,
+  VALUES_20,
+  VALUES_20,
+  VALUES_20,
+  VALUES_21,
+  VALUES_21,
+  VALUES_21,
+  VALUES_21,
+],
   BOOSTED_VALUES_2 = [
     VALUES_22,
     VALUES_22,
@@ -717,7 +717,7 @@ function changeAxis(editForm, otherAxis) {
   } else {
     select.selectedIndex = selectedIndex + 1;
   }
-  
+
   return select.value;
 }
 
@@ -789,13 +789,16 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
     insertTh(headerRow, value);
   });
 
-  Object.entries(mapping[axisY]).forEach(([value_y, value_y_display]) => {
-    const bodyRow = body.insertRow();
-    insertTh(bodyRow, value_y_display);
+  const valuesX = Object.keys(mapping[axisX]);
 
-    Object.keys(mapping[axisX]).forEach((value_x) => {
+  Object.entries(mapping[axisY]).forEach(([valueY, displayValueY]) => {
+    const bodyRow = body.insertRow();
+    insertTh(bodyRow, displayValueY);
+
+    for (let index = 0; index < valuesX.length; index++) {
+      const valueX = valuesX[index];
       const cell = bodyRow.insertCell();
-      [pet, skill, type, level] = axisTransformer(value_x, value_y);
+      const [pet, skill, type, level] = axisTransformer(valueX, valueY);
       const boostedValues = BOOSTED_VALUES[pet][skill];
 
       if (boostedValues) {
@@ -805,7 +808,7 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
       } else {
         cell.textContent = toFrenchNumber(BASE_VALUES[skill][level]);
       }
-    });
+    }
   });
 }
 
@@ -848,7 +851,9 @@ function main() {
   });
 
   editForm.addEventListener("change", (event) => {
+    console.time("a")
     editTable(petValues, editForm, mapping, allAxis, filter, event.target);
+    console.timeEnd("a")
   });
 }
 
