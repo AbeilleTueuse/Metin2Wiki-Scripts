@@ -1,7 +1,7 @@
 const VALUES_1 = [
-  9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
-  11, 11, 11, 12, 12,
-],
+    9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 11, 12, 12,
+  ],
   VALUES_2 = [
     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
   ],
@@ -237,15 +237,15 @@ const VALUES_1 = [
   ];
 
 const BOOSTED_VALUES_1 = [
-  VALUES_20,
-  VALUES_20,
-  VALUES_20,
-  VALUES_20,
-  VALUES_21,
-  VALUES_21,
-  VALUES_21,
-  VALUES_21,
-],
+    VALUES_20,
+    VALUES_20,
+    VALUES_20,
+    VALUES_20,
+    VALUES_21,
+    VALUES_21,
+    VALUES_21,
+    VALUES_21,
+  ],
   BOOSTED_VALUES_2 = [
     VALUES_22,
     VALUES_22,
@@ -524,7 +524,7 @@ const BOOSTED_VALUES_1 = [
     VALUES_52,
     VALUES_52,
     VALUES_52,
-    VALUES_52,
+    VALUES_53,
   ];
 
 const BASE_VALUES = {
@@ -749,7 +749,7 @@ function filterObjectByKeys(obj, keysToRemove) {
   }
 
   return Object.keys(obj)
-    .filter(key => !keysToRemove.includes(key))
+    .filter((key) => !keysToRemove.includes(key))
     .reduce((acc, key) => {
       acc[key] = obj[key];
       return acc;
@@ -771,13 +771,7 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
     axisX = formData.get("axisX"),
     axisY = formData.get("axisY");
 
-  [axisX, axisY] = handleInputDisplay(
-    editForm,
-    axisX,
-    axisY,
-    allAxis,
-    target
-  );
+  [axisX, axisY] = handleInputDisplay(editForm, axisX, axisY, allAxis, target);
 
   const axisTransformer = createAxisTransformer(
     axisX,
@@ -790,7 +784,7 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
 
   const filteredMappingX = filterObjectByKeys(mapping[axisX], filter[axisX]);
   const filteredMappingY = filterObjectByKeys(mapping[axisY], filter[axisY]);
-
+  console.log(mapping, axisY);
   insertFirstTh(headerRow);
 
   Object.values(filteredMappingX).forEach((valueX) => {
@@ -800,6 +794,7 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
   const valuesX = Object.keys(filteredMappingX);
 
   Object.entries(filteredMappingY).forEach(([valueY, displayValueY]) => {
+    console.log(filteredMappingY);
     const bodyRow = body.insertRow();
     insertTh(bodyRow, displayValueY);
 
