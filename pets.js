@@ -1,7 +1,7 @@
 const VALUES_1 = [
-    9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
-    11, 11, 11, 12, 12,
-  ],
+  9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
+  11, 11, 11, 12, 12,
+],
   VALUES_2 = [
     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
   ],
@@ -237,15 +237,15 @@ const VALUES_1 = [
   ];
 
 const BOOSTED_VALUES_1 = [
-    VALUES_20,
-    VALUES_20,
-    VALUES_20,
-    VALUES_20,
-    VALUES_21,
-    VALUES_21,
-    VALUES_21,
-    VALUES_21,
-  ],
+  VALUES_20,
+  VALUES_20,
+  VALUES_20,
+  VALUES_20,
+  VALUES_21,
+  VALUES_21,
+  VALUES_21,
+  VALUES_21,
+],
   BOOSTED_VALUES_2 = [
     VALUES_22,
     VALUES_22,
@@ -751,9 +751,56 @@ function filterObjectByKeys(obj, keysToRemove) {
   return Object.keys(obj)
     .filter((key) => !keysToRemove.includes(key))
     .reduce((acc, key) => {
-      acc[key] = obj[key];
+      acc[key] = obj[key].cloneNode();
       return acc;
     }, {});
+}
+
+function editFirstCell(previousCell, currentCell) {
+  const previousSpan = previousCell.firstChild;
+  const currentSpan = currentCell.firstChild;
+
+  previousSpan.textContent = `${previousSpan.textContent.split(" ~")[0]} ~ ${currentSpan.textContent}`;
+}
+
+function regroupTable(petValues, tableValues) {
+  const tableValuesLength = tableValues.length;
+
+  if (tableValuesLength <= 1) {
+    return;
+  }
+
+  let previousRow = tableValues[0];
+  const rowLength = previousRow.length;
+
+  if (!rowLength) {
+    return;
+  }
+
+  let removedRowCount = 0;
+
+  for (let indexRow = 1; indexRow < tableValuesLength; indexRow++) {
+    const currentRow = tableValues[indexRow];
+    let rowAreEqual = true;
+
+    for (let indexCell = 1; indexCell < rowLength; indexCell++) {
+      if (previousRow[indexCell] !== currentRow[indexCell]) {
+        rowAreEqual = false;
+        break;
+      }
+    }
+    if (rowAreEqual) {
+      const petValuesRowIndex = indexRow - removedRowCount;
+      const previousFirstCell = petValues.rows[petValuesRowIndex].firstChild;
+      const currentFirstCell = petValues.rows[petValuesRowIndex + 1].firstChild;
+
+      editFirstCell(previousFirstCell, currentFirstCell);
+
+      petValues.rows[petValuesRowIndex + 1].remove()
+      removedRowCount++;
+    }
+    previousRow = currentRow;
+  }
 }
 
 function editTable(petValues, editForm, mapping, allAxis, filter, target) {
@@ -784,7 +831,7 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
 
   const filteredMappingX = filterObjectByKeys(mapping[axisX], filter[axisX]);
   const filteredMappingY = filterObjectByKeys(mapping[axisY], filter[axisY]);
-  console.log(mapping, axisY);
+
   insertFirstTh(headerRow);
 
   Object.values(filteredMappingX).forEach((valueX) => {
@@ -792,27 +839,35 @@ function editTable(petValues, editForm, mapping, allAxis, filter, target) {
   });
 
   const valuesX = Object.keys(filteredMappingX);
+  const tableValues = [];
 
   Object.entries(filteredMappingY).forEach(([valueY, displayValueY]) => {
-    console.log(filteredMappingY);
     const bodyRow = body.insertRow();
     insertTh(bodyRow, displayValueY);
+    const rowValues = [displayValueY.textContent];
+    tableValues.push(rowValues);
 
     for (let index = 0; index < valuesX.length; index++) {
       const valueX = valuesX[index];
       const cell = bodyRow.insertCell();
       const [pet, skill, type, level] = axisTransformer(valueX, valueY);
       const boostedValues = BOOSTED_VALUES[pet][skill];
+      let textContent;
 
       if (boostedValues) {
-        cell.textContent = toFrenchNumber(boostedValues[type][level]);
+        textContent = boostedValues[type][level];
         cell.style.color = "red";
         cell.style.fontWeight = "bold";
       } else {
-        cell.textContent = toFrenchNumber(BASE_VALUES[skill][level]);
+        textContent = BASE_VALUES[skill][level];
       }
+      rowValues.push(textContent);
+      cell.textContent = toFrenchNumber(textContent);
     }
   });
+  if (axisY === "level") {
+    regroupTable(petValues, tableValues);
+  }
 }
 
 function createMapping() {
