@@ -119,7 +119,9 @@ function addToTableResult(
     minMaxDamages.max = damages;
   }
 
-  updateDamagesChart(scatterData, damagesChart, damagesTypeName);
+  if (damagesTypeName) {
+    updateDamagesChart(scatterData, damagesChart, damagesTypeName);
+  }
 }
 
 function clearTableResult(tableResult, damagesChart) {
@@ -2511,7 +2513,6 @@ function calcPhysicalDamages(
 
   for (var damagesType of battleValues.damagesTypeCombinaison) {
     if (!damagesType.weight) {
-      0;
       continue;
     }
 

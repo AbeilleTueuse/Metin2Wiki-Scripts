@@ -751,7 +751,7 @@ function filterObjectByKeys(obj, keysToRemove) {
   return Object.keys(obj)
     .filter((key) => !keysToRemove.includes(key))
     .reduce((acc, key) => {
-      acc[key] = obj[key].cloneNode();
+      acc[key] = obj[key];
       return acc;
     }, {});
 }
@@ -766,16 +766,12 @@ function editFirstCell(previousCell, currentCell) {
 function regroupTable(petValues, tableValues) {
   const tableValuesLength = tableValues.length;
 
-  if (tableValuesLength <= 1) {
-    return;
-  }
+  if (tableValuesLength <= 1) return;
 
   let previousRow = tableValues[0];
   const rowLength = previousRow.length;
 
-  if (!rowLength) {
-    return;
-  }
+  if (!rowLength) return;
 
   let removedRowCount = 0;
 
@@ -915,7 +911,9 @@ function main() {
   });
 
   editForm.addEventListener("change", (event) => {
+    console.time("a")
     editTable(petValues, editForm, mapping, allAxis, filter, event.target);
+    console.timeEnd("a")
   });
 }
 
