@@ -3649,8 +3649,9 @@ function displayResults(
     minMaxDamages.max,
   ];
 
+  var row = resultDamages.insertRow();
+
   for (var index = 0; index < results.length; index++) {
-    var row = resultDamages.rows[index];
     var cell = row.insertCell();
     cell.textContent = results[index];
   }
