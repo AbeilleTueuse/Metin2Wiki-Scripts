@@ -3636,7 +3636,8 @@ function displayResults(
   attackerName,
   victimName,
   meanDamages,
-  minMaxDamages
+  minMaxDamages,
+  deleteFightTemplate
 ) {
   showElement(resultDamages);
 
@@ -3655,6 +3656,9 @@ function displayResults(
     var cell = row.insertCell();
     cell.textContent = results[index];
   }
+
+  var cell = row.insertCell();
+  cell.appendChild(deleteFightTemplate.cloneNode(true));
 }
 
 function createBattle(characters, battle) {
@@ -3735,7 +3739,8 @@ function createBattle(characters, battle) {
       attacker.name,
       victim.name,
       meanDamages,
-      minMaxDamages
+      minMaxDamages,
+      battle.deleteFightTemplate
     );
     addPotentialErrorInformation(
       battle.errorInformation,
@@ -3743,7 +3748,7 @@ function createBattle(characters, battle) {
       victim,
       characters
     );
-    showElement(battle.tableContainer);
+    showElement(battle.fightResultContainer);
   });
 
   battle.attackerSelection.addEventListener("change", function (event) {
@@ -3848,6 +3853,20 @@ function createConstants() {
     },
   };
   return constants;
+}
+
+function initResultDamages(resultDamages) {
+  resultDamages.addEventListener("click", function (event) {
+    var deleteButton = event.target.closest(".svg-icon-delete");
+
+    if (deleteButton) {
+      var row = deleteButton.closest("tr");
+
+      if (row) {
+        row.remove();
+      }
+    }
+  });
 }
 
 function initChart(battle, chartSource) {
@@ -4036,13 +4055,16 @@ function createDamageCalculatorInformation(chartSource) {
     attackTypeSelection: document.getElementById("attack-type-selection"),
     victimSelection: document.getElementById("victim-selection"),
     resultDamages: document.getElementById("result-damages"),
+    deleteFightTemplate: document.getElementById("delete-fight-template")
+      .children[0],
     errorInformation: {},
-    tableContainer: document.getElementById("result-table-container"),
-    tableResult: document.getElementById("result-table").children[0],
+    fightResultContainer: document.getElementById("fight-result-container"),
+    tableResult: document.getElementById("result-table"),
     mapping: mapping,
     constants: constants,
   };
 
+  initResultDamages(battle.resultDamages);
   initChart(battle, chartSource);
 
   var errorElements = document
