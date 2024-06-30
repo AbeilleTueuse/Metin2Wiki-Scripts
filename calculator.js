@@ -49,28 +49,12 @@ function truncateNumber(number, precision) {
   return Math.floor(number * 10 ** precision) / 10 ** precision;
 }
 
-function numberDisplay(number, precision) {
-  return (Math.round(number * 10 ** precision) / 10 ** precision)
-    .toString()
-    .replace(".", ",");
-}
-
 function addKeyValue(object, key, value) {
   if (object.hasOwnProperty(key)) {
     object[key] += value;
   } else {
     object[key] = value;
   }
-}
-
-function updateDamagesChart(scatterData, damagesChart, damagesTypeName) {
-  for (var index = 0; index < damagesChart.data.datasets.length; index++) {
-    var dataset = damagesChart.data.datasets[index];
-    if (dataset.label === damagesTypeName) {
-      dataset.data = scatterData;
-    }
-  }
-  damagesChart.update();
 }
 
 function addRowToTableResult(tableResult, value) {
@@ -86,9 +70,8 @@ function addRowToTableResult(tableResult, value) {
 function addToTableResult(
   tableResult,
   damagesWeighted,
-  minMaxDamages,
-  damagesChart,
-  damagesTypeName
+  numberFormat,
+  minMaxDamages
 ) {
   var firstIteration = true;
   var scatterData = [];
@@ -106,11 +89,11 @@ function addToTableResult(
     var newRow = tableResult.insertRow(-1);
     var firstCell = newRow.insertCell(0);
 
-    firstCell.textContent = damages;
+    firstCell.textContent = numberFormat.default.format(damages);
 
     var secondCell = newRow.insertCell(1);
-    secondCell.textContent =
-      numberDisplay(damagesWeighted[damages] * 100, 3) + " %";
+
+    secondCell.textContent = numberFormat.percent.format(damagesWeighted[damages]);
 
     scatterData.push({ x: damages, y: damagesWeighted[damages] });
   }
@@ -119,21 +102,38 @@ function addToTableResult(
     minMaxDamages.max = damages;
   }
 
-  if (damagesTypeName) {
-    updateDamagesChart(scatterData, damagesChart, damagesTypeName);
+  return scatterData;
+}
+
+function updateDamagesChart(scatterData, damagesChart, damagesTypeName) {
+  var chart = damagesChart.chart;
+  var dataset = damagesChart.dataset[damagesTypeName];
+
+  if (scatterData.length >= 10) {
+    dataset.data = scatterData;
+    chart.data.datasets.push(dataset);
+    chart.update();
   }
 }
 
-function clearTableResult(tableResult, damagesChart) {
+function clearDamageChart(damagesChart) {
+  damagesChart.chart.data.datasets = [];
+}
+
+function displayDamagesChart(damagesChart, chartContainer) {
+  if (damagesChart.chart.data.datasets.length) {
+    showElement(chartContainer);
+  } else {
+    hideElement(chartContainer);
+  }
+}
+
+function clearTableResult(tableResult) {
   var tableHeaderRowCount = 1;
   var rowCount = tableResult.rows.length;
 
   for (var rowIndex = tableHeaderRowCount; rowIndex < rowCount; rowIndex++) {
     tableResult.deleteRow(tableHeaderRowCount);
-  }
-
-  for (var index = 0; index < damagesChart.data.datasets.length; index++) {
-    damagesChart.data.datasets[index].data = {};
   }
 }
 
@@ -2475,7 +2475,8 @@ function calcPhysicalDamages(
   tableResult,
   mapping,
   constants,
-  damagesChart
+  damagesChart,
+  numberFormat
 ) {
   var battleValues = createPhysicalBattleValues(
     attacker,
@@ -2489,7 +2490,6 @@ function calcPhysicalDamages(
 
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
-  clearTableResult(tableResult, damagesChart);
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
@@ -2505,7 +2505,11 @@ function calcPhysicalDamages(
 
   if (battleValues.missPercentage) {
     addRowToTableResult(tableResult, "Miss");
-    addToTableResult(tableResult, { 0: battleValues.missPercentage / 100 });
+    addToTableResult(
+      tableResult,
+      { 0: battleValues.missPercentage / 100 },
+      numberFormat
+    );
   }
 
   var lastWeightsLimit = maxAttackValue - minInterval + 1;
@@ -2582,13 +2586,14 @@ function calcPhysicalDamages(
         sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
-    addToTableResult(
+
+    var scatterData = addToTableResult(
       tableResult,
       damagesWeighted,
-      minMaxDamages,
-      damagesChart,
-      damagesType.name
+      numberFormat,
+      minMaxDamages
     );
+    updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
   if (minMaxDamages.min === Infinity) {
@@ -3226,6 +3231,7 @@ function calcPhysicalSkillDamages(
   mapping,
   constants,
   damagesChart,
+  numberFormat,
   skillId
 ) {
   var battleValues = createSkillBattleValues(
@@ -3238,7 +3244,6 @@ function calcPhysicalSkillDamages(
 
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
-  clearTableResult(tableResult, damagesChart);
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
@@ -3347,13 +3352,13 @@ function calcPhysicalSkillDamages(
       }
     }
 
-    addToTableResult(
+    var scatterData = addToTableResult(
       tableResult,
       damagesWeighted,
-      minMaxDamages,
-      damagesChart,
-      damagesType.name
+      numberFormat,
+      minMaxDamages
     );
+    updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
   if (minMaxDamages.min === Infinity) {
@@ -3371,6 +3376,7 @@ function calcMagicSkillDamages(
   mapping,
   constants,
   damagesChart,
+  numberFormat,
   skillId
 ) {
   var battleValues = createSkillBattleValues(
@@ -3384,7 +3390,6 @@ function calcMagicSkillDamages(
 
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
-  clearTableResult(tableResult, damagesChart);
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal] =
@@ -3473,13 +3478,13 @@ function calcMagicSkillDamages(
       }
     }
 
-    addToTableResult(
+    var scatterData = addToTableResult(
       tableResult,
       damagesWeighted,
-      minMaxDamages,
-      damagesChart,
-      damagesType.name
+      numberFormat,
+      minMaxDamages
     );
+    updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
   if (minMaxDamages.min === Infinity) {
@@ -3637,7 +3642,8 @@ function displayResults(
   victimName,
   meanDamages,
   minMaxDamages,
-  deleteFightTemplate
+  deleteFightTemplate,
+  numberFormat
 ) {
   showElement(resultDamages);
 
@@ -3645,9 +3651,9 @@ function displayResults(
     attackerName,
     victimName,
     attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
-    numberDisplay(meanDamages, 1),
-    minMaxDamages.min,
-    minMaxDamages.max,
+    numberFormat.format(meanDamages),
+    numberFormat.format(minMaxDamages.min),
+    numberFormat.format(minMaxDamages.max),
   ];
 
   var row = resultDamages.insertRow();
@@ -3722,6 +3728,9 @@ function createBattle(characters, battle) {
       calcDamages = calcPhysicalSkillDamages;
     }
 
+    clearTableResult(battle.tableResult);
+    clearDamageChart(battle.damagesChart);
+
     [meanDamages, minMaxDamages] = calcDamages(
       attacker,
       attackerWeapon,
@@ -3730,9 +3739,11 @@ function createBattle(characters, battle) {
       battle.mapping,
       battle.constants,
       battle.damagesChart,
+      battle.numberFormat,
       skillId
     );
 
+    displayDamagesChart(battle.damagesChart, battle.chartContainer);
     displayResults(
       battle.resultDamages,
       battle.attackTypeSelection,
@@ -3740,7 +3751,8 @@ function createBattle(characters, battle) {
       victim.name,
       meanDamages,
       minMaxDamages,
-      battle.deleteFightTemplate
+      battle.deleteFightTemplate,
+      battle.numberFormat.default
     );
     addPotentialErrorInformation(
       battle.errorInformation,
@@ -3871,17 +3883,15 @@ function initResultDamages(resultDamages) {
 
 function initChart(battle, chartSource) {
   function createChart() {
-    var canvas = document.getElementById("plot-damages");
-
     var verticalLinePlugin = {
       id: "verticalLine",
       afterDatasetsDraw: function (chart, easing) {
         if (chart.tooltip._active && chart.tooltip._active.length) {
-          const ctx = chart.ctx;
-          const activePoint = chart.tooltip._active[0];
-          const x = activePoint.element.x;
-          const topY = chart.scales.y.top;
-          const bottomY = chart.scales.y.bottom;
+          var ctx = chart.ctx;
+          var activePoint = chart.tooltip._active[0];
+          var x = activePoint.element.x;
+          var topY = chart.scales.y.top;
+          var bottomY = chart.scales.y.bottom;
 
           ctx.save();
           ctx.beginPath();
@@ -3898,47 +3908,11 @@ function initChart(battle, chartSource) {
 
     Chart.register(verticalLinePlugin);
 
-    var ctx = canvas.getContext("2d");
+    var ctx = battle.plotDamages.getContext("2d");
     var chart = new Chart(ctx, {
       type: "scatter",
       data: {
-        datasets: [
-          {
-            label: "Coup classique",
-            showLine: false,
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            borderColor: "rgba(75, 192, 192, 1)",
-            borderWidth: 1,
-            pointRadius: 3,
-          },
-          {
-            label: "Coup perçant",
-            showLine: false,
-            backgroundColor: "rgba(192, 192, 75, 0.2)",
-            borderColor: "rgba(192, 192, 75, 1)",
-            borderWidth: 1,
-            pointRadius: 3,
-            hidden: true,
-          },
-          {
-            label: "Coup critique",
-            showLine: false,
-            backgroundColor: "rgba(192, 75, 192, 0.2)",
-            borderColor: "rgba(192, 75, 192, 1)",
-            borderWidth: 1,
-            pointRadius: 3,
-            hidden: true,
-          },
-          {
-            label: "Coup critique perçant",
-            showLine: false,
-            backgroundColor: "rgba(75, 75, 192, 0.2)",
-            borderColor: "rgba(75, 75, 192, 1)",
-            borderWidth: 1,
-            pointRadius: 3,
-            hidden: true,
-          },
-        ],
+        datasets: [],
       },
       options: {
         responsive: true,
@@ -3947,19 +3921,14 @@ function initChart(battle, chartSource) {
           legend: {
             display: true,
             onClick: (e, legendItem, legend) => {
-              const index = legendItem.datasetIndex;
-              const chart = legend.chart;
-              const meta = chart.getDatasetMeta(index);
+              var index = legendItem.datasetIndex;
+              var chart = legend.chart;
+              var meta = chart.getDatasetMeta(index);
               meta.hidden =
                 meta.hidden === null
                   ? !chart.data.datasets[index].hidden
                   : null;
               chart.update();
-            },
-            onHover: (event, chartElement) => {
-              event.native.target.style.cursor = chartElement[0]
-                ? "pointer"
-                : "default";
             },
           },
           tooltip: {
@@ -3994,7 +3963,48 @@ function initChart(battle, chartSource) {
         },
       },
     });
-    battle.damagesChart = chart;
+
+    var dataset = {
+      "Coup classique": {
+        label: "Coup classique",
+        showLine: false,
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 1,
+        pointRadius: 3,
+      },
+      "Coup perçant": {
+        label: "Coup perçant",
+        showLine: false,
+        backgroundColor: "rgba(192, 192, 75, 0.2)",
+        borderColor: "rgba(192, 192, 75, 1)",
+        borderWidth: 1,
+        pointRadius: 3,
+        hidden: true,
+      },
+      "Coup critique": {
+        label: "Coup critique",
+        showLine: false,
+        backgroundColor: "rgba(192, 75, 192, 0.2)",
+        borderColor: "rgba(192, 75, 192, 1)",
+        borderWidth: 1,
+        pointRadius: 3,
+        hidden: true,
+      },
+      "Coup critique perçant": {
+        label: "Coup critique perçant",
+        showLine: false,
+        backgroundColor: "rgba(75, 75, 192, 0.2)",
+        borderColor: "rgba(75, 75, 192, 1)",
+        borderWidth: 1,
+        pointRadius: 3,
+        hidden: true,
+      },
+    };
+    battle.damagesChart = {
+      chart: chart,
+      dataset: dataset,
+    };
   }
 
   loadScript(chartSource, createChart);
@@ -4060,6 +4070,18 @@ function createDamageCalculatorInformation(chartSource) {
     errorInformation: {},
     fightResultContainer: document.getElementById("fight-result-container"),
     tableResult: document.getElementById("result-table"),
+    chartContainer: document.getElementById("chart-container"),
+    plotDamages: document.getElementById("plot-damages"),
+    numberFormat: {
+      default: new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 1,
+      }),
+      percent: new Intl.NumberFormat(undefined, {
+        style: "percent",
+        maximumFractionDigits: 3,
+      }),
+    },
     mapping: mapping,
     constants: constants,
   };
