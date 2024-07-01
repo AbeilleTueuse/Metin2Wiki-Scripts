@@ -93,7 +93,9 @@ function addToTableResult(
 
     var secondCell = newRow.insertCell(1);
 
-    secondCell.textContent = numberFormat.percent.format(damagesWeighted[damages]);
+    secondCell.textContent = numberFormat.percent.format(
+      damagesWeighted[damages]
+    );
 
     scatterData.push({ x: damages, y: damagesWeighted[damages] });
   }
@@ -332,7 +334,7 @@ function filterAttackTypeSelectionMonster(attackTypeSelection) {
 
 function filterForm(characters, battle) {
   var characterCreation = characters.characterCreation;
-  var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace
+  var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace;
 
   characterCreation.addEventListener("change", function (event) {
     var target = event.target;
@@ -345,7 +347,12 @@ function filterForm(characters, battle) {
         var weapon = characterCreation.weapon;
 
         filterClass(selectedRace, classChoice);
-        filterWeapon(selectedRace, weapon, characters.weaponCategory, allowedWeaponsPerRace);
+        filterWeapon(
+          selectedRace,
+          weapon,
+          characters.weaponCategory,
+          allowedWeaponsPerRace
+        );
 
         var newWeapon = getSelectedWeapon(characters.weaponCategory);
         handleWeaponDisplay(characters.weaponDisplay, newWeapon, weapon.value);
@@ -705,7 +712,13 @@ function handleStyle(characters, selectedElement) {
   characters.currentCharacter = selectedElement;
 }
 
-function updateForm(formData, characterCreation, characters, selectedElement, battle) {
+function updateForm(
+  formData,
+  characterCreation,
+  characters,
+  selectedElement,
+  battle
+) {
   saveButtonGreen(characters.saveButton);
   hideElement(characterCreation.previousElementSibling);
   showElement(characterCreation);
@@ -733,7 +746,13 @@ function updateForm(formData, characterCreation, characters, selectedElement, ba
   var weapon = characterCreation.weapon;
 
   filterClass(selectedRace, classChoice, true);
-  filterWeapon(selectedRace, weapon, characters.weaponCategory, battle.constants.allowedWeaponsPerRace, true);
+  filterWeapon(
+    selectedRace,
+    weapon,
+    characters.weaponCategory,
+    battle.constants.allowedWeaponsPerRace,
+    true
+  );
 
   var newWeapon = getSelectedWeapon(characters.weaponCategory);
 
@@ -3645,6 +3664,7 @@ function displayResults(
   numberFormat
 ) {
   showElement(resultDamages);
+  hideElement(resultDamages.rows[1]);
 
   var results = [
     attackerName,
@@ -3868,7 +3888,7 @@ function createConstants() {
       sura: [0, 7, 8],
       shaman: [4, 6, 8],
       lycan: [5, 8],
-    }
+    },
   };
   return constants;
 }
@@ -3882,6 +3902,11 @@ function initResultDamages(resultDamages) {
 
       if (row) {
         row.remove();
+        console.log(resultDamages.rows.length);
+
+        if (resultDamages.rows.length === 3) {
+          showElement(resultDamages.rows[1]);
+        }
       }
     }
   });
