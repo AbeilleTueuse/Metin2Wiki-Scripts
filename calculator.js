@@ -165,15 +165,9 @@ function filterWeapon(
   selectedRace,
   weapon,
   weaponCategory,
+  allowedWeaponsPerRace,
   selectValueIsChanged = false
 ) {
-  var allowedWeaponsPerRace = {
-    warrior: [0, 3, 8],
-    ninja: [0, 1, 2, 8],
-    sura: [0, 7, 8],
-    shaman: [4, 6, 8],
-    lycan: [5, 8],
-  };
   var allowedWeapons = allowedWeaponsPerRace[selectedRace];
 
   if (!selectValueIsChanged) {
@@ -338,6 +332,7 @@ function filterAttackTypeSelectionMonster(attackTypeSelection) {
 
 function filterForm(characters, battle) {
   var characterCreation = characters.characterCreation;
+  var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace
 
   characterCreation.addEventListener("change", function (event) {
     var target = event.target;
@@ -350,7 +345,7 @@ function filterForm(characters, battle) {
         var weapon = characterCreation.weapon;
 
         filterClass(selectedRace, classChoice);
-        filterWeapon(selectedRace, weapon, characters.weaponCategory);
+        filterWeapon(selectedRace, weapon, characters.weaponCategory, allowedWeaponsPerRace);
 
         var newWeapon = getSelectedWeapon(characters.weaponCategory);
         handleWeaponDisplay(characters.weaponDisplay, newWeapon, weapon.value);
@@ -590,7 +585,8 @@ function uploadCharacter(
                 characterDataObject,
                 characters.characterCreation,
                 characters,
-                selectedCharacter
+                selectedCharacter,
+                battle
               );
             }
 
@@ -709,7 +705,7 @@ function handleStyle(characters, selectedElement) {
   characters.currentCharacter = selectedElement;
 }
 
-function updateForm(formData, characterCreation, characters, selectedElement) {
+function updateForm(formData, characterCreation, characters, selectedElement, battle) {
   saveButtonGreen(characters.saveButton);
   hideElement(characterCreation.previousElementSibling);
   showElement(characterCreation);
@@ -737,7 +733,7 @@ function updateForm(formData, characterCreation, characters, selectedElement) {
   var weapon = characterCreation.weapon;
 
   filterClass(selectedRace, classChoice, true);
-  filterWeapon(selectedRace, weapon, characters.weaponCategory, true);
+  filterWeapon(selectedRace, weapon, characters.weaponCategory, battle.constants.allowedWeaponsPerRace, true);
 
   var newWeapon = getSelectedWeapon(characters.weaponCategory);
 
@@ -781,7 +777,8 @@ function handleClickOnCharacter(
         characters.savedCharacters[pseudo],
         characters.characterCreation,
         characters,
-        characterElement
+        characterElement,
+        battle
       );
     } else if (displayedPseudo === pseudo) {
       // pass
@@ -795,7 +792,8 @@ function handleClickOnCharacter(
           characters.savedCharacters[pseudo],
           characters.characterCreation,
           characters,
-          characterElement
+          characterElement,
+          battle
         );
         characters.unsavedChanges = false;
       }
@@ -960,7 +958,8 @@ function addNewCharacter(
         characterDataObject,
         characters.characterCreation,
         characters,
-        selectedCharacter
+        selectedCharacter,
+        battle
       );
       saveCharacter(
         characters.savedCharacters,
@@ -3845,6 +3844,13 @@ function createConstants() {
       loveNecklace: [20, 25, 30, 40],
       harmonyNecklace: [12, 16, 20, 30],
     },
+    allowedWeaponsPerRace: {
+      warrior: [0, 3, 8],
+      ninja: [0, 1, 2, 8],
+      sura: [0, 7, 8],
+      shaman: [4, 6, 8],
+      lycan: [5, 8],
+    }
   };
   return constants;
 }
