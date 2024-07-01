@@ -10,11 +10,14 @@ function removeAccent(str) {
   return str
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
 }
 
 function toNormalForm(str) {
-  return removeAccent(str).replace(/[^a-zA-Z0-9 ]/g, "");
+  return removeAccent(str).replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
+}
+
+function pseudoFormat(str) {
+  return removeAccent(str).replace(/[^A-Za-z0-9 \(\)\+_-]+/g, "");
 }
 
 function isValueInArray(value, array) {
@@ -951,7 +954,7 @@ function handleNewCharacter(
 }
 
 function validPseudo(pseudo) {
-  var newPseudo = pseudo.replace(/[^A-Za-z0-9]+/g, "");
+  var newPseudo = pseudoFormat(pseudo);
 
   if (!newPseudo) {
     return "Pseudo";
@@ -968,7 +971,7 @@ function addNewCharacter(
   pseudoToDuplicate
 ) {
   function editAndSetCharacterPseudoInput(selectedCharacter, spanInput) {
-    var maxPseudoLength = 15;
+    var maxPseudoLength = 20;
 
     var selection = window.getSelection();
     var range = document.createRange();
