@@ -67,7 +67,12 @@ function addRowToTableResult(tableResult, value) {
   newRow.style.fontWeight = "bold";
 }
 
-function addRowToTableResultHistory(tableResultHistory, valuesToDisplay, deleteFightTemplate, numberFormat) {
+function addRowToTableResultHistory(
+  tableResultHistory,
+  valuesToDisplay,
+  deleteFightTemplate,
+  numberFormat
+) {
   var row = tableResultHistory.insertRow();
 
   for (var index = 0; index < valuesToDisplay.length; index++) {
@@ -439,35 +444,6 @@ function filterForm(characters, battle) {
   });
 }
 
-function getSavedCharacters() {
-  var savedCharacters = localStorage.getItem("savedCharactersCalculator");
-
-  if (savedCharacters) {
-    return JSON.parse(savedCharacters);
-  }
-  return {};
-}
-
-function getSavedMonsters() {
-  var savedMonsters = localStorage.getItem("savedMonstersCalculator");
-
-  if (savedMonsters) {
-    return JSON.parse(savedMonsters).filter(function (num) {
-      return !isNaN(Number(num));
-    });
-  }
-  return [];
-}
-
-function getSavedFights() {
-  var savedFights = localStorage.getItem("savedFightsCalculator");
-
-  if (savedFights) {
-    return JSON.parse(savedFights);
-  }
-  return [];
-}
-
 function addUniquePseudo(characterDataObject, savedCharactersPseudo) {
   var characterPseudo = characterDataObject.name;
   var originalPseudo = characterPseudo;
@@ -495,23 +471,44 @@ function convertToNumber(value) {
   return isNaN(valueNumber) ? value : valueNumber;
 }
 
-function localSave(key, value) {
-  localStorage.setItem(
-    key,
-    JSON.stringify(value)
-  );
+function getLocalStorageValue(key, defaultValue) {
+  var storedValue = localStorage.getItem(key);
+
+  if (storedValue) {
+    return JSON.parse(storedValue);
+  }
+
+  return defaultValue;
+}
+
+function getSavedCharacters() {
+  return getLocalStorageValue("savedCharactersCalculator", {});
+}
+
+function getSavedMonsters() {
+  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (num) {
+    return !isNaN(Number(num));
+  });
+}
+
+function getSavedFights() {
+  return getLocalStorageValue("savedFightsCalculator", []);
+}
+
+function saveToLocalStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 function updateSavedCharacters(savedCharacters) {
-  localSave("savedCharactersCalculator", savedCharacters);
+  saveToLocalStorage("savedCharactersCalculator", savedCharacters);
 }
 
 function updateSavedMonsters(savedMonsters) {
-  localSave("savedMonstersCalculator", savedMonsters);
+  saveToLocalStorage("savedMonstersCalculator", savedMonsters);
 }
 
 function updateSavedFights(savedFights) {
-  localSave("savedFightsCalculator", savedFights);
+  saveToLocalStorage("savedFightsCalculator", savedFights);
 }
 
 function saveCharacter(
@@ -3692,7 +3689,7 @@ function displayFightResults(
   attackerName,
   victimName,
   meanDamages,
-  minMaxDamages,
+  minMaxDamages
 ) {
   var tableResultHistory = battle.tableResultHistory;
   var attackTypeSelection = battle.attackTypeSelection;
@@ -3713,7 +3710,12 @@ function displayFightResults(
   savedFights.push(valuesToDisplay);
   updateSavedFights(savedFights);
 
-  addRowToTableResultHistory(tableResultHistory, valuesToDisplay, battle.deleteFightTemplate, battle.numberFormat)
+  addRowToTableResultHistory(
+    tableResultHistory,
+    valuesToDisplay,
+    battle.deleteFightTemplate,
+    battle.numberFormat
+  );
 }
 
 function createBattle(characters, battle) {
@@ -3798,7 +3800,7 @@ function createBattle(characters, battle) {
       attacker.name,
       victim.name,
       meanDamages,
-      minMaxDamages,
+      minMaxDamages
     );
     addPotentialErrorInformation(
       battle.errorInformation,
@@ -3929,7 +3931,12 @@ function initResultTableHistory(battle) {
     hideElement(tableResultHistory.rows[1]);
 
     for (var savedFight of battle.savedFights) {
-      addRowToTableResultHistory(tableResultHistory, savedFight, battle.deleteFightTemplate, battle.numberFormat)
+      addRowToTableResultHistory(
+        tableResultHistory,
+        savedFight,
+        battle.deleteFightTemplate,
+        battle.numberFormat
+      );
     }
   }
 
