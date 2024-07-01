@@ -67,6 +67,26 @@ function addRowToTableResult(tableResult, value) {
   newRow.style.fontWeight = "bold";
 }
 
+function addRowToTableResultHistory(tableResultHistory, valuesToDisplay, deleteFightTemplate, numberFormat) {
+  var row = tableResultHistory.insertRow();
+
+  for (var index = 0; index < valuesToDisplay.length; index++) {
+    var cell = row.insertCell();
+    var textContent;
+
+    if (index >= 3) {
+      textContent = numberFormat.default.format(valuesToDisplay[index]);
+    } else {
+      textContent = valuesToDisplay[index];
+    }
+
+    cell.textContent = textContent;
+  }
+
+  var cell = row.insertCell();
+  cell.appendChild(deleteFightTemplate.cloneNode(true));
+}
+
 function addToTableResult(
   tableResult,
   damagesWeighted,
@@ -439,6 +459,15 @@ function getSavedMonsters() {
   return [];
 }
 
+function getSavedFights() {
+  var savedFights = localStorage.getItem("savedFightsCalculator");
+
+  if (savedFights) {
+    return JSON.parse(savedFights);
+  }
+  return [];
+}
+
 function addUniquePseudo(characterDataObject, savedCharactersPseudo) {
   var characterPseudo = characterDataObject.name;
   var originalPseudo = characterPseudo;
@@ -466,18 +495,23 @@ function convertToNumber(value) {
   return isNaN(valueNumber) ? value : valueNumber;
 }
 
-function updateSavedCharacters(savedCharacters) {
+function localSave(key, value) {
   localStorage.setItem(
-    "savedCharactersCalculator",
-    JSON.stringify(savedCharacters)
+    key,
+    JSON.stringify(value)
   );
 }
 
+function updateSavedCharacters(savedCharacters) {
+  localSave("savedCharactersCalculator", savedCharacters);
+}
+
 function updateSavedMonsters(savedMonsters) {
-  localStorage.setItem(
-    "savedMonstersCalculator",
-    JSON.stringify(savedMonsters)
-  );
+  localSave("savedMonstersCalculator", savedMonsters);
+}
+
+function updateSavedFights(savedFights) {
+  localSave("savedFightsCalculator", savedFights);
 }
 
 function saveCharacter(
@@ -3653,37 +3687,33 @@ function addPotentialErrorInformation(
   }
 }
 
-function displayResults(
-  resultDamages,
-  attackTypeSelection,
+function displayFightResults(
+  battle,
   attackerName,
   victimName,
   meanDamages,
   minMaxDamages,
-  deleteFightTemplate,
-  numberFormat
 ) {
-  showElement(resultDamages);
-  hideElement(resultDamages.rows[1]);
+  var tableResultHistory = battle.tableResultHistory;
+  var attackTypeSelection = battle.attackTypeSelection;
+  var savedFights = battle.savedFights;
 
-  var results = [
+  showElement(tableResultHistory);
+  hideElement(tableResultHistory.rows[1]);
+
+  var valuesToDisplay = [
     attackerName,
     victimName,
     attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
-    numberFormat.format(meanDamages),
-    numberFormat.format(minMaxDamages.min),
-    numberFormat.format(minMaxDamages.max),
+    meanDamages,
+    minMaxDamages.min,
+    minMaxDamages.max,
   ];
 
-  var row = resultDamages.insertRow();
+  savedFights.push(valuesToDisplay);
+  updateSavedFights(savedFights);
 
-  for (var index = 0; index < results.length; index++) {
-    var cell = row.insertCell();
-    cell.textContent = results[index];
-  }
-
-  var cell = row.insertCell();
-  cell.appendChild(deleteFightTemplate.cloneNode(true));
+  addRowToTableResultHistory(tableResultHistory, valuesToDisplay, battle.deleteFightTemplate, battle.numberFormat)
 }
 
 function createBattle(characters, battle) {
@@ -3763,15 +3793,12 @@ function createBattle(characters, battle) {
     );
 
     displayDamagesChart(battle.damagesChart, battle.chartContainer);
-    displayResults(
-      battle.resultDamages,
-      battle.attackTypeSelection,
+    displayFightResults(
+      battle,
       attacker.name,
       victim.name,
       meanDamages,
       minMaxDamages,
-      battle.deleteFightTemplate,
-      battle.numberFormat.default
     );
     addPotentialErrorInformation(
       battle.errorInformation,
@@ -3893,19 +3920,33 @@ function createConstants() {
   return constants;
 }
 
-function initResultDamages(resultDamages) {
-  resultDamages.addEventListener("click", function (event) {
+function initResultTableHistory(battle) {
+  var tableResultHistory = battle.tableResultHistory;
+  var savedFights = battle.savedFights;
+  var startIndex = 3;
+
+  if (savedFights.length) {
+    hideElement(tableResultHistory.rows[1]);
+
+    for (var savedFight of battle.savedFights) {
+      addRowToTableResultHistory(tableResultHistory, savedFight, battle.deleteFightTemplate, battle.numberFormat)
+    }
+  }
+
+  tableResultHistory.addEventListener("click", function (event) {
     var deleteButton = event.target.closest(".svg-icon-delete");
 
     if (deleteButton) {
       var row = deleteButton.closest("tr");
 
       if (row) {
-        row.remove();
-        console.log(resultDamages.rows.length);
+        savedFights.splice(row.rowIndex - startIndex, 1);
+        updateSavedFights(savedFights);
 
-        if (resultDamages.rows.length === 3) {
-          showElement(resultDamages.rows[1]);
+        row.remove();
+
+        if (tableResultHistory.rows.length === startIndex) {
+          showElement(tableResultHistory.rows[1]);
         }
       }
     }
@@ -4046,6 +4087,7 @@ function createDamageCalculatorInformation(chartSource) {
     unsavedChanges: false,
     savedCharacters: {},
     currentCharacter: null,
+    savedMonsters: getSavedMonsters(),
     characterCreation: document.getElementById("character-creation"),
     addNewCharacterButton: document.getElementById("add-new-character"),
     dropZone: document.getElementById("character-drop-zone"),
@@ -4073,14 +4115,9 @@ function createDamageCalculatorInformation(chartSource) {
 
   delete characters.newCharacterTemplate.dataset.click;
 
-  var savedCharacters = getSavedCharacters();
-  var savedMonsters = getSavedMonsters();
-
-  for (var [pseudo, character] of Object.entries(savedCharacters)) {
+  for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
     characters.savedCharacters[pseudo] = character;
   }
-
-  characters.savedMonsters = savedMonsters;
 
   var skillContainer = document.getElementById("skill-container");
   characters.skillElementsToFilter =
@@ -4091,11 +4128,12 @@ function createDamageCalculatorInformation(chartSource) {
 
   var battle = {
     resetAttackType: false,
+    savedFights: getSavedFights(),
     battleForm: document.getElementById("create-battle"),
     attackerSelection: document.getElementById("attacker-selection"),
     attackTypeSelection: document.getElementById("attack-type-selection"),
     victimSelection: document.getElementById("victim-selection"),
-    resultDamages: document.getElementById("result-damages"),
+    tableResultHistory: document.getElementById("result-table-history"),
     deleteFightTemplate: document.getElementById("delete-fight-template")
       .children[0],
     errorInformation: {},
@@ -4117,7 +4155,7 @@ function createDamageCalculatorInformation(chartSource) {
     constants: constants,
   };
 
-  initResultDamages(battle.resultDamages);
+  initResultTableHistory(battle);
   initChart(battle, chartSource);
 
   var errorElements = document
