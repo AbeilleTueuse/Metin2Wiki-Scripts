@@ -1684,13 +1684,15 @@ function calcSkillDamageWithSecondaryBonuses(
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
-
+  
   damages -= battleValues.defense;
-
+  
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
-  damages = floorMultiplication(damages, battleValues.skillBonusByBonusCoeff);
-  damages = floorMultiplication(damages, battleValues.tigerStrengthCoeff);
+
+  var tempDamages = floorMultiplication(damages, battleValues.skillBonusByBonusCoeff);
+
+  damages = floorMultiplication(tempDamages, battleValues.tigerStrengthCoeff);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -1699,6 +1701,10 @@ function calcSkillDamageWithSecondaryBonuses(
   if (damagesType.piercingHit) {
     damages +=
       battleValues.piercingHitDefense + Math.min(0, minPiercingDamages);
+    damages += floorMultiplication(
+      tempDamages,
+      battleValues.extraPiercingHitCoeff
+    );
   }
 
   damages = floorMultiplication(damages, battleValues.skillDamageCoeff);
@@ -1895,9 +1901,7 @@ function createPhysicalBattleValues(
   var tigerStrength = 0;
   var blessingBonus = 0;
   var criticalHitPercentage = attacker.criticalHit;
-  var criticalHitPercentageMarriage = 0;
   var piercingHitPercentage = attacker.piercingHit;
-  var piercingHitPercentageMarriage = 0;
   var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
   var averageDamage = 0;
   var averageDamageResistance = 0;
@@ -1966,7 +1970,7 @@ function createPhysicalBattleValues(
         }
 
         if (attacker.loveEarrings === "on") {
-          criticalHitPercentageMarriage = getMarriageBonusValue(
+          criticalHitPercentage += getMarriageBonusValue(
             attacker,
             marriageTable,
             "loveEarrings"
@@ -1974,7 +1978,7 @@ function createPhysicalBattleValues(
         }
 
         if (attacker.harmonyEarrings === "on") {
-          piercingHitPercentageMarriage = getMarriageBonusValue(
+          piercingHitPercentage += getMarriageBonusValue(
             attacker,
             marriageTable,
             "harmonyEarrings"
@@ -2151,11 +2155,11 @@ function createPhysicalBattleValues(
   };
 
   criticalHitPercentage = Math.min(
-    criticalHitPercentage + criticalHitPercentageMarriage,
+    criticalHitPercentage,
     100
   );
   piercingHitPercentage = Math.min(
-    piercingHitPercentage + piercingHitPercentageMarriage,
+    piercingHitPercentage,
     100
   );
 
@@ -2227,6 +2231,7 @@ function createSkillBattleValues(
   var tigerStrength = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
+  var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
   var skillDamage = 0;
   var skillDamageResistance = 0;
   var rankBonus = 0;
@@ -2439,6 +2444,7 @@ function createSkillBattleValues(
     piercingHitDefense: victim.defense,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 1 - weaponDefense / 100,
+    extraPiercingHitCoeff: extraPiercingHitPercentage / 200,
     skillDamageCoeff: 1 + skillDamage / 100,
     skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
     rankBonusCoeff: 1 + rankBonus / 100,
@@ -2452,7 +2458,10 @@ function createSkillBattleValues(
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
-  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
+  piercingHitPercentage = Math.min(
+    piercingHitPercentage,
+    100
+  );
 
   battleValues.damagesTypeCombinaison = [
     {
