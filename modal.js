@@ -87,12 +87,14 @@ function initializeSpawnLayers(spawnLayerContainers) {
     const spawnLayerColor = localStorage.getItem(SPAWN_LAYER_COLOR);
 
     spawnLayerContainers.forEach((spawnLayerContainer) => {
-        const selectColor = createSelectColor(optionMapping, styleMapping);
         const spawnLayer = spawnLayerContainer.querySelector("img");
-
-        spawnLayerContainer.appendChild(selectColor);
-        selects.push(selectColor);
-        spawnLayers.push(spawnLayer);
+        
+        if (spawnLayer) {
+            const selectColor = createSelectColor(optionMapping, styleMapping);
+            spawnLayerContainer.appendChild(selectColor);
+            selects.push(selectColor);
+            spawnLayers.push(spawnLayer);
+        }
     });
 
     const handleChange = (event) => {
