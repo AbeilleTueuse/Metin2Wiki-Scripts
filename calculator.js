@@ -7,13 +7,13 @@ function hideElement(element) {
 }
 
 function removeAccent(str) {
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function toNormalForm(str) {
-  return removeAccent(str).replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
+  return removeAccent(str)
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .toLowerCase();
 }
 
 function pseudoFormat(str) {
@@ -36,17 +36,32 @@ function compareNumbers(a, b) {
   return b - a;
 }
 
-function floorMultiplication(firstFactor, secondFactor) {
-  return Math.floor((firstFactor * secondFactor).toFixed(8));
+function getFloorMultiplication() {
+  var base64String =
+    "AGFzbQEAAAABCgJgAABgAn99AX8CDwEDZW52Bm1lbW9yeQIAAgMDAgABBj8KfwFBgIgEC38AQYAIC38AQYAIC38AQYAIC38AQYCIBAt/AEGACAt/AEGAiAQLfwBBgIAIC38AQQALfwBBAQsHtAELEV9fd2FzbV9jYWxsX2N0b3JzAAAZX1oxOWZsb29yTXVsdGlwbGljYXRpb25pZgABDF9fZHNvX2hhbmRsZQMBCl9fZGF0YV9lbmQDAgtfX3N0YWNrX2xvdwMDDF9fc3RhY2tfaGlnaAMEDV9fZ2xvYmFsX2Jhc2UDBQtfX2hlYXBfYmFzZQMGCl9faGVhcF9lbmQDBw1fX21lbW9yeV9iYXNlAwgMX190YWJsZV9iYXNlAwkKJgICAAshAAJAIACyIAGUIgGLQwAAAE9dRQ0AIAGoDwtBgICAgHgLAF0EbmFtZQALCmZsb29yLndhc20BNQIAEV9fd2FzbV9jYWxsX2N0b3JzAR9mbG9vck11bHRpcGxpY2F0aW9uKGludCwgZmxvYXQpBxIBAA9fX3N0YWNrX3BvaW50ZXIAKAlwcm9kdWNlcnMBDHByb2Nlc3NlZC1ieQEFY2xhbmcIMTguMS4wcmMALA90YXJnZXRfZmVhdHVyZXMCKw9tdXRhYmxlLWdsb2JhbHMrCHNpZ24tZXh0";
+  var binaryString = window.atob(base64String);
+  var bytes = new Uint8Array(binaryString.length);
+
+  for (var i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  var wasmModule = new WebAssembly.Module(bytes);
+  var memory = new WebAssembly.Memory({ initial: 100, maximum: 1000 });
+  var imports = {
+    env: {
+      console_log: function (arg) {
+        console.log(arg);
+      },
+      memory: memory,
+    },
+  };
+  var wasmInstance = new WebAssembly.Instance(wasmModule, imports);
+
+  return wasmInstance.exports._Z19floorMultiplicationif;
 }
 
-function floorMultiplicationWithNegative(firstFactor, secondFactor) {
-  if (secondFactor < 0) {
-    return -floorMultiplication(firstFactor, -secondFactor);
-  } else {
-    return floorMultiplication(firstFactor, secondFactor);
-  }
-}
+var floorMultiplication = getFloorMultiplication();
 
 function truncateNumber(number, precision) {
   return Math.floor(number * 10 ** precision) / 10 ** precision;
@@ -489,7 +504,9 @@ function getSavedCharacters() {
 }
 
 function getSavedMonsters() {
-  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (num) {
+  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (
+    num
+  ) {
     return !isNaN(Number(num));
   });
 }
@@ -1596,8 +1613,7 @@ function getMarriageBonusValue(character, marriageTable, itemName) {
 
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
   damages = floorMultiplication(
-    damages * battleValues.attackValueCoeff + battleValues.adjustCoeff,
-    1
+    1, damages * battleValues.attackValueCoeff + battleValues.adjustCoeff
   );
   damages += battleValues.attackValueMarriage;
   damages = floorMultiplication(
@@ -1614,10 +1630,7 @@ function calcDamageWithPrimaryBonuses(damages, battleValues) {
 
   var elementDamages = 0;
   for (var elementBonusCoeff of battleValues.elementBonusCoeff) {
-    elementDamages += floorMultiplicationWithNegative(
-      damages,
-      elementBonusCoeff
-    );
+    elementDamages += floorMultiplication(damages, elementBonusCoeff);
   }
   damages += elementDamages;
 
@@ -1684,13 +1697,16 @@ function calcSkillDamageWithSecondaryBonuses(
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
-  
+
   damages -= battleValues.defense;
-  
+
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
 
-  var tempDamages = floorMultiplication(damages, battleValues.skillBonusByBonusCoeff);
+  var tempDamages = floorMultiplication(
+    damages,
+    battleValues.skillBonusByBonusCoeff
+  );
 
   damages = floorMultiplication(tempDamages, battleValues.tigerStrengthCoeff);
 
@@ -1744,22 +1760,22 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
     var polymorphMonster = createMonster(attacker.polymorphMonster);
 
     var polymorphStr = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.str
+      polymorphMonster.str,
+      polymorphPowerPct
     );
 
     attacker.polymorphDex += floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.dex
+      polymorphMonster.dex,
+      polymorphPowerPct
     );
 
     attacker.minAttackValuePolymorph = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.minAttackValue
+      polymorphMonster.minAttackValue,
+      polymorphPowerPct
     );
     attacker.maxAttackValuePolymorph = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.maxAttackValue
+      polymorphMonster.maxAttackValue,
+      polymorphPowerPct
     );
 
     if (!attacker.weapon) {
@@ -2154,14 +2170,8 @@ function createPhysicalBattleValues(
     steelDragonElixirCoeff: 1 - steelDragonElixir / 100,
   };
 
-  criticalHitPercentage = Math.min(
-    criticalHitPercentage,
-    100
-  );
-  piercingHitPercentage = Math.min(
-    piercingHitPercentage,
-    100
-  );
+  criticalHitPercentage = Math.min(criticalHitPercentage, 100);
+  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
   battleValues.damagesTypeCombinaison = [
     {
@@ -2458,10 +2468,7 @@ function createSkillBattleValues(
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
-  piercingHitPercentage = Math.min(
-    piercingHitPercentage,
-    100
-  );
+  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
   battleValues.damagesTypeCombinaison = [
     {
@@ -2583,7 +2590,7 @@ function calcPhysicalDamages(
 
     var damagesWeighted = {};
     addRowToTableResult(tableResult, damagesType.name);
-
+    console.time(damagesType.name)
     for (
       var attackValue = minAttackValue;
       attackValue <= maxAttackValue;
@@ -2602,7 +2609,7 @@ function calcPhysicalDamages(
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
       var rawDamages =
         mainAttackValue +
-        floorMultiplication(attackFactor, secondaryAttackValue);
+        floorMultiplication(secondaryAttackValue, attackFactor);
       var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         rawDamages,
         battleValues
@@ -2647,6 +2654,7 @@ function calcPhysicalDamages(
         sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
+    console.timeEnd(damagesType.name)
 
     var scatterData = addToTableResult(
       tableResult,
@@ -2678,8 +2686,8 @@ function calcBlessingBonus(skillPowerTable, victim) {
   }
 
   var blessingBonus = floorMultiplication(
-    ((int * 0.3 + 5) * (2 * skillPower + 0.5) + 0.3 * dex) / (skillPower + 2.3),
-    1
+    1,
+    ((int * 0.3 + 5) * (2 * skillPower + 0.5) + 0.3 * dex) / (skillPower + 2.3)
   );
 
   if (victim.class === "dragon" && victim.blessingOnself === "on") {
@@ -2721,8 +2729,8 @@ function getSkillFormula(
         case 1:
           skillFormula = function (atk) {
             return floorMultiplication(
-              1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
-              1
+              1,
+              1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2731,8 +2739,8 @@ function getSkillFormula(
         case 2:
           skillFormula = function (atk) {
             return floorMultiplication(
-              3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
-              1
+              1,
+              3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2742,8 +2750,8 @@ function getSkillFormula(
         case 5:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
-              1
+              1,
+              2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2752,17 +2760,17 @@ function getSkillFormula(
         case 6:
           skillFormula = function (atk) {
             return floorMultiplication(
-              (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
-              1
+              1,
+              (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07
             );
           };
           break;
         case 9:
           skillFormula = function (atk) {
             return floorMultiplication(
+              1,
               3 * atk +
-                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
-              1
+                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower
             );
           };
           break;
@@ -2773,8 +2781,8 @@ function getSkillFormula(
         case 1:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
-              1
+              1,
+              2.3 * atk + (4 * atk + 4 * str + vit) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2784,8 +2792,8 @@ function getSkillFormula(
         case 2:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
-              1
+              1,
+              2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2794,8 +2802,8 @@ function getSkillFormula(
         case 3:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
-              1
+              1,
+              2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower
             );
           };
           break;
@@ -2803,8 +2811,8 @@ function getSkillFormula(
         case 5:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-              1
+              1,
+              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2813,9 +2821,9 @@ function getSkillFormula(
         case 6:
           skillFormula = function (atk) {
             return floorMultiplication(
+              1,
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-                1.1,
-              1
+                1.1
             );
           };
           break;
@@ -2823,9 +2831,9 @@ function getSkillFormula(
         case 9:
           skillFormula = function (atk) {
             return floorMultiplication(
+              1,
               3 * atk +
-                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
-              1
+                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower
             );
           };
           break;
@@ -2836,8 +2844,8 @@ function getSkillFormula(
         case 1:
           skillFormula = function (atk) {
             return floorMultiplication(
-              atk + (1.2 * atk + 600 + 4 * dex + 4 * str) * skillPower,
-              1
+              1,
+              atk + (1.2 * atk + 600 + 4 * dex + 4 * str) * skillPower
             );
           };
           skillInfo.weaponBonus = [1, 50];
@@ -2848,8 +2856,8 @@ function getSkillFormula(
         case 2:
           skillFormula = function (atk) {
             return floorMultiplication(
-              atk + (1.6 * atk + 250 + 7 * dex + 7 * str) * skillPower,
-              1
+              1,
+              atk + (1.6 * atk + 250 + 7 * dex + 7 * str) * skillPower
             );
           };
           skillInfo.weaponBonus = [1, 35];
@@ -2859,8 +2867,8 @@ function getSkillFormula(
         case 3:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
-              1
+              1,
+              2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2869,8 +2877,8 @@ function getSkillFormula(
         case 5:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
-              1
+              1,
+              2 * lv + (atk + 3 * str + 18 * dex) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2879,8 +2887,8 @@ function getSkillFormula(
         case 6:
           skillFormula = function (atk) {
             return floorMultiplication(
-              (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
-              1
+              1,
+              (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1
             );
           };
           break;
@@ -2888,8 +2896,8 @@ function getSkillFormula(
         case 9:
           skillFormula = function (atk) {
             return floorMultiplication(
-              atk + (1.7 * atk + 500.5 + 6 * dex + 5 * lv) * skillPower,
-              1
+              1,
+              atk + (1.7 * atk + 500.5 + 6 * dex + 5 * lv) * skillPower
             );
           };
           break;
@@ -2910,8 +2918,8 @@ function getSkillFormula(
         case 2:
           skillFormula = function (atk) {
             return floorMultiplication(
-              atk + (1.7 * atk + 5 * dex + str) * skillPower,
-              1
+              1,
+              atk + (1.7 * atk + 5 * dex + str) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2920,8 +2928,8 @@ function getSkillFormula(
         case 3:
           skillFormula = function (atk) {
             return floorMultiplication(
-              1.5 * atk + (2.6 * atk + 0.9 * int + 200) * skillPower,
-              1
+              1,
+              1.5 * atk + (2.6 * atk + 0.9 * int + 200) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2931,8 +2939,8 @@ function getSkillFormula(
         case 4:
           skillFormula = function (atk) {
             return floorMultiplication(
-              (3 * dex + 200 + 2 * str + 2 * int) * skillPower,
-              1
+              1,
+              (3 * dex + 200 + 2 * str + 2 * int) * skillPower
             );
           };
           skillInfo.removeWeaponReduction = true;
@@ -2941,9 +2949,9 @@ function getSkillFormula(
         case 5:
           skillFormula = function (atk) {
             return floorMultiplication(
+              1,
               atk +
-                (1.4 * atk + 150 + 7 * dex + 4 * str + 4 * int) * skillPower,
-              1
+                (1.4 * atk + 150 + 7 * dex + 4 * str + 4 * int) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2952,10 +2960,10 @@ function getSkillFormula(
         case 6:
           skillFormula = function (atk) {
             return floorMultiplication(
+              1,
               (atk +
                 (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
-                1.2,
-              1
+                1.2
             );
           };
           improvedByBonus = true;
@@ -2964,8 +2972,8 @@ function getSkillFormula(
         case 9:
           skillFormula = function (atk) {
             return floorMultiplication(
-              1.9 * atk + (2.6 * atk + 500.5) * skillPower,
-              1
+              1,
+              1.9 * atk + (2.6 * atk + 500.5) * skillPower
             );
           };
           break;
@@ -2976,11 +2984,11 @@ function getSkillFormula(
         case 1:
           skillFormula = function (atk) {
             return floorMultiplication(
+              1,
               atk +
                 2 * lv +
                 2 * int +
-                (2 * atk + 4 * str + 14 * int) * skillPower,
-              1
+                (2 * atk + 4 * str + 14 * int) * skillPower
             );
           };
           improvedByBonus = true;
@@ -2990,11 +2998,11 @@ function getSkillFormula(
         case 2:
           skillFormula = function (atk) {
             return floorMultiplication(
+              1,
               1.1 * atk +
                 2 * lv +
                 2 * int +
-                (1.5 * atk + str + 12 * int) * skillPower,
-              1
+                (1.5 * atk + str + 12 * int) * skillPower
             );
           };
           improvedByBonus = true;
@@ -3003,11 +3011,11 @@ function getSkillFormula(
         case 6:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               40 +
                 5 * lv +
                 2 * int +
-                (10 * int + 7 * mav + 75) * attackFactor * skillPower,
-              1
+                (10 * int + 7 * mav + 75) * attackFactor * skillPower
             );
           };
           break;
@@ -3015,8 +3023,8 @@ function getSkillFormula(
         case 9:
           skillFormula = function (atk) {
             return floorMultiplication(
-              1.9 * atk + (2.6 * atk + 500.5) * skillPower,
-              1
+              1,
+              1.9 * atk + (2.6 * atk + 500.5) * skillPower
             );
           };
           break;
@@ -3027,11 +3035,11 @@ function getSkillFormula(
         case 1:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               40 +
                 5 * lv +
                 2 * int +
-                (13 * int + 6 * mav + 75) * attackFactor * skillPower,
-              1
+                (13 * int + 6 * mav + 75) * attackFactor * skillPower
             );
           };
           improvedByBonus = true;
@@ -3051,11 +3059,11 @@ function getSkillFormula(
         case 3:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               30 +
                 2 * lv +
                 2 * int +
-                (7 * int + 6 * mav + 350) * attackFactor * skillPower,
-              1
+                (7 * int + 6 * mav + 350) * attackFactor * skillPower
             );
           };
           break;
@@ -3072,12 +3080,12 @@ function getSkillFormula(
         case 6:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               120 +
                 6 * lv +
                 (5 * vit + 5 * dex + 29 * int + 9 * mav) *
                   attackFactor *
-                  skillPower,
-              1
+                  skillPower
             );
           };
           improvedByBonus = true;
@@ -3089,10 +3097,10 @@ function getSkillFormula(
         case 1:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               70 +
                 5 * lv +
-                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
-              1
+                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower
             );
           };
           skillInfo.weaponBonus = [4, 10];
@@ -3102,12 +3110,12 @@ function getSkillFormula(
         case 2:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               60 +
                 5 * lv +
                 (16 * int + 6 * dex + 6 * mav + 120) *
                   attackFactor *
-                  skillPower,
-              1
+                  skillPower
             );
           };
           skillInfo.weaponBonus = [4, 10];
@@ -3118,12 +3126,12 @@ function getSkillFormula(
         case 3:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               70 +
                 3 * lv +
                 (20 * int + 3 * str + 10 * mav + 100) *
                   attackFactor *
-                  skillPower,
-              1
+                  skillPower
             );
           };
           skillInfo.weaponBonus = [4, 10];
@@ -3136,12 +3144,12 @@ function getSkillFormula(
         case 1:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               60 +
                 5 * lv +
                 (8 * int + 2 * dex + 8 * mav + 10 * int) *
                   attackFactor *
-                  skillPower,
-              1
+                  skillPower
             );
           };
           skillInfo.weaponBonus = [6, 10];
@@ -3151,12 +3159,12 @@ function getSkillFormula(
         case 2:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               40 +
                 4 * lv +
                 (13 * int + 2 * str + 10 * mav + 10.5 * int) *
                   attackFactor *
-                  skillPower,
-              1
+                  skillPower
             );
           };
           skillInfo.weaponBonus = [6, 10];
@@ -3167,12 +3175,12 @@ function getSkillFormula(
         case 3:
           skillFormula = function (mav) {
             return floorMultiplication(
+              1,
               50 +
                 5 * lv +
                 (8 * int + 2 * str + 8 * mav + 400.5) *
                   attackFactor *
-                  skillPower,
-              1
+                  skillPower
             );
           };
           improvedByBonus = true;
@@ -3195,8 +3203,8 @@ function getSkillFormula(
         case 2:
           skillFormula = function (atk) {
             return floorMultiplication(
-              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-              1
+              1,
+              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower
             );
           };
           skillInfo.weaponBonus = [5, 35];
@@ -3207,8 +3215,8 @@ function getSkillFormula(
         case 3:
           skillFormula = function (atk) {
             return floorMultiplication(
-              atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
-              1
+              1,
+              atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower
             );
           };
           skillInfo.weaponBonus = [5, 35];
@@ -3218,8 +3226,8 @@ function getSkillFormula(
         case 4:
           skillFormula = function (atk) {
             return floorMultiplication(
-              3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
-              1
+              1,
+              3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower
             );
           };
           improvedByBonus = true;
@@ -3251,15 +3259,15 @@ function getSkillFormula(
       // Combat équestre
       case 137:
         skillFormula = function (atk) {
-          return floorMultiplication(atk + 2 * atk * skillPower, 1);
+          return floorMultiplication(1, atk + 2 * atk * skillPower);
         };
         break;
       // Charge à cheval
       case 138:
         skillFormula = function (atk) {
           return floorMultiplication(
-            2.4 * (200 + 1.5 * lv) + 600 * skillPower,
-            1
+            1,
+            2.4 * (200 + 1.5 * lv) + 600 * skillPower
           );
         };
         break;
@@ -3267,15 +3275,15 @@ function getSkillFormula(
       case 139:
         skillFormula = function (atk) {
           return floorMultiplication(
-            2 * (200 + 1.5 * lv) + 600 * skillPower,
-            1
+            1,
+            2 * (200 + 1.5 * lv) + 600 * skillPower
           );
         };
         break;
       // Grêle de flèches
       case 140:
         skillFormula = function (atk) {
-          return floorMultiplication(atk + 2 * atk * skillPower, 1);
+          return floorMultiplication(1, atk + 2 * atk * skillPower);
         };
         break;
     }
@@ -3355,7 +3363,7 @@ function calcPhysicalSkillDamages(
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
       var rawDamages =
         mainAttackValue +
-        floorMultiplication(attackFactor, secondaryAttackValue);
+        floorMultiplication(secondaryAttackValue, attackFactor);
 
       var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         rawDamages,
