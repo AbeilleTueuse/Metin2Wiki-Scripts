@@ -7,13 +7,13 @@ function hideElement(element) {
 }
 
 function removeAccent(str) {
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function toNormalForm(str) {
-  return removeAccent(str).replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
+  return removeAccent(str)
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .toLowerCase();
 }
 
 function pseudoFormat(str) {
@@ -489,7 +489,9 @@ function getSavedCharacters() {
 }
 
 function getSavedMonsters() {
-  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (num) {
+  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (
+    num
+  ) {
     return !isNaN(Number(num));
   });
 }
@@ -642,7 +644,7 @@ function uploadCharacter(
             );
           }
         } catch (error) {
-          console.log(error)
+          console.log(error);
           if (error.name === "TypeError") {
             // delete the character
           }
@@ -1598,22 +1600,23 @@ function getMarriageBonusValue(character, marriageTable, itemName) {
 }
 
 function calcDamageWithPrimaryBonuses(damages, battleValues) {
-  damages = floorMultiplication(
-    damages * battleValues.attackValueCoeff + battleValues.adjustCoeff,
-    1
+  damages = Math.floor(
+    (damages * battleValues.attackValueCoeff) / 100 + battleValues.adjustCoeff
   );
+
   damages += battleValues.attackValueMarriage;
-  damages = floorMultiplication(
-    damages,
-    battleValues.monsterResistanceMarriageCoeff
+
+  damages = Math.floor(
+    (damages * battleValues.monsterResistanceMarriageCoeff) / 100
   );
-  damages = floorMultiplication(damages, battleValues.monsterResistanceCoeff);
-  damages = floorMultiplication(damages, battleValues.typeBonusCoeff);
+  damages = Math.floor((damages * battleValues.monsterResistanceCoeff) / 100);
+
+  damages += Math.floor((damages * battleValues.typeBonusCoeff) / 100);
   damages +=
-    floorMultiplication(damages, battleValues.raceBonusCoeff) -
-    floorMultiplication(damages, battleValues.raceResistanceCoeff);
-  damages = floorMultiplication(damages, battleValues.stoneBonusCoeff);
-  damages = floorMultiplication(damages, battleValues.monsterBonusCoeff);
+    Math.floor((damages * battleValues.raceBonusCoeff) / 100) -
+    Math.floor((damages * battleValues.raceResistanceCoeff) / 100);
+  damages += Math.floor((damages * battleValues.stoneBonusCoeff) / 100);
+  damages += Math.floor((damages * battleValues.monsterBonusCoeff) / 100);
 
   var elementDamages = 0;
   for (var elementBonusCoeff of battleValues.elementBonusCoeff) {
@@ -1623,8 +1626,7 @@ function calcDamageWithPrimaryBonuses(damages, battleValues) {
     );
   }
   damages += elementDamages;
-
-  damages = floorMultiplication(damages, battleValues.damageMultiplier);
+  damages = Math.floor(damages * battleValues.damageMultiplier);
 
   return damages;
 }
@@ -1687,13 +1689,16 @@ function calcSkillDamageWithSecondaryBonuses(
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
-  
+
   damages -= battleValues.defense;
-  
+
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
 
-  var tempDamages = floorMultiplication(damages, battleValues.skillBonusByBonusCoeff);
+  var tempDamages = floorMultiplication(
+    damages,
+    battleValues.skillBonusByBonusCoeff
+  );
 
   damages = floorMultiplication(tempDamages, battleValues.tigerStrengthCoeff);
 
@@ -2125,15 +2130,15 @@ function createPhysicalBattleValues(
     missPercentage: missPercentage,
     adjustCoeff: 0,
     attackValueCoeff:
-      1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
+      100 + attackValuePercent + Math.min(100, attackMeleeMagic),
     attackValueMarriage: attackValueMarriage,
-    monsterResistanceMarriageCoeff: 1 - monsterResistanceMarriage / 100,
-    monsterResistanceCoeff: 1 - monsterResistance / 100,
-    typeBonusCoeff: 1 + typeBonus / 100,
-    raceBonusCoeff: raceBonus / 100,
-    raceResistanceCoeff: raceResistance / 100,
-    monsterBonusCoeff: 1 + monsterBonus / 100,
-    stoneBonusCoeff: 1 + stoneBonus / 100,
+    monsterResistanceMarriageCoeff: 100 - monsterResistanceMarriage,
+    monsterResistanceCoeff: 100 - monsterResistance,
+    typeBonusCoeff: typeBonus,
+    raceBonusCoeff: raceBonus,
+    raceResistanceCoeff: raceResistance,
+    stoneBonusCoeff: stoneBonus,
+    monsterBonusCoeff: monsterBonus,
     elementBonusCoeff: elementBonus,
     damageMultiplier: damageMultiplier,
     defense: victim.defense,
@@ -2157,14 +2162,8 @@ function createPhysicalBattleValues(
     steelDragonElixirCoeff: 1 - steelDragonElixir / 100,
   };
 
-  criticalHitPercentage = Math.min(
-    criticalHitPercentage,
-    100
-  );
-  piercingHitPercentage = Math.min(
-    piercingHitPercentage,
-    100
-  );
+  criticalHitPercentage = Math.min(criticalHitPercentage, 100);
+  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
   battleValues.damagesTypeCombinaison = [
     {
@@ -2430,15 +2429,15 @@ function createSkillBattleValues(
     weaponBonusCoeff: 1,
     adjustCoeff: adjustCoeff,
     attackValueCoeff:
-      1 + (attackValuePercent + Math.min(100, attackMeleeMagic)) / 100,
+      100 + attackValuePercent + Math.min(100, attackMeleeMagic),
     attackValueMarriage: attackValueMarriage,
-    monsterResistanceMarriageCoeff: 1 - monsterResistanceMarriage / 100,
-    monsterResistanceCoeff: 1 - monsterResistance / 100,
-    typeBonusCoeff: 1 + typeBonus / 100,
-    raceBonusCoeff: raceBonus / 100,
-    raceResistanceCoeff: raceResistance / 100,
-    monsterBonusCoeff: 1 + monsterBonus / 100,
-    stoneBonusCoeff: 1 + stoneBonus / 100,
+    monsterResistanceMarriageCoeff: 100 - monsterResistanceMarriage,
+    monsterResistanceCoeff: 100 - monsterResistance,
+    typeBonusCoeff: typeBonus,
+    raceBonusCoeff: raceBonus,
+    raceResistanceCoeff: raceResistance,
+    stoneBonusCoeff: stoneBonus,
+    monsterBonusCoeff: monsterBonus,
     elementBonusCoeff: elementBonus,
     damageMultiplier: damageMultiplier,
     useDamages: useDamages,
@@ -2461,10 +2460,7 @@ function createSkillBattleValues(
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
-  piercingHitPercentage = Math.min(
-    piercingHitPercentage,
-    100
-  );
+  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
   battleValues.damagesTypeCombinaison = [
     {
