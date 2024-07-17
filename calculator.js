@@ -448,7 +448,7 @@ function filterForm(characters, battle) {
 }
 
 function addUniquePseudo(characterDataObject, savedCharactersPseudo) {
-  var characterPseudo = characterDataObject.name;
+  var characterPseudo = String(characterDataObject.name);
   var originalPseudo = characterPseudo;
   var count = 0;
 
@@ -604,11 +604,13 @@ function uploadCharacter(
         var fileContent = e.target.result;
         try {
           var characterDataObject = JSON.parse(fileContent);
-          var characterPseudo = characterDataObject.name;
 
-          if (characterPseudo) {
+          if (characterDataObject.hasOwnProperty("name")) {
+            var characterPseudo = String(characterDataObject.name);
+
             hideElement(characters.characterCreation);
             characterPseudo = validPseudo(characterPseudo);
+
             [characterDataObject, characterPseudo] = addUniquePseudo(
               characterDataObject,
               Object.keys(characters.savedCharacters)
@@ -640,6 +642,7 @@ function uploadCharacter(
             );
           }
         } catch (error) {
+          console.log(error)
           if (error.name === "TypeError") {
             // delete the character
           }
