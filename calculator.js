@@ -889,8 +889,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-          pseudo +
-          " ?"
+            pseudo +
+            " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -1416,8 +1416,6 @@ function calcAttackFactor(attacker, victim) {
 
   var K1 = calcCoeffK(attacker.polymorphDex, attacker.level);
   var K2 = calcCoeffK(victim.polymorphDex, attacker.level);
-  console.log("K1: ", K1);
-  console.log("K2: ", K2);
 
   var AR = (K1 + 210) / 300;
   var ER = (((2 * K2 + 5) / (K2 + 95)) * 3) / 10;
@@ -1645,12 +1643,18 @@ function calcDamageWithSecondaryBonuses(
 
   if (damagesType.piercingHit) {
     damages += battleValues.defense + Math.min(0, minPiercingDamages);
-    damages += Math.floor((damagesWithPrimaryBonuses * battleValues.extraPiercingHitCoeff) / 1000);
+    damages += Math.floor(
+      (damagesWithPrimaryBonuses * battleValues.extraPiercingHitCoeff) / 1000
+    );
   }
 
   damages = Math.floor((damages * battleValues.averageDamageCoeff) / 100);
-  damages = Math.floor((damages * battleValues.averageDamageResistanceCoeff) / 100);
-  damages = Math.floor((damages * battleValues.skillDamageResistanceCoeff) / 100);
+  damages = Math.floor(
+    (damages * battleValues.averageDamageResistanceCoeff) / 100
+  );
+  damages = Math.floor(
+    (damages * battleValues.skillDamageResistanceCoeff) / 100
+  );
 
   damages = Math.floor((damages * battleValues.rankBonusCoeff) / 100);
   damages = Math.max(0, damages + battleValues.defensePercent);
@@ -1682,7 +1686,9 @@ function calcSkillDamageWithSecondaryBonuses(
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
 
-  var tempDamages = Math.floor((damages * battleValues.skillBonusByBonusCoeff) / 100);
+  var tempDamages = Math.floor(
+    (damages * battleValues.skillBonusByBonusCoeff) / 100
+  );
 
   damages = Math.floor((damages * battleValues.tigerStrengthCoeff) / 100);
 
@@ -1693,11 +1699,15 @@ function calcSkillDamageWithSecondaryBonuses(
   if (damagesType.piercingHit) {
     damages +=
       battleValues.piercingHitDefense + Math.min(0, minPiercingDamages);
-    damages += Math.floor((tempDamages * battleValues.extraPiercingHitCoeff) / 1000);
+    damages += Math.floor(
+      (tempDamages * battleValues.extraPiercingHitCoeff) / 1000
+    );
   }
 
   damages = Math.floor((damages * battleValues.skillDamageCoeff) / 100);
-  damages = Math.floor((damages * battleValues.skillDamageResistanceCoeff) / 100);
+  damages = Math.floor(
+    (damages * battleValues.skillDamageResistanceCoeff) / 100
+  );
   damages = Math.floor((damages * battleValues.rankBonusCoeff) / 100);
 
   damages = Math.max(0, damages + battleValues.defensePercent);
@@ -2127,8 +2137,7 @@ function createPhysicalBattleValues(
     blessingBonusCoeff: 100 - blessingBonus,
     extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
     averageDamageCoeff: 100 + averageDamage,
-    averageDamageResistanceCoeff:
-      100 - Math.min(99, averageDamageResistance),
+    averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
     skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
     rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
@@ -2580,7 +2589,7 @@ function calcPhysicalDamages(
       var rawDamages =
         mainAttackValue +
         floorMultiplication(attackFactor, secondaryAttackValue);
-      console.log(secondaryAttackValue);
+
       var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         rawDamages,
         battleValues
@@ -2675,7 +2684,7 @@ function getSkillFormula(
   victim
 ) {
   var skillFormula;
-  var skillInfo = {};
+  var skillInfo = { range: [0, 0] };
 
   var attackerClass = attacker.class;
   var lv = attacker.level;
@@ -2735,14 +2744,16 @@ function getSkillFormula(
             );
           };
           break;
+        // Tremblement de terre
         case 9:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-              (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
+                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
+          skillInfo.range = [1, 1000];
           break;
       }
     } else if (attackerClass === "mental") {
@@ -2792,45 +2803,48 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-              1.1,
+                1.1,
               1
             );
           };
           break;
         // Tremblement de terre
         case 9:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-              (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
+                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
+          skillInfo.range = [1, 1000];
           break;
       }
     } else if (attackerClass === "blade_fight") {
       switch (skillId) {
         // Embuscade
         case 1:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
-              atk + (1.2 * atk + 600 + 4 * dex + 4 * str) * skillPower,
+              atk + (1.2 * atk + variation + 4 * dex + 4 * str) * skillPower,
               1
             );
           };
           skillInfo.weaponBonus = [1, 50];
+          skillInfo.range = [500, 700];
           improvedByBonus = true;
           improvedBySkillBonus = true;
           break;
         // Attaque rapide
         case 2:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
-              atk + (1.6 * atk + 250 + 7 * dex + 7 * str) * skillPower,
+              atk + (1.6 * atk + variation + 7 * dex + 7 * str) * skillPower,
               1
             );
           };
           skillInfo.weaponBonus = [1, 35];
+          skillInfo.range = [200, 300];
           improvedByBonus = true;
           break;
         // Dague filante
@@ -2864,12 +2878,13 @@ function getSkillFormula(
           break;
         // Étoiles brillantes
         case 9:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
-              atk + (1.7 * atk + 500.5 + 6 * dex + 5 * lv) * skillPower,
+              atk + (1.7 * atk + variation + 6 * dex + 5 * lv) * skillPower,
               1
             );
           };
+          skillInfo.range = [1, 1000];
           break;
       }
     } else if (attackerClass === "archery") {
@@ -2896,12 +2911,13 @@ function getSkillFormula(
           break;
         // Flèche de feu
         case 3:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
-              1.5 * atk + (2.6 * atk + 0.9 * int + 200) * skillPower,
+              1.5 * atk + (2.6 * atk + 0.9 * int + variation) * skillPower,
               1
             );
           };
+          skillInfo.range = [100, 300];
           improvedByBonus = true;
           improvedBySkillBonus = true;
           break;
@@ -2917,35 +2933,40 @@ function getSkillFormula(
           break;
         // Flèche empoisonnée
         case 5:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk +
-              (1.4 * atk + 150 + 7 * dex + 4 * str + 4 * int) * skillPower,
+                (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
+                  skillPower,
               1
             );
           };
+          skillInfo.range = [100, 200];
           improvedByBonus = true;
           break;
         // Coup étincelant
         case 6:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
               (atk +
-                (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
-              1.2,
+                (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
+                  skillPower) *
+                1.2,
               1
             );
           };
+          skillInfo.range = [100, 200];
           improvedByBonus = true;
           break;
         // Tir tempête
         case 9:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
-              1.9 * atk + (2.6 * atk + 500.5) * skillPower,
+              1.9 * atk + (2.6 * atk + variation) * skillPower,
               1
             );
           };
+          skillInfo.range = [1, 1000];
           break;
       }
     } else if (attackerClass === "weaponary") {
@@ -2955,9 +2976,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-              2 * lv +
-              2 * int +
-              (2 * atk + 4 * str + 14 * int) * skillPower,
+                2 * lv +
+                2 * int +
+                (2 * atk + 4 * str + 14 * int) * skillPower,
               1
             );
           };
@@ -2969,9 +2990,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk +
-              2 * lv +
-              2 * int +
-              (1.5 * atk + str + 12 * int) * skillPower,
+                2 * lv +
+                2 * int +
+                (1.5 * atk + str + 12 * int) * skillPower,
               1
             );
           };
@@ -2979,82 +3000,88 @@ function getSkillFormula(
           break;
         // Contre-sort
         case 6:
-          skillFormula = function (mav) {
+          skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              5 * lv +
-              2 * int +
-              (10 * int + 7 * mav + 75) * attackFactor * skillPower,
+                5 * lv +
+                2 * int +
+                (10 * int + 7 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
+          skillInfo.range = [50, 100];
           break;
         // Coup démoniaque
         case 9:
-          skillFormula = function (atk) {
+          skillFormula = function (atk, variation) {
             return floorMultiplication(
-              1.9 * atk + (2.6 * atk + 500.5) * skillPower,
+              1.9 * atk + (2.6 * atk + variation) * skillPower,
               1
             );
           };
+          skillInfo.range = [1, 1000];
           break;
       }
     } else if (attackerClass === "black_magic") {
       switch (skillId) {
         // Attaque des ténèbres
         case 1:
-          skillFormula = function (mav) {
+          skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              5 * lv +
-              2 * int +
-              (13 * int + 6 * mav + 75) * attackFactor * skillPower,
+                5 * lv +
+                2 * int +
+                (13 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
+          skillInfo.range = [50, 100];
           improvedByBonus = true;
           improvedBySkillBonus = true;
           break;
         // Attaque de flammes
         // case 2:
-        //   skillFormula = function (mav) {
+        //   skillFormula = function (mav, variation) {
         //     return floorMultiplication(
-        //       5 * lv + 2 * int + (7 * int + 8 * mav + 4 * str + 2 * vit + 190) * skillPower,
+        //       5 * lv + 2 * int + (7 * int + 8 * mav + 4 * str + 2 * vit + variation) * skillPower,
         //       1
         //     );
         //   };
+        //   skillInfo.range = [180, 100];
         //   improvedByBonus = true;
         //   break;
         // Esprit de flammes
         case 3:
-          skillFormula = function (mav) {
+          skillFormula = function (mav, variation) {
             return floorMultiplication(
               30 +
-              2 * lv +
-              2 * int +
-              (7 * int + 6 * mav + 350) * attackFactor * skillPower,
+                2 * lv +
+                2 * int +
+                (7 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
+          skillInfo.range = [200, 500];
           break;
         // Frappe de l'esprit
         // case 5:
-        //   skillFormula = function (mav) {
+        //   skillFormula = function (mav, variation) {
         //     return floorMultiplication(
-        //       40 + 2 * lv + 2 * int + (2 * vit + 2 * dex + 13 * int + 6 * mav + 190) * attackFactor * skillPower,
+        //       40 + 2 * lv + 2 * int + (2 * vit + 2 * dex + 13 * int + 6 * mav + variation) * attackFactor * skillPower,
         //       1
         //     );
         //   };
+        //   skillInfo.range = [180, 200];
         //   break;
         // Orbe des ténèbres
         case 6:
           skillFormula = function (mav) {
             return floorMultiplication(
               120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-              attackFactor *
-              skillPower,
+                6 * lv +
+                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3068,8 +3095,8 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-              5 * lv +
-              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+                5 * lv +
+                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
               1
             );
           };
@@ -3081,10 +3108,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-              5 * lv +
-              (16 * int + 6 * dex + 6 * mav + 120) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (16 * int + 6 * dex + 6 * mav + 120) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3097,10 +3124,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-              3 * lv +
-              (20 * int + 3 * str + 10 * mav + 100) *
-              attackFactor *
-              skillPower,
+                3 * lv +
+                (20 * int + 3 * str + 10 * mav + 100) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3112,47 +3139,50 @@ function getSkillFormula(
       switch (skillId) {
         // Jet de foudre
         case 1:
-          skillFormula = function (mav) {
+          skillFormula = function (mav, varation) {
             return floorMultiplication(
               60 +
-              5 * lv +
-              (8 * int + 2 * dex + 8 * mav + 10 * int) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (8 * int + 2 * dex + 8 * mav + varation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
           skillInfo.weaponBonus = [6, 10];
+          skillInfo.range = [5 * int, 15 * int];
           improvedByBonus = true;
           break;
         // Invocation de foudre
         case 2:
-          skillFormula = function (mav) {
+          skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              4 * lv +
-              (13 * int + 2 * str + 10 * mav + 10.5 * int) *
-              attackFactor *
-              skillPower,
+                4 * lv +
+                (13 * int + 2 * str + 10 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
           skillInfo.weaponBonus = [6, 10];
+          skillInfo.range = [5 * int, 16 * int];
           improvedByBonus = true;
           improvedBySkillBonus = true;
           break;
         // Griffe de foudre
         case 3:
-          skillFormula = function (mav) {
+          skillFormula = function (mav, variation) {
             return floorMultiplication(
               50 +
-              5 * lv +
-              (8 * int + 2 * str + 8 * mav + 400.5) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (8 * int + 2 * str + 8 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
+          skillInfo.range = [1, 800];
           improvedByBonus = true;
           break;
       }
@@ -3305,6 +3335,10 @@ function calcPhysicalSkillDamages(
     victim
   );
 
+  var [minVariation, maxVariation] = skillInfo.range;
+
+  totalCardinal *= maxVariation - minVariation + 1;
+
   updateBattleValues(battleValues, skillInfo, attackerWeapon);
 
   for (var damagesType of battleValues.damagesTypeCombinaison) {
@@ -3314,39 +3348,67 @@ function calcPhysicalSkillDamages(
 
     var damagesWeighted = {};
     addRowToTableResult(tableResult, damagesType.name);
+    for (var variation = minVariation; variation <= maxVariation; variation++) {
+      for (
+        var attackValue = minAttackValue;
+        attackValue <= maxAttackValue;
+        attackValue++
+      ) {
+        var weight;
 
-    for (
-      var attackValue = minAttackValue;
-      attackValue <= maxAttackValue;
-      attackValue++
-    ) {
-      var weight;
+        if (attackValue > lastWeightsLimit) {
+          weight = maxAttackValue - attackValue + 1;
+        } else if (attackValue < firstWeightLimit) {
+          weight = attackValue - minAttackValue + 1;
+        } else {
+          weight = minInterval;
+        }
 
-      if (attackValue > lastWeightsLimit) {
-        weight = maxAttackValue - attackValue + 1;
-      } else if (attackValue < firstWeightLimit) {
-        weight = attackValue - minAttackValue + 1;
-      } else {
-        weight = minInterval;
-      }
+        var secondaryAttackValue = 2 * attackValue + attackValueOther;
+        var rawDamages =
+          mainAttackValue +
+          floorMultiplication(attackFactor, secondaryAttackValue);
 
-      var secondaryAttackValue = 2 * attackValue + attackValueOther;
-      var rawDamages =
-        mainAttackValue +
-        floorMultiplication(attackFactor, secondaryAttackValue);
+        var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+          rawDamages,
+          battleValues
+        );
 
-      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-        rawDamages,
-        battleValues
-      );
+        if (damagesWithPrimaryBonuses <= 2) {
+          for (var damages = 1; damages <= 5; damages++) {
+            damages *= battleValues.useDamages;
 
-      if (damagesWithPrimaryBonuses <= 2) {
-        for (var damages = 1; damages <= 5; damages++) {
-          damages *= battleValues.useDamages;
+            var damagesWithFormula = skillFormula(damages, variation);
 
-          var damagesWithFormula = skillFormula(damages);
+            damagesWithFormula = Math.floor(
+              (damagesWithFormula * battleValues.weaponBonusCoeff) / 100
+            );
 
-          damagesWithFormula = Math.floor((damagesWithFormula * battleValues.weaponBonusCoeff) / 100);
+            var finalDamages = calcSkillDamageWithSecondaryBonuses(
+              damagesWithFormula,
+              battleValues,
+              damagesType,
+              damagesWithPrimaryBonuses
+            );
+
+            addKeyValue(
+              damagesWeighted,
+              finalDamages,
+              (weight * damagesType.weight) / (5 * totalCardinal)
+            );
+            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+          }
+        } else {
+          damagesWithPrimaryBonuses *= battleValues.useDamages;
+
+          var damagesWithFormula = skillFormula(
+            damagesWithPrimaryBonuses,
+            variation
+          );
+
+          damagesWithFormula = Math.floor(
+            (damagesWithFormula * battleValues.weaponBonusCoeff) / 100
+          );
 
           var finalDamages = calcSkillDamageWithSecondaryBonuses(
             damagesWithFormula,
@@ -3358,30 +3420,10 @@ function calcPhysicalSkillDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            (weight * damagesType.weight) / (5 * totalCardinal)
+            (weight * damagesType.weight) / totalCardinal
           );
-          sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+          sumDamages += finalDamages * weight * damagesType.weight;
         }
-      } else {
-        damagesWithPrimaryBonuses *= battleValues.useDamages;
-
-        var damagesWithFormula = skillFormula(damagesWithPrimaryBonuses);
-
-        damagesWithFormula = Math.floor((damagesWithFormula * battleValues.weaponBonusCoeff) / 100);
-
-        var finalDamages = calcSkillDamageWithSecondaryBonuses(
-          damagesWithFormula,
-          battleValues,
-          damagesType,
-          damagesWithPrimaryBonuses
-        );
-
-        addKeyValue(
-          damagesWeighted,
-          finalDamages,
-          (weight * damagesType.weight) / totalCardinal
-        );
-        sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
 
@@ -3439,6 +3481,10 @@ function calcMagicSkillDamages(
     victim
   );
 
+  var [minVariation, maxVariation] = skillInfo.range;
+
+  totalCardinal *= maxVariation - minVariation + 1;
+
   updateBattleValues(battleValues, skillInfo, attackerWeapon);
 
   for (var damagesType of battleValues.damagesTypeCombinaison) {
@@ -3449,62 +3495,64 @@ function calcMagicSkillDamages(
     var damagesWeighted = {};
     addRowToTableResult(tableResult, damagesType.name);
 
-    for (
-      var magicAttackValue = minMagicAttackValue;
-      magicAttackValue <= maxMagicAttackValue;
-      magicAttackValue++
-    ) {
-      var weight;
+    for (var variation = minVariation; variation <= maxVariation; variation++) {
+      for (
+        var magicAttackValue = minMagicAttackValue;
+        magicAttackValue <= maxMagicAttackValue;
+        magicAttackValue++
+      ) {
+        var weight;
 
-      if (magicAttackValue > lastWeightsLimit) {
-        weight = maxMagicAttackValue - magicAttackValue + 1;
-      } else if (magicAttackValue < firstWeightLimit) {
-        weight = magicAttackValue - minMagicAttackValue + 1;
-      } else {
-        weight = minInterval;
-      }
+        if (magicAttackValue > lastWeightsLimit) {
+          weight = maxMagicAttackValue - magicAttackValue + 1;
+        } else if (magicAttackValue < firstWeightLimit) {
+          weight = magicAttackValue - minMagicAttackValue + 1;
+        } else {
+          weight = minInterval;
+        }
 
-      var rawDamages = skillFormula(magicAttackValue);
+        var rawDamages = skillFormula(magicAttackValue, variation);
 
-      rawDamages = Math.floor((damagesWithFormula * battleValues.weaponBonusCoeff) / 100);
+        rawDamages = Math.floor(
+          (rawDamages * battleValues.weaponBonusCoeff) / 100
+        );
 
-      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-        rawDamages,
-        battleValues
-      );
+        var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+          rawDamages,
+          battleValues
+        );
 
-      if (damagesWithPrimaryBonuses <= 2) {
-        for (var damages = 1; damages <= 5; damages++) {
+        if (damagesWithPrimaryBonuses <= 2) {
+          for (var damages = 1; damages <= 5; damages++) {
+            var finalDamages = calcSkillDamageWithSecondaryBonuses(
+              damages,
+              battleValues,
+              damagesType,
+              damagesWithPrimaryBonuses
+            );
+
+            addKeyValue(
+              damagesWeighted,
+              finalDamages,
+              (weight * damagesType.weight) / (5 * totalCardinal)
+            );
+            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+          }
+        } else {
           var finalDamages = calcSkillDamageWithSecondaryBonuses(
-            damages,
+            damagesWithPrimaryBonuses,
             battleValues,
             damagesType,
-            damagesWithPrimaryBonuses,
-            skillFormula
+            damagesWithPrimaryBonuses
           );
 
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            (weight * damagesType.weight) / (5 * totalCardinal)
+            (weight * damagesType.weight) / totalCardinal
           );
-          sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+          sumDamages += finalDamages * weight * damagesType.weight;
         }
-      } else {
-        var finalDamages = calcSkillDamageWithSecondaryBonuses(
-          damagesWithPrimaryBonuses,
-          battleValues,
-          damagesType,
-          damagesWithPrimaryBonuses,
-          skillFormula
-        );
-
-        addKeyValue(
-          damagesWeighted,
-          finalDamages,
-          (weight * damagesType.weight) / totalCardinal
-        );
-        sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
 
