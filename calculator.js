@@ -40,14 +40,6 @@ function floorMultiplication(firstFactor, secondFactor) {
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
 
-function floorMultiplicationWithNegative(firstFactor, secondFactor) {
-  if (secondFactor < 0) {
-    return -floorMultiplication(firstFactor, -secondFactor);
-  } else {
-    return floorMultiplication(firstFactor, secondFactor);
-  }
-}
-
 function truncateNumber(number, precision) {
   return Math.floor(number * 10 ** precision) / 10 ** precision;
 }
@@ -1424,6 +1416,8 @@ function calcAttackFactor(attacker, victim) {
 
   var K1 = calcCoeffK(attacker.polymorphDex, attacker.level);
   var K2 = calcCoeffK(victim.polymorphDex, attacker.level);
+  console.log("K1: ", K1);
+  console.log("K2: ", K2);
 
   var AR = (K1 + 210) / 300;
   var ER = (((2 * K2 + 5) / (K2 + 95)) * 3) / 10;
@@ -1680,20 +1674,17 @@ function calcSkillDamageWithSecondaryBonuses(
   damagesType,
   minPiercingDamages
 ) {
-  damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
-  damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
+  damages = Math.floor(damages * battleValues.magicResistanceCoeff);
+  damages = Math.trunc((damages * battleValues.weaponDefenseCoeff) / 100);
 
   damages -= battleValues.defense;
 
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
 
-  var tempDamages = floorMultiplication(
-    damages,
-    battleValues.skillBonusByBonusCoeff
-  );
+  var tempDamages = Math.floor((damages * battleValues.skillBonusByBonusCoeff) / 100);
 
-  damages = floorMultiplication(tempDamages, battleValues.tigerStrengthCoeff);
+  damages = Math.floor((damages * battleValues.tigerStrengthCoeff) / 100);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -1702,30 +1693,24 @@ function calcSkillDamageWithSecondaryBonuses(
   if (damagesType.piercingHit) {
     damages +=
       battleValues.piercingHitDefense + Math.min(0, minPiercingDamages);
-    damages += floorMultiplication(
-      tempDamages,
-      battleValues.extraPiercingHitCoeff
-    );
+    damages += Math.floor((tempDamages * battleValues.extraPiercingHitCoeff) / 1000);
   }
 
-  damages = floorMultiplication(damages, battleValues.skillDamageCoeff);
-  damages = floorMultiplication(
-    damages,
-    battleValues.skillDamageResistanceCoeff
-  );
+  damages = Math.floor((damages * battleValues.skillDamageCoeff) / 100);
+  damages = Math.floor((damages * battleValues.skillDamageResistanceCoeff) / 100);
+  damages = Math.floor((damages * battleValues.rankBonusCoeff) / 100);
 
-  damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
   damages = Math.max(0, damages + battleValues.defensePercent);
   damages += Math.min(
     300,
-    floorMultiplication(damages, battleValues.damageBonusCoeff)
+    Math.floor((damages * battleValues.damageBonusCoeff) / 100)
   );
-  damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
-  damages = floorMultiplication(damages, battleValues.sungMaStrBonusCoeff);
-  damages -= floorMultiplication(damages, battleValues.sungmaStrMalusCoeff);
+  damages = Math.floor((damages * battleValues.empireMalusCoeff) / 10);
+  damages = Math.floor((damages * battleValues.sungMaStrBonusCoeff) / 10000);
+  damages -= Math.floor(damages * battleValues.sungmaStrMalusCoeff);
 
-  damages = floorMultiplication(damages, battleValues.whiteDragonElixirCoeff);
-  damages = floorMultiplication(damages, battleValues.steelDragonElixirCoeff);
+  damages = Math.floor((damages * battleValues.whiteDragonElixirCoeff) / 100);
+  damages = Math.floor((damages * battleValues.steelDragonElixirCoeff) / 100);
 
   return damages;
 }
@@ -2440,7 +2425,7 @@ function createSkillBattleValues(
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 100 - weaponDefense,
     extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
-    skillDamageCoeff: 1 + skillDamage / 100,
+    skillDamageCoeff: 100 + skillDamage,
     skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
     rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
@@ -2515,10 +2500,10 @@ function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
     battleValues.weaponDefenseCoeff = 1;
   }
 
-  battleValues.weaponBonusCoeff = 1 + weaponBonus / 100;
+  battleValues.weaponBonusCoeff = 100 + weaponBonus;
   battleValues.skillWardCoeff = 1 - skillWard / 100;
   battleValues.skillBonusCoeff = 1 + skillBonus / 100;
-  battleValues.skillBonusByBonusCoeff = 1 + skillBonusByBonus / 100;
+  battleValues.skillBonusByBonusCoeff = 100 + skillBonusByBonus;
 }
 
 function calcPhysicalDamages(
@@ -2576,7 +2561,6 @@ function calcPhysicalDamages(
     var damagesWeighted = {};
     addRowToTableResult(tableResult, damagesType.name);
 
-    console.time(damagesType.name);
     for (
       var attackValue = minAttackValue;
       attackValue <= maxAttackValue;
@@ -2596,6 +2580,7 @@ function calcPhysicalDamages(
       var rawDamages =
         mainAttackValue +
         floorMultiplication(attackFactor, secondaryAttackValue);
+      console.log(secondaryAttackValue);
       var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         rawDamages,
         battleValues
@@ -2640,7 +2625,6 @@ function calcPhysicalDamages(
         sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
-    console.timeEnd(damagesType.name);
 
     var scatterData = addToTableResult(
       tableResult,
@@ -3362,10 +3346,7 @@ function calcPhysicalSkillDamages(
 
           var damagesWithFormula = skillFormula(damages);
 
-          damagesWithFormula = floorMultiplication(
-            damagesWithFormula,
-            battleValues.weaponBonusCoeff
-          );
+          damagesWithFormula = Math.floor((damagesWithFormula * battleValues.weaponBonusCoeff) / 100);
 
           var finalDamages = calcSkillDamageWithSecondaryBonuses(
             damagesWithFormula,
@@ -3386,10 +3367,7 @@ function calcPhysicalSkillDamages(
 
         var damagesWithFormula = skillFormula(damagesWithPrimaryBonuses);
 
-        damagesWithFormula = floorMultiplication(
-          damagesWithFormula,
-          battleValues.weaponBonusCoeff
-        );
+        damagesWithFormula = Math.floor((damagesWithFormula * battleValues.weaponBonusCoeff) / 100);
 
         var finalDamages = calcSkillDamageWithSecondaryBonuses(
           damagesWithFormula,
@@ -3488,10 +3466,7 @@ function calcMagicSkillDamages(
 
       var rawDamages = skillFormula(magicAttackValue);
 
-      rawDamages = floorMultiplication(
-        rawDamages,
-        battleValues.weaponBonusCoeff
-      );
+      rawDamages = Math.floor((damagesWithFormula * battleValues.weaponBonusCoeff) / 100);
 
       var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         rawDamages,
