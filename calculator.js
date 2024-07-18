@@ -897,8 +897,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
+          pseudo +
+          " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -1618,14 +1618,16 @@ function calcDamageWithPrimaryBonuses(damages, battleValues) {
   damages += Math.floor((damages * battleValues.stoneBonusCoeff) / 100);
   damages += Math.floor((damages * battleValues.monsterBonusCoeff) / 100);
 
-  var elementDamages = 0;
-  for (var elementBonusCoeff of battleValues.elementBonusCoeff) {
-    elementDamages += floorMultiplicationWithNegative(
-      damages,
-      elementBonusCoeff
-    );
-  }
-  damages += elementDamages;
+  var elementBonusCoeff = battleValues.elementBonusCoeff;
+
+  damages +=
+    Math.trunc((damages * elementBonusCoeff[0]) / 10000) +
+    Math.trunc((damages * elementBonusCoeff[1]) / 10000) +
+    Math.trunc((damages * elementBonusCoeff[2]) / 10000) +
+    Math.trunc((damages * elementBonusCoeff[3]) / 10000) +
+    Math.trunc((damages * elementBonusCoeff[4]) / 10000) +
+    Math.trunc((damages * elementBonusCoeff[5]) / 10000);
+
   damages = Math.floor(damages * battleValues.damageMultiplier);
 
   return damages;
@@ -1638,10 +1640,10 @@ function calcDamageWithSecondaryBonuses(
   minPiercingDamages,
   damagesWithPrimaryBonuses
 ) {
-  damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
-  damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
-  damages = floorMultiplication(damages, battleValues.tigerStrengthCoeff);
-  damages = floorMultiplication(damages, battleValues.blessingBonusCoeff);
+  damages = Math.floor(damages * battleValues.magicResistanceCoeff);
+  damages = Math.trunc((damages * battleValues.weaponDefenseCoeff) / 100);
+  damages = Math.floor((damages * battleValues.tigerStrengthCoeff) / 100);
+  damages = Math.floor((damages * battleValues.blessingBonusCoeff) / 100);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -1649,34 +1651,25 @@ function calcDamageWithSecondaryBonuses(
 
   if (damagesType.piercingHit) {
     damages += battleValues.defense + Math.min(0, minPiercingDamages);
-    damages += floorMultiplication(
-      damagesWithPrimaryBonuses,
-      battleValues.extraPiercingHitCoeff
-    );
+    damages += Math.floor((damagesWithPrimaryBonuses * battleValues.extraPiercingHitCoeff) / 1000);
   }
 
-  damages = floorMultiplication(damages, battleValues.averageDamageCoeff);
-  damages = floorMultiplication(
-    damages,
-    battleValues.averageDamageResistanceCoeff
-  );
-  damages = floorMultiplication(
-    damages,
-    battleValues.skillDamageResistanceCoeff
-  );
+  damages = Math.floor((damages * battleValues.averageDamageCoeff) / 100);
+  damages = Math.floor((damages * battleValues.averageDamageResistanceCoeff) / 100);
+  damages = Math.floor((damages * battleValues.skillDamageResistanceCoeff) / 100);
 
-  damages = floorMultiplication(damages, battleValues.rankBonusCoeff);
+  damages = Math.floor((damages * battleValues.rankBonusCoeff) / 100);
   damages = Math.max(0, damages + battleValues.defensePercent);
   damages += Math.min(
     300,
-    floorMultiplication(damages, battleValues.damageBonusCoeff)
+    Math.floor((damages * battleValues.damageBonusCoeff) / 100)
   );
-  damages = floorMultiplication(damages, battleValues.empireMalusCoeff);
-  damages = floorMultiplication(damages, battleValues.sungMaStrBonusCoeff);
-  damages -= floorMultiplication(damages, battleValues.sungmaStrMalusCoeff);
+  damages = Math.floor((damages * battleValues.empireMalusCoeff) / 10);
+  damages = Math.floor((damages * battleValues.sungMaStrBonusCoeff) / 10000);
+  damages -= Math.floor(damages * battleValues.sungmaStrMalusCoeff);
 
-  damages = floorMultiplication(damages, battleValues.whiteDragonElixirCoeff);
-  damages = floorMultiplication(damages, battleValues.steelDragonElixirCoeff);
+  damages = Math.floor((damages * battleValues.whiteDragonElixirCoeff) / 100);
+  damages = Math.floor((damages * battleValues.steelDragonElixirCoeff) / 100);
 
   return damages;
 }
@@ -1838,7 +1831,7 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
       victim[mapping.elementResistance[index]];
 
     if (elementDifference >= 0) {
-      elementBonus[elementBonusIndex] = elementDifference / 1000;
+      elementBonus[elementBonusIndex] = 10 * elementDifference;
       minElementMalus -= elementDifference;
       maxDifference = Math.max(maxDifference, elementDifference);
       elementBonusIndex++;
@@ -1858,7 +1851,7 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
     var elementDifference = savedElementDifferences[index];
 
     elementBonus[elementBonusIndex + index] =
-      Math.max(minElementMalus, elementDifference) / 1000;
+      10 * Math.max(minElementMalus, elementDifference);
 
     minElementMalus = Math.min(
       0,
@@ -2004,9 +1997,9 @@ function createPhysicalBattleValues(
 
         if (attacker[elementBonusName] && victim[elementBonusName]) {
           elementBonus[index] =
-            (attacker[elementBonusName] - victim[elementResistanceName]) / 200;
+            50 * (attacker[elementBonusName] - victim[elementResistanceName]);
         } else {
-          elementBonus[index] = attacker[elementBonusName] / 2000;
+          elementBonus[index] = 5 * attacker[elementBonusName];
         }
       }
 
@@ -2042,7 +2035,7 @@ function createPhysicalBattleValues(
     damageBonus = attacker.damageBonus;
 
     if (attacker.empireMalus === "on") {
-      empireMalus = 10;
+      empireMalus = 1;
     }
   } else {
     if (isPC(victim)) {
@@ -2072,7 +2065,7 @@ function createPhysicalBattleValues(
 
         if (attacker[elementBonusName]) {
           elementBonus[index] =
-            (attacker[elementBonusName] - victim[elementResistanceName]) / 125;
+            80 * (attacker[elementBonusName] - victim[elementResistanceName]);
         }
       }
 
@@ -2102,7 +2095,7 @@ function createPhysicalBattleValues(
 
   if (isPC(victim)) {
     if (victim.biologist70 === "on") {
-      victim.defense = floorMultiplication(victim.defense, 1.1);
+      victim.defense = Math.floor((victim.defense * 110) / 100);
     }
     criticalHitPercentage = Math.max(
       0,
@@ -2144,22 +2137,22 @@ function createPhysicalBattleValues(
     defense: victim.defense,
     defenseMarriage: defenseMarriage,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
-    weaponDefenseCoeff: 1 - weaponDefense / 100,
-    tigerStrengthCoeff: 1 + tigerStrength / 100,
-    blessingBonusCoeff: 1 - blessingBonus / 100,
-    extraPiercingHitCoeff: extraPiercingHitPercentage / 200,
-    averageDamageCoeff: 1 + averageDamage / 100,
+    weaponDefenseCoeff: 100 - weaponDefense,
+    tigerStrengthCoeff: 100 + tigerStrength,
+    blessingBonusCoeff: 100 - blessingBonus,
+    extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
+    averageDamageCoeff: 100 + averageDamage,
     averageDamageResistanceCoeff:
-      1 - Math.min(99, averageDamageResistance) / 100,
-    skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
-    rankBonusCoeff: 1 + rankBonus / 100,
+      100 - Math.min(99, averageDamageResistance),
+    skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
+    rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
-    damageBonusCoeff: damageBonus / 100,
-    empireMalusCoeff: 1 - empireMalus / 100,
-    sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
+    damageBonusCoeff: damageBonus,
+    empireMalusCoeff: 10 - empireMalus,
+    sungMaStrBonusCoeff: 10000 + sungMaStrBonus,
     sungmaStrMalusCoeff: sungmaStrMalus,
-    whiteDragonElixirCoeff: 1 + whiteDragonElixir / 100,
-    steelDragonElixirCoeff: 1 - steelDragonElixir / 100,
+    whiteDragonElixirCoeff: 100 + whiteDragonElixir,
+    steelDragonElixirCoeff: 100 - steelDragonElixir,
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
@@ -2360,7 +2353,7 @@ function createSkillBattleValues(
     damageBonus = attacker.damageBonus;
 
     if (attacker.empireMalus === "on") {
-      empireMalus = 10;
+      empireMalus = 1;
     }
   } else {
     if (isPC(victim)) {
@@ -2442,21 +2435,21 @@ function createSkillBattleValues(
     damageMultiplier: damageMultiplier,
     useDamages: useDamages,
     defense: defense,
-    tigerStrengthCoeff: 1 + tigerStrength / 100,
+    tigerStrengthCoeff: 100 + tigerStrength,
     piercingHitDefense: victim.defense,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
-    weaponDefenseCoeff: 1 - weaponDefense / 100,
-    extraPiercingHitCoeff: extraPiercingHitPercentage / 200,
+    weaponDefenseCoeff: 100 - weaponDefense,
+    extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
     skillDamageCoeff: 1 + skillDamage / 100,
-    skillDamageResistanceCoeff: 1 - Math.min(99, skillDamageResistance) / 100,
-    rankBonusCoeff: 1 + rankBonus / 100,
+    skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
+    rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
-    damageBonusCoeff: damageBonus / 100,
-    empireMalusCoeff: 1 - empireMalus / 100,
-    sungMaStrBonusCoeff: 1 + sungMaStrBonus / 10000,
+    damageBonusCoeff: damageBonus,
+    empireMalusCoeff: 10 - empireMalus,
+    sungMaStrBonusCoeff: 10000 + sungMaStrBonus,
     sungmaStrMalusCoeff: sungmaStrMalus,
-    whiteDragonElixirCoeff: 1 + whiteDragonElixir / 100,
-    steelDragonElixirCoeff: 1 - steelDragonElixir / 100,
+    whiteDragonElixirCoeff: 100 + whiteDragonElixir,
+    steelDragonElixirCoeff: 100 - steelDragonElixir,
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
@@ -2583,6 +2576,7 @@ function calcPhysicalDamages(
     var damagesWeighted = {};
     addRowToTableResult(tableResult, damagesType.name);
 
+    console.time(damagesType.name);
     for (
       var attackValue = minAttackValue;
       attackValue <= maxAttackValue;
@@ -2646,6 +2640,7 @@ function calcPhysicalDamages(
         sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
+    console.timeEnd(damagesType.name);
 
     var scatterData = addToTableResult(
       tableResult,
@@ -2760,7 +2755,7 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2813,7 +2808,7 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-                1.1,
+              1.1,
               1
             );
           };
@@ -2823,7 +2818,7 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + 500.5 + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2941,7 +2936,7 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-                (1.4 * atk + 150 + 7 * dex + 4 * str + 4 * int) * skillPower,
+              (1.4 * atk + 150 + 7 * dex + 4 * str + 4 * int) * skillPower,
               1
             );
           };
@@ -2953,7 +2948,7 @@ function getSkillFormula(
             return floorMultiplication(
               (atk +
                 (1.2 * atk + 150 + 6 * dex + 3 * str + 3 * int) * skillPower) *
-                1.2,
+              1.2,
               1
             );
           };
@@ -2976,9 +2971,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-                2 * lv +
-                2 * int +
-                (2 * atk + 4 * str + 14 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (2 * atk + 4 * str + 14 * int) * skillPower,
               1
             );
           };
@@ -2990,9 +2985,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk +
-                2 * lv +
-                2 * int +
-                (1.5 * atk + str + 12 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (1.5 * atk + str + 12 * int) * skillPower,
               1
             );
           };
@@ -3003,9 +2998,9 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (10 * int + 7 * mav + 75) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (10 * int + 7 * mav + 75) * attackFactor * skillPower,
               1
             );
           };
@@ -3027,9 +3022,9 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (13 * int + 6 * mav + 75) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (13 * int + 6 * mav + 75) * attackFactor * skillPower,
               1
             );
           };
@@ -3051,9 +3046,9 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               30 +
-                2 * lv +
-                2 * int +
-                (7 * int + 6 * mav + 350) * attackFactor * skillPower,
+              2 * lv +
+              2 * int +
+              (7 * int + 6 * mav + 350) * attackFactor * skillPower,
               1
             );
           };
@@ -3072,10 +3067,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                  attackFactor *
-                  skillPower,
+              6 * lv +
+              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3089,8 +3084,8 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                5 * lv +
-                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+              5 * lv +
+              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
               1
             );
           };
@@ -3102,10 +3097,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (16 * int + 6 * dex + 6 * mav + 120) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (16 * int + 6 * dex + 6 * mav + 120) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3118,10 +3113,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                3 * lv +
-                (20 * int + 3 * str + 10 * mav + 100) *
-                  attackFactor *
-                  skillPower,
+              3 * lv +
+              (20 * int + 3 * str + 10 * mav + 100) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3136,10 +3131,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (8 * int + 2 * dex + 8 * mav + 10 * int) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * dex + 8 * mav + 10 * int) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3151,10 +3146,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               40 +
-                4 * lv +
-                (13 * int + 2 * str + 10 * mav + 10.5 * int) *
-                  attackFactor *
-                  skillPower,
+              4 * lv +
+              (13 * int + 2 * str + 10 * mav + 10.5 * int) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3167,10 +3162,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               50 +
-                5 * lv +
-                (8 * int + 2 * str + 8 * mav + 400.5) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * str + 8 * mav + 400.5) *
+              attackFactor *
+              skillPower,
               1
             );
           };
