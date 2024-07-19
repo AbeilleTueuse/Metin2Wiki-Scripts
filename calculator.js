@@ -3727,11 +3727,11 @@ function displayFightResults(
   );
 }
 
-function createBattle(characters, battle) {
-  function isPseudoSaved(pseudo) {
-    return characters.savedCharacters.hasOwnProperty(pseudo);
-  }
+function isPseudoSaved(characters, pseudo) {
+  return characters.savedCharacters.hasOwnProperty(pseudo);
+}
 
+function createBattle(characters, battle) {
   battle.battleForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
@@ -3751,7 +3751,7 @@ function createBattle(characters, battle) {
 
     var attackerWeapon = null;
 
-    if (isPseudoSaved(attackerName)) {
+    if (isPseudoSaved(characters, attackerName)) {
       var attacker = copyObject(characters.savedCharacters[attackerName]);
 
       if (weaponData.hasOwnProperty(attacker.weapon)) {
@@ -3763,15 +3763,13 @@ function createBattle(characters, battle) {
       var attacker = createMonster(attackerName);
     }
 
-    if (isPseudoSaved(victimName)) {
+    if (isPseudoSaved(characters, victimName)) {
       var victim = copyObject(characters.savedCharacters[victimName]);
     } else {
       var victim = createMonster(victimName, attacker);
     }
 
-    var calcDamages;
-    var calcBattleValues;
-    var skillId = 0;
+    var calcDamages, calcBattleValues, skillId;
 
     if (attackType === "physical") {
       calcBattleValues = createPhysicalBattleValues;
@@ -3833,18 +3831,6 @@ function createBattle(characters, battle) {
       characters
     );
     showElement(battle.fightResultContainer);
-  });
-
-  battle.attackerSelection.addEventListener("change", function (event) {
-    var attackerName = event.target.value;
-    var attackTypeSelection = battle.attackTypeSelection;
-
-    if (isPseudoSaved(attackerName)) {
-      var attacker = characters.savedCharacters[attackerName];
-      filterAttackTypeSelection(attacker, attackTypeSelection);
-    } else {
-      filterAttackTypeSelectionMonster(attackTypeSelection);
-    }
   });
 }
 
@@ -4113,6 +4099,19 @@ function initChart(battle, chartSource) {
   loadScript(chartSource, createChart);
 }
 
+function attackSelectonListener(characters, attackerSelection, attackTypeSelection) {
+  attackerSelection.addEventListener("change", function(event) {
+    var attackerName = event.target.value;
+  
+    if (isPseudoSaved(characters, attackerName)) {
+      var attacker = characters.savedCharacters[attackerName];
+      filterAttackTypeSelection(attacker, attackTypeSelection);
+    } else {
+      filterAttackTypeSelectionMonster(attackTypeSelection);
+    }
+  });
+}
+
 function createDamageCalculatorInformation(chartSource) {
   var characters = {
     unsavedChanges: false,
@@ -4186,6 +4185,7 @@ function createDamageCalculatorInformation(chartSource) {
     constants: constants,
   };
 
+  attackSelectonListener(characters, battle.attackerSelection, battle.attackTypeSelection);
   initResultTableHistory(battle);
   initChart(battle, chartSource);
 
