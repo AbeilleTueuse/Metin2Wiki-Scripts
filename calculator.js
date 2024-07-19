@@ -4100,9 +4100,9 @@ function initChart(battle, chartSource) {
 }
 
 function attackSelectonListener(characters, attackerSelection, attackTypeSelection) {
-  attackerSelection.addEventListener("change", function(event) {
+  attackerSelection.addEventListener("change", function (event) {
     var attackerName = event.target.value;
-  
+
     if (isPseudoSaved(characters, attackerName)) {
       var attacker = characters.savedCharacters[attackerName];
       filterAttackTypeSelection(attacker, attackTypeSelection);
