@@ -91,7 +91,8 @@ function addToTableResult(
   tableResult,
   damagesWeighted,
   numberFormat,
-  minMaxDamages
+  minMaxDamages,
+  totalCardinal
 ) {
   var firstIteration = true;
   var scatterData = [];
@@ -112,12 +113,13 @@ function addToTableResult(
     firstCell.textContent = numberFormat.default.format(damages);
 
     var secondCell = newRow.insertCell(1);
+    var weight = damagesWeighted[damages] / totalCardinal;
 
     secondCell.textContent = numberFormat.percent.format(
-      damagesWeighted[damages]
+      weight
     );
 
-    scatterData.push({ x: damages, y: damagesWeighted[damages] });
+    scatterData.push({ x: damages, y: weight });
   }
 
   if (minMaxDamages && damages > minMaxDamages.max) {
@@ -2628,7 +2630,7 @@ function calcPhysicalDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            weight / (5 * totalCardinal)
+            weight / 5
           );
           sumDamages += (finalDamages * weight) / 5;
         }
@@ -2644,7 +2646,7 @@ function calcPhysicalDamages(
         addKeyValue(
           damagesWeighted,
           finalDamages,
-          weight / totalCardinal
+          weight
         );
         sumDamages += finalDamages * weight;
       }
@@ -2654,13 +2656,10 @@ function calcPhysicalDamages(
       tableResult,
       damagesWeighted,
       numberFormat,
-      minMaxDamages
+      minMaxDamages,
+      totalCardinal
     );
     updateDamagesChart(scatterData, damagesChart, damagesType.name);
-  }
-
-  if (minMaxDamages.min === Infinity) {
-    minMaxDamages.min = 0;
   }
 
   return [sumDamages / totalCardinal, minMaxDamages];
@@ -3392,7 +3391,7 @@ function calcPhysicalSkillDamages(
             addKeyValue(
               damagesWeighted,
               finalDamages,
-              weight / (5 * totalCardinal)
+              weight / 5
             );
             sumDamages += (finalDamages * weight) / 5;
           }
@@ -3418,7 +3417,7 @@ function calcPhysicalSkillDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            weight / totalCardinal
+            weight
           );
           sumDamages += finalDamages * weight;
         }
@@ -3429,13 +3428,10 @@ function calcPhysicalSkillDamages(
       tableResult,
       damagesWeighted,
       numberFormat,
-      minMaxDamages
+      minMaxDamages,
+      totalCardinal
     );
     updateDamagesChart(scatterData, damagesChart, damagesType.name);
-  }
-
-  if (minMaxDamages.min === Infinity) {
-    minMaxDamages.min = 0;
   }
 
   return [sumDamages / totalCardinal, minMaxDamages];
@@ -3514,7 +3510,7 @@ function calcMagicSkillDamages(
             addKeyValue(
               damagesWeighted,
               finalDamages,
-              weight / (5 * totalCardinal)
+              weight / 5
             );
             sumDamages += (finalDamages * weight) / 5;
           }
@@ -3529,7 +3525,7 @@ function calcMagicSkillDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            weight / totalCardinal
+            weight
           );
           sumDamages += finalDamages * weight;
         }
@@ -3540,13 +3536,10 @@ function calcMagicSkillDamages(
       tableResult,
       damagesWeighted,
       numberFormat,
-      minMaxDamages
+      minMaxDamages,
+      totalCardinal
     );
     updateDamagesChart(scatterData, damagesChart, damagesType.name);
-  }
-
-  if (minMaxDamages.min === Infinity) {
-    minMaxDamages.min = 0;
   }
 
   return [sumDamages / totalCardinal, minMaxDamages];
@@ -3706,6 +3699,10 @@ function displayFightResults(
 
   showElement(tableResultHistory);
   hideElement(tableResultHistory.rows[1]);
+
+  if (minMaxDamages.min === Infinity) {
+    minMaxDamages.min = 0;
+  }
 
   var valuesToDisplay = [
     attackerName,
