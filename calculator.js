@@ -889,8 +889,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
+          pseudo +
+          " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -2515,6 +2515,26 @@ function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
   battleValues.skillBonusByBonusCoeff = 100 + skillBonusByBonus;
 }
 
+function calcWeights(minValue, maxValue, minInterval) {
+  var firstWeightLimit = minValue + minInterval - 1;
+  var lastWeightsLimit = maxValue - minInterval + 1;
+  var weights = [];
+
+  for (var value = minValue; value < firstWeightLimit; value++) {
+    weights.push(value - minValue + 1);
+  }
+
+  for (var value = firstWeightLimit; value <= lastWeightsLimit; value++) {
+    weights.push(minInterval);
+  }
+
+  for (var value = lastWeightsLimit + 1; value <= maxValue; value++) {
+    weights.push(maxValue - value + 1);
+  }
+
+  return weights;
+}
+
 function calcPhysicalDamages(
   attacker,
   attackerWeapon,
@@ -2548,6 +2568,8 @@ function calcPhysicalDamages(
     totalCardinal,
   ] = calcSecondaryAttackValue(attacker, attackerWeapon);
 
+  var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
+
   totalCardinal *= 100;
 
   if (battleValues.missPercentage) {
@@ -2558,9 +2580,6 @@ function calcPhysicalDamages(
       numberFormat
     );
   }
-
-  var lastWeightsLimit = maxAttackValue - minInterval + 1;
-  var firstWeightLimit = minAttackValue + minInterval - 1;
 
   for (var damagesType of battleValues.damagesTypeCombinaison) {
     if (!damagesType.weight) {
@@ -2575,15 +2594,7 @@ function calcPhysicalDamages(
       attackValue <= maxAttackValue;
       attackValue++
     ) {
-      var weight;
-
-      if (attackValue > lastWeightsLimit) {
-        weight = maxAttackValue - attackValue + 1;
-      } else if (attackValue < firstWeightLimit) {
-        weight = attackValue - minAttackValue + 1;
-      } else {
-        weight = minInterval;
-      }
+      var weight = weights[attackValue - minAttackValue];
 
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
       var rawDamages =
@@ -2749,7 +2760,7 @@ function getSkillFormula(
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2803,7 +2814,7 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-                1.1,
+              1.1,
               1
             );
           };
@@ -2813,7 +2824,7 @@ function getSkillFormula(
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2936,8 +2947,8 @@ function getSkillFormula(
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk +
-                (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
-                  skillPower,
+              (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
+              skillPower,
               1
             );
           };
@@ -2950,8 +2961,8 @@ function getSkillFormula(
             return floorMultiplication(
               (atk +
                 (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
-                  skillPower) *
-                1.2,
+                skillPower) *
+              1.2,
               1
             );
           };
@@ -2976,9 +2987,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-                2 * lv +
-                2 * int +
-                (2 * atk + 4 * str + 14 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (2 * atk + 4 * str + 14 * int) * skillPower,
               1
             );
           };
@@ -2990,9 +3001,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk +
-                2 * lv +
-                2 * int +
-                (1.5 * atk + str + 12 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (1.5 * atk + str + 12 * int) * skillPower,
               1
             );
           };
@@ -3003,9 +3014,9 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (10 * int + 7 * mav + variation) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (10 * int + 7 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3029,9 +3040,9 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (13 * int + 6 * mav + variation) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (13 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3055,9 +3066,9 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               30 +
-                2 * lv +
-                2 * int +
-                (7 * int + 6 * mav + variation) * attackFactor * skillPower,
+              2 * lv +
+              2 * int +
+              (7 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3078,10 +3089,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                  attackFactor *
-                  skillPower,
+              6 * lv +
+              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3095,8 +3106,8 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                5 * lv +
-                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+              5 * lv +
+              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
               1
             );
           };
@@ -3108,10 +3119,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (16 * int + 6 * dex + 6 * mav + 120) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (16 * int + 6 * dex + 6 * mav + 120) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3124,10 +3135,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                3 * lv +
-                (20 * int + 3 * str + 10 * mav + 100) *
-                  attackFactor *
-                  skillPower,
+              3 * lv +
+              (20 * int + 3 * str + 10 * mav + 100) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3142,10 +3153,10 @@ function getSkillFormula(
           skillFormula = function (mav, varation) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (8 * int + 2 * dex + 8 * mav + varation) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * dex + 8 * mav + varation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3158,10 +3169,10 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                4 * lv +
-                (13 * int + 2 * str + 10 * mav + variation) *
-                  attackFactor *
-                  skillPower,
+              4 * lv +
+              (13 * int + 2 * str + 10 * mav + variation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3175,10 +3186,10 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               50 +
-                5 * lv +
-                (8 * int + 2 * str + 8 * mav + variation) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * str + 8 * mav + variation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3324,8 +3335,7 @@ function calcPhysicalSkillDamages(
     totalCardinal,
   ] = calcSecondaryAttackValue(attacker, attackerWeapon);
 
-  var lastWeightsLimit = maxAttackValue - minInterval + 1;
-  var firstWeightLimit = minAttackValue + minInterval - 1;
+  var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
 
   var [skillFormula, skillInfo] = getSkillFormula(
     constants.skillPowerTable,
@@ -3354,15 +3364,7 @@ function calcPhysicalSkillDamages(
         attackValue <= maxAttackValue;
         attackValue++
       ) {
-        var weight;
-
-        if (attackValue > lastWeightsLimit) {
-          weight = maxAttackValue - attackValue + 1;
-        } else if (attackValue < firstWeightLimit) {
-          weight = attackValue - minAttackValue + 1;
-        } else {
-          weight = minInterval;
-        }
+        var weight = weights[attackValue - minAttackValue];
 
         var secondaryAttackValue = 2 * attackValue + attackValueOther;
         var rawDamages =
@@ -3470,8 +3472,7 @@ function calcMagicSkillDamages(
   var [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal] =
     calcMagicAttackValue(attacker, attackerWeapon);
 
-  var lastWeightsLimit = maxMagicAttackValue - minInterval + 1;
-  var firstWeightLimit = minMagicAttackValue + minInterval - 1;
+  var weights = calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval);
 
   var [skillFormula, skillInfo] = getSkillFormula(
     constants.skillPowerTable,
@@ -3501,15 +3502,7 @@ function calcMagicSkillDamages(
         magicAttackValue <= maxMagicAttackValue;
         magicAttackValue++
       ) {
-        var weight;
-
-        if (magicAttackValue > lastWeightsLimit) {
-          weight = maxMagicAttackValue - magicAttackValue + 1;
-        } else if (magicAttackValue < firstWeightLimit) {
-          weight = magicAttackValue - minMagicAttackValue + 1;
-        } else {
-          weight = minInterval;
-        }
+        var weight = weights[magicAttackValue - minMagicAttackValue];
 
         var rawDamages = skillFormula(magicAttackValue, variation);
 
