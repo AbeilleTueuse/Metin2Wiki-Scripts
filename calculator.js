@@ -1874,9 +1874,7 @@ function createPhysicalBattleValues(
   attackerWeapon,
   victim,
   mapping,
-  polymorphPowerTable,
-  marriageTable,
-  skillPowerTable
+  constants
 ) {
   var missPercentage = 0;
   var attackValuePercent = 0;
@@ -1911,7 +1909,7 @@ function createPhysicalBattleValues(
   var whiteDragonElixir = 0;
   var steelDragonElixir = 0;
 
-  computePolymorphPoint(attacker, victim, polymorphPowerTable);
+  computePolymorphPoint(attacker, victim, constants.polymorphPowerTable);
   computeHorse(attacker);
 
   if (isPC(attacker)) {
@@ -1953,14 +1951,14 @@ function createPhysicalBattleValues(
       }
 
       criticalHitPercentage = 0;
-      blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+      blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
       averageDamageResistance = victim.averageDamageResistance;
     } else {
       if (attacker.isMarried === "on") {
         if (attacker.loveNecklace === "on") {
           attackValueMarriage = getMarriageBonusValue(
             attacker,
-            marriageTable,
+            constants.marriageTable,
             "loveNecklace"
           );
         }
@@ -1968,7 +1966,7 @@ function createPhysicalBattleValues(
         if (attacker.loveEarrings === "on") {
           criticalHitPercentage += getMarriageBonusValue(
             attacker,
-            marriageTable,
+            constants.marriageTable,
             "loveEarrings"
           );
         }
@@ -1976,7 +1974,7 @@ function createPhysicalBattleValues(
         if (attacker.harmonyEarrings === "on") {
           piercingHitPercentage += getMarriageBonusValue(
             attacker,
-            marriageTable,
+            constants.marriageTable,
             "harmonyEarrings"
           );
         }
@@ -2038,7 +2036,7 @@ function createPhysicalBattleValues(
         if (victim.harmonyBracelet === "on") {
           monsterResistanceMarriage = getMarriageBonusValue(
             victim,
-            marriageTable,
+            constants.marriageTable,
             "harmonyBracelet"
           );
         }
@@ -2046,7 +2044,7 @@ function createPhysicalBattleValues(
         if (victim.harmonyNecklace === "on") {
           defenseMarriage = getMarriageBonusValue(
             victim,
-            marriageTable,
+            constants.marriageTable,
             "harmonyNecklace"
           );
         }
@@ -2067,12 +2065,12 @@ function createPhysicalBattleValues(
       if (attacker.attack == 0) {
         missPercentage = victim.meleeBlock;
         averageDamageResistance = victim.averageDamageResistance;
-        blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+        blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
       } else if (attacker.attack == 1) {
         missPercentage = victim.arrowBlock;
         weaponDefense = victim.arrowDefense;
         averageDamageResistance = victim.averageDamageResistance;
-        blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+        blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
       } else {
         missPercentage = victim.arrowBlock;
         skillDamageResistance = victim.skillDamageResistance;
@@ -2197,7 +2195,7 @@ function createSkillBattleValues(
   attackerWeapon,
   victim,
   mapping,
-  marriageTable,
+  constants,
   magicSkill
 ) {
   var adjustCoeff = 0;
@@ -2277,7 +2275,7 @@ function createSkillBattleValues(
         if (attacker.loveNecklace === "on") {
           attackValueMarriage = getMarriageBonusValue(
             attacker,
-            marriageTable,
+            constants.marriageTable,
             "loveNecklace"
           );
         }
@@ -2285,7 +2283,7 @@ function createSkillBattleValues(
         if (attacker.loveEarrings === "on") {
           criticalHitPercentage += getMarriageBonusValue(
             attacker,
-            marriageTable,
+            constants.marriageTable,
             "loveEarrings"
           );
         }
@@ -2293,7 +2291,7 @@ function createSkillBattleValues(
         if (attacker.harmonyEarrings === "on") {
           piercingHitPercentage += getMarriageBonusValue(
             attacker,
-            marriageTable,
+            constants.marriageTable,
             "harmonyEarrings"
           );
         }
@@ -2354,7 +2352,7 @@ function createSkillBattleValues(
       if (victim.isMarried === "on" && victim.harmonyBracelet === "on") {
         monsterResistanceMarriage = getMarriageBonusValue(
           victim,
-          marriageTable,
+          constants.marriageTable,
           "harmonyBracelet"
         );
       }
@@ -2479,6 +2477,23 @@ function createSkillBattleValues(
   return battleValues;
 }
 
+function createMagicSkillBattleValues(
+  attacker,
+  attackerWeapon,
+  victim,
+  mapping,
+  constants,
+) {
+  return createSkillBattleValues(
+    attacker,
+    attackerWeapon,
+    victim,
+    mapping,
+    constants,
+    true
+  );
+}
+
 function updateBattleValues(battleValues, skillInfo, attackerWeapon) {
   var weaponBonus = 0;
   var skillWard = 0;
@@ -2539,22 +2554,11 @@ function calcPhysicalDamages(
   attacker,
   attackerWeapon,
   victim,
+  battleValues,
   tableResult,
-  mapping,
-  constants,
   damagesChart,
   numberFormat
 ) {
-  var battleValues = createPhysicalBattleValues(
-    attacker,
-    attackerWeapon,
-    victim,
-    mapping,
-    constants.polymorphPowerTable,
-    constants.marriageTable,
-    constants.skillPowerTable
-  );
-
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
 
@@ -2594,7 +2598,7 @@ function calcPhysicalDamages(
       attackValue <= maxAttackValue;
       attackValue++
     ) {
-      var weight = weights[attackValue - minAttackValue];
+      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
 
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
       var rawDamages =
@@ -2624,9 +2628,9 @@ function calcPhysicalDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            (weight * damagesType.weight) / (5 * totalCardinal)
+            weight / (5 * totalCardinal)
           );
-          sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+          sumDamages += (finalDamages * weight) / 5;
         }
       } else {
         var finalDamages = calcDamageWithSecondaryBonuses(
@@ -2640,9 +2644,9 @@ function calcPhysicalDamages(
         addKeyValue(
           damagesWeighted,
           finalDamages,
-          (weight * damagesType.weight) / totalCardinal
+          weight / totalCardinal
         );
-        sumDamages += finalDamages * weight * damagesType.weight;
+        sumDamages += finalDamages * weight;
       }
     }
 
@@ -3307,21 +3311,13 @@ function calcPhysicalSkillDamages(
   attacker,
   attackerWeapon,
   victim,
+  battleValues,
   tableResult,
-  mapping,
-  constants,
   damagesChart,
   numberFormat,
+  constants,
   skillId
 ) {
-  var battleValues = createSkillBattleValues(
-    attacker,
-    attackerWeapon,
-    victim,
-    mapping,
-    constants.marriageTable
-  );
-
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
 
@@ -3364,7 +3360,7 @@ function calcPhysicalSkillDamages(
         attackValue <= maxAttackValue;
         attackValue++
       ) {
-        var weight = weights[attackValue - minAttackValue];
+        var weight = weights[attackValue - minAttackValue] * damagesType.weight;
 
         var secondaryAttackValue = 2 * attackValue + attackValueOther;
         var rawDamages =
@@ -3396,9 +3392,9 @@ function calcPhysicalSkillDamages(
             addKeyValue(
               damagesWeighted,
               finalDamages,
-              (weight * damagesType.weight) / (5 * totalCardinal)
+              weight / (5 * totalCardinal)
             );
-            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+            sumDamages += (finalDamages * weight) / 5;
           }
         } else {
           damagesWithPrimaryBonuses *= battleValues.useDamages;
@@ -3422,9 +3418,9 @@ function calcPhysicalSkillDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            (weight * damagesType.weight) / totalCardinal
+            weight / totalCardinal
           );
-          sumDamages += finalDamages * weight * damagesType.weight;
+          sumDamages += finalDamages * weight;
         }
       }
     }
@@ -3449,22 +3445,13 @@ function calcMagicSkillDamages(
   attacker,
   attackerWeapon,
   victim,
+  battleValues,
   tableResult,
-  mapping,
-  constants,
   damagesChart,
   numberFormat,
+  constants,
   skillId
 ) {
-  var battleValues = createSkillBattleValues(
-    attacker,
-    attackerWeapon,
-    victim,
-    mapping,
-    constants.marriageTable,
-    true
-  );
-
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
 
@@ -3502,7 +3489,7 @@ function calcMagicSkillDamages(
         magicAttackValue <= maxMagicAttackValue;
         magicAttackValue++
       ) {
-        var weight = weights[magicAttackValue - minMagicAttackValue];
+        var weight = weights[magicAttackValue - minMagicAttackValue] * damagesType.weight;
 
         var rawDamages = skillFormula(magicAttackValue, variation);
 
@@ -3527,9 +3514,9 @@ function calcMagicSkillDamages(
             addKeyValue(
               damagesWeighted,
               finalDamages,
-              (weight * damagesType.weight) / (5 * totalCardinal)
+              weight / (5 * totalCardinal)
             );
-            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+            sumDamages += (finalDamages * weight) / 5;
           }
         } else {
           var finalDamages = calcSkillDamageWithSecondaryBonuses(
@@ -3542,9 +3529,9 @@ function calcMagicSkillDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            (weight * damagesType.weight) / totalCardinal
+            weight / totalCardinal
           );
-          sumDamages += finalDamages * weight * damagesType.weight;
+          sumDamages += finalDamages * weight;
         }
       }
     }
@@ -3782,37 +3769,52 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    var meanDamages, minMaxDamages;
     var calcDamages;
+    var calcBattleValues;
     var skillId = 0;
 
     if (attackType === "physical") {
+      calcBattleValues = createPhysicalBattleValues;
       calcDamages = calcPhysicalDamages;
+
     } else if (attackType.startsWith("attackSkill")) {
       skillId = Number(attackType.split("attackSkill")[1]);
 
       if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
+        calcBattleValues = createMagicSkillBattleValues;
         calcDamages = calcMagicSkillDamages;
+
       } else {
+        calcBattleValues = createSkillBattleValues;
         calcDamages = calcPhysicalSkillDamages;
       }
+
     } else if (attackType.startsWith("horseSkill")) {
       skillId = Number(attackType.split("horseSkill")[1]);
+      calcBattleValues = createSkillBattleValues;
       calcDamages = calcPhysicalSkillDamages;
     }
 
     clearTableResult(battle.tableResult);
     clearDamageChart(battle.damagesChart);
 
-    [meanDamages, minMaxDamages] = calcDamages(
+    var battleValues = calcBattleValues(
       attacker,
       attackerWeapon,
       victim,
-      battle.tableResult,
       battle.mapping,
-      battle.constants,
+      battle.constants
+    );
+
+    var [meanDamages, minMaxDamages] = calcDamages(
+      attacker,
+      attackerWeapon,
+      victim,
+      battleValues,
+      battle.tableResult,
       battle.damagesChart,
       battle.numberFormat,
+      battle.constants,
       skillId
     );
 
