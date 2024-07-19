@@ -2552,6 +2552,16 @@ function calcWeights(minValue, maxValue, minInterval) {
   return weights;
 }
 
+function calcRemainingWeight(weights, currentIndex) {
+  var remainingWeight = 0;
+
+  for (var index = 0; index <= currentIndex; index++) {
+    remainingWeight += weights[index];
+  }
+
+  return remainingWeight;
+}
+
 function calcPhysicalDamages(
   attacker,
   attackerWeapon,
@@ -2596,11 +2606,11 @@ function calcPhysicalDamages(
     addRowToTableResult(tableResult, damagesType.name);
 
     for (
-      var attackValue = minAttackValue;
-      attackValue <= maxAttackValue;
-      attackValue++
+      var attackValue = maxAttackValue;
+      attackValue >= minAttackValue;
+      attackValue--
     ) {
-      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
+      var weight = weights[attackValue - minAttackValue];
 
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
       var rawDamages =
@@ -2618,6 +2628,8 @@ function calcPhysicalDamages(
         battleValues.defenseMarriage;
 
       if (minPiercingDamages <= 2) {
+        var remainingWeight = calcRemainingWeight(weights, attackValue - minAttackValue);
+
         for (var damages = 1; damages <= 5; damages++) {
           var finalDamages = calcDamageWithSecondaryBonuses(
             damages,
@@ -2630,10 +2642,11 @@ function calcPhysicalDamages(
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            weight / 5
+            remainingWeight * damagesType.weight / 5
           );
-          sumDamages += (finalDamages * weight) / 5;
+          sumDamages += (finalDamages * remainingWeight * damagesType.weight) / 5;
         }
+        break;
       } else {
         var finalDamages = calcDamageWithSecondaryBonuses(
           minPiercingDamages,
@@ -2646,9 +2659,9 @@ function calcPhysicalDamages(
         addKeyValue(
           damagesWeighted,
           finalDamages,
-          weight
+          weight * damagesType.weight
         );
-        sumDamages += finalDamages * weight;
+        sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
 
