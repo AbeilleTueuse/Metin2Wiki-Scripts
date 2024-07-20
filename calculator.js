@@ -3343,8 +3343,7 @@ function calcMagicSkillDamages(
           );
 
           savedDamages[rawDamages] = finalDamages;
-
-          addKeyValue(damagesWeighted, finalDamages, weight);
+          damagesWeighted[finalDamages] = weight;
           sumDamages += finalDamages * weight;
         }
       }
