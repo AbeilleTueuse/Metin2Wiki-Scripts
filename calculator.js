@@ -3130,9 +3130,9 @@ function calcPhysicalSkillDamages(
     addRowToTableResult(tableResult, damagesType.name);
     for (var variation = minVariation; variation <= maxVariation; variation++) {
       for (
-        var attackValue = minAttackValue;
-        attackValue <= maxAttackValue;
-        attackValue++
+        var attackValue = maxAttackValue;
+        attackValue >= minAttackValue;
+        attackValue--
       ) {
         var weight = weights[attackValue - minAttackValue];
 
@@ -3293,9 +3293,9 @@ function calcMagicSkillDamages(
 
     for (var variation = minVariation; variation <= maxVariation; variation++) {
       for (
-        var magicAttackValue = minMagicAttackValue;
-        magicAttackValue <= maxMagicAttackValue;
-        magicAttackValue++
+        var magicAttackValue = maxMagicAttackValue;
+        magicAttackValue >= minMagicAttackValue;
+        magicAttackValue--
       ) {
         var weight = weights[magicAttackValue - minMagicAttackValue];
 
