@@ -2353,7 +2353,7 @@ function calcPhysicalDamages(
       attackValue >= minAttackValue;
       attackValue--
     ) {
-      var weight = weights[attackValue - minAttackValue];
+      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
 
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
       var rawDamages =
@@ -2381,18 +2381,13 @@ function calcPhysicalDamages(
               damagesWithPrimaryBonuses
             );
 
-            addKeyValue(
-              damagesWeighted,
-              finalDamages,
-              (weight * damagesType.weight) / 5
-            );
-            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+            addKeyValue(damagesWeighted, finalDamages, weight / 5);
+            sumDamages += (finalDamages * weight) / 5;
           }
         } else {
-          var remainingWeight = calcRemainingWeight(
-            weights,
-            attackValue - minAttackValue
-          );
+          var remainingWeight =
+            calcRemainingWeight(weights, attackValue - minAttackValue) *
+            damagesType.weight;
 
           for (var damages = 1; damages <= 5; damages++) {
             var finalDamages = calcDamageWithSecondaryBonuses(
@@ -2402,14 +2397,8 @@ function calcPhysicalDamages(
               minPiercingDamages,
               damagesWithPrimaryBonuses
             );
-
-            addKeyValue(
-              damagesWeighted,
-              finalDamages,
-              (remainingWeight * damagesType.weight) / 5
-            );
-            sumDamages +=
-              (finalDamages * remainingWeight * damagesType.weight) / 5;
+            addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
+            sumDamages += (finalDamages * remainingWeight) / 5;
           }
           break;
         }
@@ -2422,8 +2411,8 @@ function calcPhysicalDamages(
           damagesWithPrimaryBonuses
         );
 
-        addKeyValue(damagesWeighted, finalDamages, weight * damagesType.weight);
-        sumDamages += finalDamages * weight * damagesType.weight;
+        addKeyValue(damagesWeighted, finalDamages, weight);
+        sumDamages += finalDamages * weight;
       }
     }
 
@@ -3127,6 +3116,7 @@ function calcPhysicalSkillDamages(
     }
 
     var damagesWeighted = {};
+    var savedDamages = {};
     addRowToTableResult(tableResult, damagesType.name);
     for (var variation = minVariation; variation <= maxVariation; variation++) {
       for (
@@ -3134,7 +3124,7 @@ function calcPhysicalSkillDamages(
         attackValue >= minAttackValue;
         attackValue--
       ) {
-        var weight = weights[attackValue - minAttackValue];
+        var weight = weights[attackValue - minAttackValue] * damagesType.weight;
 
         var secondaryAttackValue = 2 * attackValue + attackValueOther;
         var rawDamages =
@@ -3164,18 +3154,13 @@ function calcPhysicalSkillDamages(
                 damagesWithPrimaryBonuses
               );
 
-              addKeyValue(
-                damagesWeighted,
-                finalDamages,
-                (weight * damagesType.weight) / 5
-              );
-              sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+              addKeyValue(damagesWeighted, finalDamages, weight / 5);
+              sumDamages += (finalDamages * weight) / 5;
             }
           } else {
-            var remainingWeight = calcRemainingWeight(
-              weights,
-              attackValue - minAttackValue
-            );
+            var remainingWeight =
+              calcRemainingWeight(weights, attackValue - minAttackValue) *
+              damagesType.weight;
 
             for (var damages = 1; damages <= 5; damages++) {
               damages *= battleValues.useDamages;
@@ -3193,13 +3178,8 @@ function calcPhysicalSkillDamages(
                 damagesWithPrimaryBonuses
               );
 
-              addKeyValue(
-                damagesWeighted,
-                finalDamages,
-                (remainingWeight * damagesType.weight) / 5
-              );
-              sumDamages +=
-                (finalDamages * remainingWeight * damagesType.weight) / 5;
+              addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
+              sumDamages += (finalDamages * remainingWeight) / 5;
             }
             break;
           }
@@ -3211,23 +3191,27 @@ function calcPhysicalSkillDamages(
             variation
           );
 
-          damagesWithFormula = Math.floor(
+          if (savedDamages.hasOwnProperty(damagesWithFormula)) {
+            var finalDamages = savedDamages[damagesWithFormula];
+            damagesWeighted[finalDamages] += weight;
+            sumDamages += finalDamages * weight;
+            continue;
+          }
+
+          var finalDamages = Math.floor(
             (damagesWithFormula * battleValues.weaponBonusCoeff) / 100
           );
 
-          var finalDamages = calcSkillDamageWithSecondaryBonuses(
-            damagesWithFormula,
+          finalDamages = calcSkillDamageWithSecondaryBonuses(
+            finalDamages,
             battleValues,
             damagesType,
             damagesWithPrimaryBonuses
           );
 
-          addKeyValue(
-            damagesWeighted,
-            finalDamages,
-            weight * damagesType.weight
-          );
-          sumDamages += finalDamages * weight * damagesType.weight;
+          savedDamages[damagesWithFormula] = finalDamages;
+          damagesWeighted[finalDamages] = weight;
+          sumDamages += finalDamages * weight;
         }
       }
     }
@@ -3289,6 +3273,7 @@ function calcMagicSkillDamages(
     }
 
     var damagesWeighted = {};
+    var savedDamages = {};
     addRowToTableResult(tableResult, damagesType.name);
 
     for (var variation = minVariation; variation <= maxVariation; variation++) {
@@ -3297,16 +3282,24 @@ function calcMagicSkillDamages(
         magicAttackValue >= minMagicAttackValue;
         magicAttackValue--
       ) {
-        var weight = weights[magicAttackValue - minMagicAttackValue];
+        var weight =
+          weights[magicAttackValue - minMagicAttackValue] * damagesType.weight;
 
         var rawDamages = skillFormula(magicAttackValue, variation);
 
-        rawDamages = Math.floor(
+        if (savedDamages.hasOwnProperty(rawDamages)) {
+          var finalDamages = savedDamages[rawDamages];
+          damagesWeighted[finalDamages] += weight;
+          sumDamages += finalDamages * weight;
+          continue;
+        }
+
+        var damagesWithPrimaryBonuses = Math.floor(
           (rawDamages * battleValues.weaponBonusCoeff) / 100
         );
 
-        var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-          rawDamages,
+        damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+          damagesWithPrimaryBonuses,
           battleValues
         );
 
@@ -3319,19 +3312,15 @@ function calcMagicSkillDamages(
                 damagesType,
                 damagesWithPrimaryBonuses
               );
-
-              addKeyValue(
-                damagesWeighted,
-                finalDamages,
-                (weight * damagesType.weight) / 5
-              );
-              sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+              addKeyValue(damagesWeighted, finalDamages, weight / 5);
+              sumDamages += (finalDamages * weight) / 5;
             }
           } else {
-            var remainingWeight = calcRemainingWeight(
-              weights,
-              magicAttackValue - minMagicAttackValue
-            );
+            var remainingWeight =
+              calcRemainingWeight(
+                weights,
+                magicAttackValue - minMagicAttackValue
+              ) * damagesType.weight;
 
             for (var damages = 1; damages <= 5; damages++) {
               var finalDamages = calcSkillDamageWithSecondaryBonuses(
@@ -3341,13 +3330,8 @@ function calcMagicSkillDamages(
                 damagesWithPrimaryBonuses
               );
 
-              addKeyValue(
-                damagesWeighted,
-                finalDamages,
-                (remainingWeight * damagesType.weight) / 5
-              );
-              sumDamages +=
-                (finalDamages * remainingWeight * damagesType.weight) / 5;
+              addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
+              sumDamages += (finalDamages * remainingWeight) / 5;
             }
           }
         } else {
@@ -3358,12 +3342,10 @@ function calcMagicSkillDamages(
             damagesWithPrimaryBonuses
           );
 
-          addKeyValue(
-            damagesWeighted,
-            finalDamages,
-            weight * damagesType.weight
-          );
-          sumDamages += finalDamages * weight * damagesType.weight;
+          savedDamages[rawDamages] = finalDamages;
+
+          addKeyValue(damagesWeighted, finalDamages, weight);
+          sumDamages += finalDamages * weight;
         }
       }
     }
