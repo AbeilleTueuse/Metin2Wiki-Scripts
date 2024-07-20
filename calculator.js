@@ -66,7 +66,7 @@ function addRowToTableResultHistory(
   tableResultHistory,
   valuesToDisplay,
   deleteFightTemplate,
-  numberFormat
+  numberFormats
 ) {
   var row = tableResultHistory.insertRow();
 
@@ -75,7 +75,7 @@ function addRowToTableResultHistory(
     var textContent;
 
     if (index >= 3) {
-      textContent = numberFormat.default.format(valuesToDisplay[index]);
+      textContent = numberFormats.default.format(valuesToDisplay[index]);
     } else {
       textContent = valuesToDisplay[index];
     }
@@ -90,12 +90,14 @@ function addRowToTableResultHistory(
 function addToTableResult(
   tableResult,
   damagesWeighted,
-  numberFormat,
+  numberFormats,
   minMaxDamages,
   totalCardinal
 ) {
   var firstIteration = true;
   var scatterData = [];
+  var numberFormatDefault = numberFormats.default;
+  var numberFormatPercent = numberFormats.percent;
 
   for (var damages in damagesWeighted) {
     damages = parseInt(damages);
@@ -110,12 +112,12 @@ function addToTableResult(
     var newRow = tableResult.insertRow(-1);
     var firstCell = newRow.insertCell(0);
 
-    firstCell.textContent = numberFormat.default.format(damages);
+    firstCell.textContent = numberFormatDefault.format(damages);
 
     var secondCell = newRow.insertCell(1);
     var weight = damagesWeighted[damages] / totalCardinal;
 
-    secondCell.textContent = numberFormat.percent.format(weight);
+    secondCell.textContent = numberFormatPercent.format(weight);
 
     scatterData.push({ x: damages, y: weight });
   }
@@ -2314,10 +2316,11 @@ function calcPhysicalDamages(
   battleValues,
   tableResult,
   damagesChart,
-  numberFormat
+  numberFormats
 ) {
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
+  var damagesCount = 0;
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
@@ -2336,7 +2339,7 @@ function calcPhysicalDamages(
     addToTableResult(
       tableResult,
       { 0: battleValues.missPercentage / 100 },
-      numberFormat
+      numberFormats
     );
   }
 
@@ -2383,6 +2386,7 @@ function calcPhysicalDamages(
 
             addKeyValue(damagesWeighted, finalDamages, weight / 5);
             sumDamages += (finalDamages * weight) / 5;
+            damagesCount++;
           }
         } else {
           var remainingWeight =
@@ -2399,6 +2403,7 @@ function calcPhysicalDamages(
             );
             addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
             sumDamages += (finalDamages * remainingWeight) / 5;
+            damagesCount += attackValue - minAttackValue + 1;
           }
           break;
         }
@@ -2413,20 +2418,21 @@ function calcPhysicalDamages(
 
         addKeyValue(damagesWeighted, finalDamages, weight);
         sumDamages += finalDamages * weight;
+        damagesCount++;
       }
     }
 
     var scatterData = addToTableResult(
       tableResult,
       damagesWeighted,
-      numberFormat,
+      numberFormats,
       minMaxDamages,
       totalCardinal
     );
     updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
-  return [sumDamages / totalCardinal, minMaxDamages];
+  return [sumDamages / totalCardinal, minMaxDamages, damagesCount];
 }
 
 function calcBlessingBonus(skillPowerTable, victim) {
@@ -3077,12 +3083,13 @@ function calcPhysicalSkillDamages(
   battleValues,
   tableResult,
   damagesChart,
-  numberFormat,
+  numberFormats,
   constants,
   skillId
 ) {
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
+  var damagesCount = 0;
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
@@ -3156,6 +3163,7 @@ function calcPhysicalSkillDamages(
 
               addKeyValue(damagesWeighted, finalDamages, weight / 5);
               sumDamages += (finalDamages * weight) / 5;
+              damagesCount++;
             }
           } else {
             var remainingWeight =
@@ -3180,6 +3188,7 @@ function calcPhysicalSkillDamages(
 
               addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
               sumDamages += (finalDamages * remainingWeight) / 5;
+              damagesCount += attackValue - minAttackValue + 1;
             }
             break;
           }
@@ -3195,6 +3204,7 @@ function calcPhysicalSkillDamages(
             var finalDamages = savedDamages[damagesWithFormula];
             damagesWeighted[finalDamages] += weight;
             sumDamages += finalDamages * weight;
+            damagesCount++;
             continue;
           }
 
@@ -3212,6 +3222,7 @@ function calcPhysicalSkillDamages(
           savedDamages[damagesWithFormula] = finalDamages;
           damagesWeighted[finalDamages] = weight;
           sumDamages += finalDamages * weight;
+          damagesCount++;
         }
       }
     }
@@ -3219,14 +3230,14 @@ function calcPhysicalSkillDamages(
     var scatterData = addToTableResult(
       tableResult,
       damagesWeighted,
-      numberFormat,
+      numberFormats,
       minMaxDamages,
       totalCardinal
     );
     updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
-  return [sumDamages / totalCardinal, minMaxDamages];
+  return [sumDamages / totalCardinal, minMaxDamages, damagesCount];
 }
 
 function calcMagicSkillDamages(
@@ -3236,12 +3247,13 @@ function calcMagicSkillDamages(
   battleValues,
   tableResult,
   damagesChart,
-  numberFormat,
+  numberFormats,
   constants,
   skillId
 ) {
   var sumDamages = 0;
   var minMaxDamages = { min: Infinity, max: 0 };
+  var damagesCount = 0;
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal] =
@@ -3291,6 +3303,7 @@ function calcMagicSkillDamages(
           var finalDamages = savedDamages[rawDamages];
           damagesWeighted[finalDamages] += weight;
           sumDamages += finalDamages * weight;
+          damagesCount++;
           continue;
         }
 
@@ -3314,6 +3327,7 @@ function calcMagicSkillDamages(
               );
               addKeyValue(damagesWeighted, finalDamages, weight / 5);
               sumDamages += (finalDamages * weight) / 5;
+              damagesCount++;
             }
           } else {
             var remainingWeight =
@@ -3332,6 +3346,7 @@ function calcMagicSkillDamages(
 
               addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
               sumDamages += (finalDamages * remainingWeight) / 5;
+              damagesCount++;
             }
           }
         } else {
@@ -3345,6 +3360,7 @@ function calcMagicSkillDamages(
           savedDamages[rawDamages] = finalDamages;
           damagesWeighted[finalDamages] = weight;
           sumDamages += finalDamages * weight;
+          damagesCount++;
         }
       }
     }
@@ -3352,14 +3368,14 @@ function calcMagicSkillDamages(
     var scatterData = addToTableResult(
       tableResult,
       damagesWeighted,
-      numberFormat,
+      numberFormats,
       minMaxDamages,
       totalCardinal
     );
     updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
-  return [sumDamages / totalCardinal, minMaxDamages];
+  return [sumDamages / totalCardinal, minMaxDamages, damagesCount];
 }
 
 function changeMonsterValues(monster, instance, attacker) {
@@ -3537,8 +3553,25 @@ function displayFightResults(
     tableResultHistory,
     valuesToDisplay,
     battle.deleteFightTemplate,
-    battle.numberFormat
+    battle.numberFormats
   );
+}
+
+function displayFightInfo(damagesCount, totalTime, battle) {
+  var container = battle.damagesCount.parentElement;
+
+  if (damagesCount <= 1) {
+    hideElement(container);
+    return;
+  } else {
+    showElement(container);
+  }
+
+  damagesCount = battle.numberFormats.default.format(damagesCount);
+  totalTime = battle.numberFormats.second.format(totalTime / 1000);
+
+  battle.damagesCount.textContent = damagesCount;
+  battle.damagesTime.textContent = totalTime;
 }
 
 function isPseudoSaved(characters, pseudo) {
@@ -3548,6 +3581,8 @@ function isPseudoSaved(characters, pseudo) {
 function createBattle(characters, battle) {
   battle.battleForm.addEventListener("submit", function (event) {
     event.preventDefault();
+
+    startTime = performance.now();
 
     // auto save
     if (characters.unsavedChanges) {
@@ -3615,17 +3650,19 @@ function createBattle(characters, battle) {
       skillType
     );
 
-    var [meanDamages, minMaxDamages] = calcDamages(
+    var [meanDamages, minMaxDamages, damagesCount] = calcDamages(
       attacker,
       attackerWeapon,
       victim,
       battleValues,
       battle.tableResult,
       battle.damagesChart,
-      battle.numberFormat,
+      battle.numberFormats,
       battle.constants,
       skillId
     );
+
+    endTime = performance.now();
 
     displayDamagesChart(battle.damagesChart, battle.chartContainer);
     displayFightResults(
@@ -3642,6 +3679,7 @@ function createBattle(characters, battle) {
       characters
     );
     showElement(battle.fightResultContainer);
+    displayFightInfo(damagesCount, endTime - startTime, battle);
   });
 }
 
@@ -3756,7 +3794,7 @@ function initResultTableHistory(battle) {
         tableResultHistory,
         savedFight,
         battle.deleteFightTemplate,
-        battle.numberFormat
+        battle.numberFormats
       );
     }
   }
@@ -3986,13 +4024,21 @@ function createDamageCalculatorInformation(chartSource) {
     tableResult: document.getElementById("result-table"),
     chartContainer: document.getElementById("chart-container"),
     plotDamages: document.getElementById("plot-damages"),
-    numberFormat: {
+    damagesCount: document.getElementById("damages-count"),
+    damagesTime: document.getElementById("damages-time"),
+    numberFormats: {
       default: new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 0,
         maximumFractionDigits: 1,
       }),
       percent: new Intl.NumberFormat(undefined, {
         style: "percent",
+        maximumFractionDigits: 3,
+      }),
+      second: new Intl.NumberFormat(undefined, {
+        style: "unit",
+        unit: "second",
+        unitDisplay: "long",
         maximumFractionDigits: 3,
       }),
     },
