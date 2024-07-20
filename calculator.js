@@ -3297,8 +3297,7 @@ function calcMagicSkillDamages(
         magicAttackValue <= maxMagicAttackValue;
         magicAttackValue++
       ) {
-        var weight =
-          weights[magicAttackValue - minMagicAttackValue];
+        var weight = weights[magicAttackValue - minMagicAttackValue];
 
         var rawDamages = skillFormula(magicAttackValue, variation);
 
@@ -3321,7 +3320,11 @@ function calcMagicSkillDamages(
                 damagesWithPrimaryBonuses
               );
 
-              addKeyValue(damagesWeighted, finalDamages, weight * damagesType.weight / 5);
+              addKeyValue(
+                damagesWeighted,
+                finalDamages,
+                (weight * damagesType.weight) / 5
+              );
               sumDamages += (finalDamages * weight * damagesType.weight) / 5;
             }
           } else {
@@ -3338,8 +3341,13 @@ function calcMagicSkillDamages(
                 damagesWithPrimaryBonuses
               );
 
-              addKeyValue(damagesWeighted, finalDamages, remainingWeight * damagesType.weight / 5);
-              sumDamages += (finalDamages * remainingWeight * damagesType.weight) / 5;
+              addKeyValue(
+                damagesWeighted,
+                finalDamages,
+                (remainingWeight * damagesType.weight) / 5
+              );
+              sumDamages +=
+                (finalDamages * remainingWeight * damagesType.weight) / 5;
             }
           }
         } else {
@@ -3350,7 +3358,11 @@ function calcMagicSkillDamages(
             damagesWithPrimaryBonuses
           );
 
-          addKeyValue(damagesWeighted, finalDamages, weight * damagesType.weight);
+          addKeyValue(
+            damagesWeighted,
+            finalDamages,
+            weight * damagesType.weight
+          );
           sumDamages += finalDamages * weight * damagesType.weight;
         }
       }
