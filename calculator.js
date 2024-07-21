@@ -80,7 +80,8 @@ function addRowToTableResultHistory(
 function addToTableResultAndChart(
   battle,
   damagesWeightedByType,
-  totalCardinal,
+  damagesCount,
+  totalCardinal
 ) {
   var numberFormatDefault = battle.numberFormats.default;
   var numberFormatPercent = battle.numberFormats.percent;
@@ -110,8 +111,9 @@ function addToTableResultAndChart(
   var translation = constants.translation;
   var minDamages = Infinity;
   var maxDamages = 0;
+  var addToTableResult = damagesCount <= 201;
 
-  if (damagesWeightedByType.hasOwnProperty("miss")) {
+  if (addToTableResult && damagesWeightedByType.hasOwnProperty("miss")) {
     addSpanRow(translation.miss);
     addRowWithResults(0, damagesWeightedByType.miss[0]);
   }
@@ -125,7 +127,9 @@ function addToTableResultAndChart(
     var scatterData = [];
     var damagesWeighted = damagesWeightedByType[damagesTypeName];
 
-    addSpanRow(translation[damagesTypeName]);
+    if (addToTableResult) {
+      addSpanRow(translation[damagesTypeName]);
+    }
 
     for (var damages in damagesWeighted) {
       if (firstIteration) {
@@ -136,8 +140,11 @@ function addToTableResultAndChart(
       }
 
       var weight = damagesWeighted[damages] / totalCardinal;
-      addRowWithResults(damages, weight);
       scatterData.push({ x: damages, y: weight });
+
+      if (addToTableResult) {
+        addRowWithResults(damages, weight);
+      }
     }
 
     if (damages > maxDamages) {
@@ -1669,7 +1676,7 @@ function calcDamageWithSecondaryBonuses(
   }
 
   if (damagesType.piercingHit) {
-    damages += battleValues.defense + Math.min(0, minPiercingDamages);
+    damages += battleValues.defenseBoost + Math.min(0, minPiercingDamages);
     damages += Math.floor(
       (damagesWithPrimaryBonuses * battleValues.extraPiercingHitCoeff) / 1000
     );
@@ -1724,8 +1731,7 @@ function calcSkillDamageWithSecondaryBonuses(
   }
 
   if (damagesType.piercingHit) {
-    damages +=
-      battleValues.piercingHitDefense + Math.min(0, minPiercingDamages);
+    damages += battleValues.defenseBoost + Math.min(0, minPiercingDamages);
     damages += Math.floor(
       (tempDamages * battleValues.extraPiercingHitCoeff) / 1000
     );
@@ -1921,6 +1927,7 @@ function createBattleValues(
   var damageMultiplier = 1;
   var useDamages = 1;
   var defense = victim.defense;
+  var defenseBoost = defense;
   var magicResistance = 0;
   var weaponDefense = 0;
   var tigerStrength = 0;
@@ -2146,7 +2153,7 @@ function createBattleValues(
 
   if (isPC(victim)) {
     if (!skillType && victim.biologist70 === "on") {
-      victim.defense = Math.floor((victim.defense * 110) / 100);
+      defenseBoost = Math.floor((defenseBoost * 110) / 100);
     }
 
     criticalHitPercentage = Math.max(
@@ -2165,7 +2172,7 @@ function createBattleValues(
     if (isMagicClass(victim)) {
       defensePercent = (-2 * victim.magicDefense * victim.defensePercent) / 100;
     } else {
-      defensePercent = (-2 * victim.defense * victim.defensePercent) / 100;
+      defensePercent = (-2 * defenseBoost * victim.defensePercent) / 100;
     }
 
     if (victim.steelDragonElixir === "on") {
@@ -2204,9 +2211,9 @@ function createBattleValues(
     damageMultiplier: damageMultiplier,
     useDamages: useDamages,
     defense: defense,
+    defenseBoost: defenseBoost,
     defenseMarriage: defenseMarriage,
     tigerStrengthCoeff: 100 + tigerStrength,
-    piercingHitDefense: victim.defense,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 100 - weaponDefense,
     blessingBonusCoeff: 100 - blessingBonus,
@@ -3023,7 +3030,7 @@ function calcPhysicalDamages(attacker, attackerWeapon, victim, battleValues) {
 
       var minPiercingDamages =
         damagesWithPrimaryBonuses -
-        battleValues.defense +
+        battleValues.defenseBoost +
         battleValues.defenseMarriage;
 
       if (minPiercingDamages <= 2) {
@@ -3085,15 +3092,12 @@ function calcPhysicalSkillDamages(
   attackerWeapon,
   victim,
   battleValues,
-  tableResult,
-  damagesChart,
-  numberFormats,
   constants,
   skillId
 ) {
   var sumDamages = 0;
-  var minMaxDamages = { min: Infinity, max: 0 };
   var damagesCount = 0;
+  var damagesWeightedByType = {};
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
@@ -3128,7 +3132,9 @@ function calcPhysicalSkillDamages(
 
     var damagesWeighted = {};
     var savedDamages = {};
-    addRowToTableResult(tableResult, damagesType.name);
+
+    damagesWeightedByType[damagesType.name] = damagesWeighted;
+
     for (var variation = minVariation; variation <= maxVariation; variation++) {
       for (
         var attackValue = maxAttackValue;
@@ -3230,18 +3236,9 @@ function calcPhysicalSkillDamages(
         }
       }
     }
-
-    var scatterData = addToTableResult(
-      tableResult,
-      damagesWeighted,
-      numberFormats,
-      minMaxDamages,
-      totalCardinal
-    );
-    updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
-  return [sumDamages / totalCardinal, minMaxDamages, damagesCount];
+  return [sumDamages, totalCardinal, damagesCount, damagesWeightedByType];
 }
 
 function calcMagicSkillDamages(
@@ -3249,15 +3246,12 @@ function calcMagicSkillDamages(
   attackerWeapon,
   victim,
   battleValues,
-  tableResult,
-  damagesChart,
-  numberFormats,
   constants,
   skillId
 ) {
   var sumDamages = 0;
-  var minMaxDamages = { min: Infinity, max: 0 };
   var damagesCount = 0;
+  var damagesWeightedByType = {};
 
   var attackFactor = calcAttackFactor(attacker, victim);
   var [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal] =
@@ -3290,7 +3284,8 @@ function calcMagicSkillDamages(
 
     var damagesWeighted = {};
     var savedDamages = {};
-    addRowToTableResult(tableResult, damagesType.name);
+
+    damagesWeightedByType[damagesType.name] = damagesWeighted;
 
     for (var variation = minVariation; variation <= maxVariation; variation++) {
       for (
@@ -3368,18 +3363,9 @@ function calcMagicSkillDamages(
         }
       }
     }
-
-    var scatterData = addToTableResult(
-      tableResult,
-      damagesWeighted,
-      numberFormats,
-      minMaxDamages,
-      totalCardinal
-    );
-    updateDamagesChart(scatterData, damagesChart, damagesType.name);
   }
 
-  return [sumDamages / totalCardinal, minMaxDamages, damagesCount];
+  return [sumDamages, totalCardinal, damagesCount, damagesWeightedByType];
 }
 
 function changeMonsterValues(monster, instance, attacker) {
@@ -3527,6 +3513,7 @@ function displayResults(
   sumDamages,
   totalCardinal,
   damagesWeightedByType,
+  damagesCount,
   battle,
   attackerName,
   victimName
@@ -3534,7 +3521,8 @@ function displayResults(
   var [minDamages, maxDamages] = addToTableResultAndChart(
     battle,
     damagesWeightedByType,
-    totalCardinal,
+    damagesCount,
+    totalCardinal
   );
   displayDamagesChart(battle.damagesChart, battle.chartContainer);
   displayFightResults(
@@ -3684,18 +3672,20 @@ function createBattle(characters, battle) {
         battle.constants,
         skillId
       );
+    
+    endTime = performance.now();
 
     displayResults(
       sumDamages,
       totalCordinal,
       damagesWeightedByType,
+      damagesCount,
       battle,
       attacker.name,
       victim.name
     );
 
-    endTime = performance.now();
-
+    displayFightInfo(damagesCount, endTime - startTime, battle);
     addPotentialErrorInformation(
       battle.errorInformation,
       attacker,
@@ -3703,7 +3693,6 @@ function createBattle(characters, battle) {
       characters
     );
     showElement(battle.fightResultContainer);
-    displayFightInfo(damagesCount, endTime - startTime, battle);
   });
 }
 
