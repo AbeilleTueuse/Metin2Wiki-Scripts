@@ -52,16 +52,6 @@ function addKeyValue(object, key, value) {
   }
 }
 
-function addRowToTableResult(tableResult, value) {
-  var newRow = tableResult.insertRow(-1);
-  var firstCell = newRow.insertCell(0);
-
-  firstCell.textContent = value;
-  firstCell.colSpan = 2;
-
-  newRow.style.fontWeight = "bold";
-}
-
 function addRowToTableResultHistory(
   tableResultHistory,
   valuesToDisplay,
@@ -87,46 +77,81 @@ function addRowToTableResultHistory(
   cell.appendChild(deleteFightTemplate.cloneNode(true));
 }
 
-function addToTableResult(
-  tableResult,
-  damagesWeighted,
-  numberFormats,
-  minMaxDamages,
-  totalCardinal
+function addToTableResultAndChart(
+  battle,
+  damagesWeightedByType,
+  totalCardinal,
 ) {
-  var firstIteration = true;
-  var scatterData = [];
-  var numberFormatDefault = numberFormats.default;
-  var numberFormatPercent = numberFormats.percent;
+  var numberFormatDefault = battle.numberFormats.default;
+  var numberFormatPercent = battle.numberFormats.percent;
+  var constants = battle.constants;
+  var tableResult = battle.tableResult;
 
-  for (var damages in damagesWeighted) {
-    damages = parseInt(damages);
-
-    if (firstIteration && minMaxDamages) {
-      if (damages < minMaxDamages.min) {
-        minMaxDamages.min = damages;
-      }
-      firstIteration = false;
-    }
-
+  function addSpanRow(value) {
     var newRow = tableResult.insertRow(-1);
     var firstCell = newRow.insertCell(0);
 
+    firstCell.textContent = value;
+    firstCell.colSpan = 2;
+
+    newRow.style.fontWeight = "bold";
+  }
+
+  function addRowWithResults(damages, weight) {
+    var newRow = tableResult.insertRow(-1);
+
+    var firstCell = newRow.insertCell(0);
     firstCell.textContent = numberFormatDefault.format(damages);
 
     var secondCell = newRow.insertCell(1);
-    var weight = damagesWeighted[damages] / totalCardinal;
-
     secondCell.textContent = numberFormatPercent.format(weight);
-
-    scatterData.push({ x: damages, y: weight });
   }
 
-  if (minMaxDamages && damages > minMaxDamages.max) {
-    minMaxDamages.max = damages;
+  var translation = constants.translation;
+  var minDamages = Infinity;
+  var maxDamages = 0;
+
+  if (damagesWeightedByType.hasOwnProperty("miss")) {
+    addSpanRow(translation.miss);
+    addRowWithResults(0, damagesWeightedByType.miss[0]);
   }
 
-  return scatterData;
+  constants.damagesTypeOrder.forEach(function (damagesTypeName) {
+    if (!damagesWeightedByType.hasOwnProperty(damagesTypeName)) {
+      return;
+    }
+
+    var firstIteration = true;
+    var scatterData = [];
+    var damagesWeighted = damagesWeightedByType[damagesTypeName];
+
+    addSpanRow(translation[damagesTypeName]);
+
+    for (var damages in damagesWeighted) {
+      if (firstIteration) {
+        if (damages < minDamages) {
+          minDamages = damages;
+        }
+        firstIteration = false;
+      }
+
+      var weight = damagesWeighted[damages] / totalCardinal;
+      addRowWithResults(damages, weight);
+      scatterData.push({ x: damages, y: weight });
+    }
+
+    if (damages > maxDamages) {
+      maxDamages = damages;
+    }
+
+    updateDamagesChart(scatterData, battle.damagesChart, damagesTypeName);
+  });
+
+  if (minDamages === Infinity) {
+    minDamages = 0;
+  }
+
+  return [minDamages, maxDamages];
 }
 
 function updateDamagesChart(scatterData, damagesChart, damagesTypeName) {
@@ -2211,7 +2236,7 @@ function createBattleValues(
         (100 - criticalHitPercentage) *
         (100 - piercingHitPercentage) *
         (100 - missPercentage),
-      name: "Coup classique",
+      name: "hit",
     },
     {
       criticalHit: true,
@@ -2220,7 +2245,7 @@ function createBattleValues(
         criticalHitPercentage *
         (100 - piercingHitPercentage) *
         (100 - missPercentage),
-      name: "Coup critique",
+      name: "criticalHit",
     },
     {
       criticalHit: false,
@@ -2229,14 +2254,14 @@ function createBattleValues(
         (100 - criticalHitPercentage) *
         piercingHitPercentage *
         (100 - missPercentage),
-      name: "Coup perçant",
+      name: "piercingHit",
     },
     {
       criticalHit: true,
       piercingHit: true,
       weight:
         criticalHitPercentage * piercingHitPercentage * (100 - missPercentage),
-      name: "Coup critique perçant",
+      name: "criticalPiercingHit",
     },
   ];
 
@@ -2307,132 +2332,6 @@ function calcRemainingWeight(weights, currentIndex) {
   }
 
   return remainingWeight;
-}
-
-function calcPhysicalDamages(
-  attacker,
-  attackerWeapon,
-  victim,
-  battleValues,
-  tableResult,
-  damagesChart,
-  numberFormats
-) {
-  var sumDamages = 0;
-  var minMaxDamages = { min: Infinity, max: 0 };
-  var damagesCount = 0;
-
-  var attackFactor = calcAttackFactor(attacker, victim);
-  var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
-  var [
-    minAttackValue,
-    maxAttackValue,
-    attackValueOther,
-    minInterval,
-    totalCardinal,
-  ] = calcSecondaryAttackValue(attacker, attackerWeapon);
-
-  var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
-
-  if (battleValues.missPercentage) {
-    addRowToTableResult(tableResult, "Miss");
-    addToTableResult(
-      tableResult,
-      { 0: battleValues.missPercentage / 100 },
-      numberFormats
-    );
-  }
-
-  for (var damagesType of battleValues.damagesTypeCombinaison) {
-    if (!damagesType.weight) {
-      continue;
-    }
-
-    var damagesWeighted = {};
-    addRowToTableResult(tableResult, damagesType.name);
-
-    for (
-      var attackValue = maxAttackValue;
-      attackValue >= minAttackValue;
-      attackValue--
-    ) {
-      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
-
-      var secondaryAttackValue = 2 * attackValue + attackValueOther;
-      var rawDamages =
-        mainAttackValue +
-        floorMultiplication(attackFactor, secondaryAttackValue);
-
-      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-        rawDamages,
-        battleValues
-      );
-
-      var minPiercingDamages =
-        damagesWithPrimaryBonuses -
-        battleValues.defense +
-        battleValues.defenseMarriage;
-
-      if (minPiercingDamages <= 2) {
-        if (damagesType.piercingHit) {
-          for (var damages = 1; damages <= 5; damages++) {
-            var finalDamages = calcDamageWithSecondaryBonuses(
-              damages,
-              battleValues,
-              damagesType,
-              minPiercingDamages,
-              damagesWithPrimaryBonuses
-            );
-
-            addKeyValue(damagesWeighted, finalDamages, weight / 5);
-            sumDamages += (finalDamages * weight) / 5;
-            damagesCount++;
-          }
-        } else {
-          var remainingWeight =
-            calcRemainingWeight(weights, attackValue - minAttackValue) *
-            damagesType.weight;
-
-          for (var damages = 1; damages <= 5; damages++) {
-            var finalDamages = calcDamageWithSecondaryBonuses(
-              damages,
-              battleValues,
-              damagesType,
-              minPiercingDamages,
-              damagesWithPrimaryBonuses
-            );
-            addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
-            sumDamages += (finalDamages * remainingWeight) / 5;
-            damagesCount += attackValue - minAttackValue + 1;
-          }
-          break;
-        }
-      } else {
-        var finalDamages = calcDamageWithSecondaryBonuses(
-          minPiercingDamages,
-          battleValues,
-          damagesType,
-          minPiercingDamages,
-          damagesWithPrimaryBonuses
-        );
-
-        addKeyValue(damagesWeighted, finalDamages, weight);
-        sumDamages += finalDamages * weight;
-        damagesCount++;
-      }
-    }
-
-    var scatterData = addToTableResult(
-      tableResult,
-      damagesWeighted,
-      numberFormats,
-      minMaxDamages,
-      totalCardinal
-    );
-    updateDamagesChart(scatterData, damagesChart, damagesType.name);
-  }
-
-  return [sumDamages / totalCardinal, minMaxDamages, damagesCount];
 }
 
 function calcBlessingBonus(skillPowerTable, victim) {
@@ -3076,6 +2975,111 @@ function getSkillFormula(
   return [skillFormula, skillInfo];
 }
 
+function calcPhysicalDamages(attacker, attackerWeapon, victim, battleValues) {
+  var sumDamages = 0;
+  var damagesCount = 0;
+  var damagesWeightedByType = {};
+
+  var attackFactor = calcAttackFactor(attacker, victim);
+  var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
+  var [
+    minAttackValue,
+    maxAttackValue,
+    attackValueOther,
+    minInterval,
+    totalCardinal,
+  ] = calcSecondaryAttackValue(attacker, attackerWeapon);
+
+  var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
+
+  if (battleValues.missPercentage) {
+    damagesWeightedByType.miss = { 0: battleValues.missPercentage / 100 };
+  }
+
+  for (var damagesType of battleValues.damagesTypeCombinaison) {
+    if (!damagesType.weight) {
+      continue;
+    }
+
+    var damagesWeighted = {};
+    damagesWeightedByType[damagesType.name] = damagesWeighted;
+
+    for (
+      var attackValue = maxAttackValue;
+      attackValue >= minAttackValue;
+      attackValue--
+    ) {
+      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
+
+      var secondaryAttackValue = 2 * attackValue + attackValueOther;
+      var rawDamages =
+        mainAttackValue +
+        floorMultiplication(attackFactor, secondaryAttackValue);
+
+      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+        rawDamages,
+        battleValues
+      );
+
+      var minPiercingDamages =
+        damagesWithPrimaryBonuses -
+        battleValues.defense +
+        battleValues.defenseMarriage;
+
+      if (minPiercingDamages <= 2) {
+        if (damagesType.piercingHit) {
+          for (var damages = 1; damages <= 5; damages++) {
+            var finalDamages = calcDamageWithSecondaryBonuses(
+              damages,
+              battleValues,
+              damagesType,
+              minPiercingDamages,
+              damagesWithPrimaryBonuses
+            );
+
+            addKeyValue(damagesWeighted, finalDamages, weight / 5);
+            sumDamages += (finalDamages * weight) / 5;
+            damagesCount++;
+          }
+        } else {
+          var remainingWeight =
+            calcRemainingWeight(weights, attackValue - minAttackValue) *
+            damagesType.weight;
+
+          for (var damages = 1; damages <= 5; damages++) {
+            var finalDamages = calcDamageWithSecondaryBonuses(
+              damages,
+              battleValues,
+              damagesType,
+              minPiercingDamages,
+              damagesWithPrimaryBonuses
+            );
+
+            addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
+            sumDamages += (finalDamages * remainingWeight) / 5;
+            damagesCount += attackValue - minAttackValue + 1;
+          }
+          break;
+        }
+      } else {
+        var finalDamages = calcDamageWithSecondaryBonuses(
+          minPiercingDamages,
+          battleValues,
+          damagesType,
+          minPiercingDamages,
+          damagesWithPrimaryBonuses
+        );
+
+        addKeyValue(damagesWeighted, finalDamages, weight);
+        sumDamages += finalDamages * weight;
+        damagesCount++;
+      }
+    }
+  }
+
+  return [sumDamages, totalCardinal, damagesCount, damagesWeightedByType];
+}
+
 function calcPhysicalSkillDamages(
   attacker,
   attackerWeapon,
@@ -3519,12 +3523,37 @@ function addPotentialErrorInformation(
   }
 }
 
+function displayResults(
+  sumDamages,
+  totalCardinal,
+  damagesWeightedByType,
+  battle,
+  attackerName,
+  victimName
+) {
+  var [minDamages, maxDamages] = addToTableResultAndChart(
+    battle,
+    damagesWeightedByType,
+    totalCardinal,
+  );
+  displayDamagesChart(battle.damagesChart, battle.chartContainer);
+  displayFightResults(
+    battle,
+    attackerName,
+    victimName,
+    sumDamages / totalCardinal,
+    minDamages,
+    maxDamages
+  );
+}
+
 function displayFightResults(
   battle,
   attackerName,
   victimName,
   meanDamages,
-  minMaxDamages
+  minDamages,
+  maxDamages
 ) {
   var tableResultHistory = battle.tableResultHistory;
   var attackTypeSelection = battle.attackTypeSelection;
@@ -3533,17 +3562,13 @@ function displayFightResults(
   showElement(tableResultHistory);
   hideElement(tableResultHistory.rows[1]);
 
-  if (minMaxDamages.min === Infinity) {
-    minMaxDamages.min = 0;
-  }
-
   var valuesToDisplay = [
     attackerName,
     victimName,
     attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
     meanDamages,
-    minMaxDamages.min,
-    minMaxDamages.max,
+    minDamages,
+    maxDamages,
   ];
 
   savedFights.push(valuesToDisplay);
@@ -3650,28 +3675,27 @@ function createBattle(characters, battle) {
       skillType
     );
 
-    var [meanDamages, minMaxDamages, damagesCount] = calcDamages(
-      attacker,
-      attackerWeapon,
-      victim,
-      battleValues,
-      battle.tableResult,
-      battle.damagesChart,
-      battle.numberFormats,
-      battle.constants,
-      skillId
+    var [sumDamages, totalCordinal, damagesCount, damagesWeightedByType] =
+      calcDamages(
+        attacker,
+        attackerWeapon,
+        victim,
+        battleValues,
+        battle.constants,
+        skillId
+      );
+
+    displayResults(
+      sumDamages,
+      totalCordinal,
+      damagesWeightedByType,
+      battle,
+      attacker.name,
+      victim.name
     );
 
     endTime = performance.now();
 
-    displayDamagesChart(battle.damagesChart, battle.chartContainer);
-    displayFightResults(
-      battle,
-      attacker.name,
-      victim.name,
-      meanDamages,
-      minMaxDamages
-    );
     addPotentialErrorInformation(
       battle.errorInformation,
       attacker,
@@ -3777,6 +3801,19 @@ function createConstants() {
       shaman: [4, 6, 8],
       lycan: [5, 8],
     },
+    translation: {
+      miss: "Miss",
+      hit: "Coup classique",
+      criticalHit: "Coup critique",
+      piercingHit: "Coup perçant",
+      criticalPiercingHit: "Coup critique perçant",
+    },
+    damagesTypeOrder: [
+      "hit",
+      "criticalHit",
+      "piercingHit",
+      "criticalPiercingHit",
+    ],
   };
   return constants;
 }
@@ -3902,17 +3939,19 @@ function initChart(battle, chartSource) {
       },
     });
 
+    var translation = battle.constants.translation;
+
     var dataset = {
-      "Coup classique": {
-        label: "Coup classique",
+      hit: {
+        label: translation.hit,
         showLine: false,
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         borderColor: "rgba(75, 192, 192, 1)",
         borderWidth: 1,
         pointRadius: 3,
       },
-      "Coup perçant": {
-        label: "Coup perçant",
+      piercingHit: {
+        label: translation.piercingHit,
         showLine: false,
         backgroundColor: "rgba(192, 192, 75, 0.2)",
         borderColor: "rgba(192, 192, 75, 1)",
@@ -3920,8 +3959,8 @@ function initChart(battle, chartSource) {
         pointRadius: 3,
         hidden: true,
       },
-      "Coup critique": {
-        label: "Coup critique",
+      criticalHit: {
+        label: translation.criticalHit,
         showLine: false,
         backgroundColor: "rgba(192, 75, 192, 0.2)",
         borderColor: "rgba(192, 75, 192, 1)",
@@ -3929,8 +3968,8 @@ function initChart(battle, chartSource) {
         pointRadius: 3,
         hidden: true,
       },
-      "Coup critique perçant": {
-        label: "Coup critique perçant",
+      criticalPiercingHit: {
+        label: translation.criticalPiercingHit,
         showLine: false,
         backgroundColor: "rgba(75, 75, 192, 0.2)",
         borderColor: "rgba(75, 75, 192, 1)",
