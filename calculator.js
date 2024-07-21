@@ -140,6 +140,7 @@ function addToTableResultAndChart(
       }
 
       var weight = damagesWeighted[damages] / totalCardinal;
+      damagesWeighted[damages] = weight;
       scatterData.push({ x: damages, y: weight });
 
       if (addToTableResult) {
@@ -610,7 +611,10 @@ function downloadCharacter(character) {
 
   link.href = blobURL;
   link.download = character.name + ".txt";
+  document.body.appendChild(link);
+
   link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(blobURL);
 }
 
@@ -3509,6 +3513,40 @@ function addPotentialErrorInformation(
   }
 }
 
+function downloadRawDataListener() {
+  var button = document.getElementById("download-raw-data");
+
+  button.addEventListener("click", function(e) {
+    var damagesWeightedByType = window.damagesWeightedByType;
+
+    if (!damagesWeightedByType) {
+      return;
+    }
+
+    var csvContent = "damages,probabilities,damagesType\n";
+
+    for (var damagesType in damagesWeightedByType) {
+      var damagesWeighted = damagesWeightedByType[damagesType];
+      
+      for (var damages in damagesWeighted) {
+        csvContent += damages + "," + damagesWeighted[damages] + "," + damagesType + "\n";
+      }
+    }
+
+    var link = document.createElement("a");
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    var blobURL = URL.createObjectURL(blob);
+    
+    link.href = blobURL;
+    link.download = "raw_damages.csv";
+    document.body.appendChild(link);
+
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobURL);
+  });
+}
+
 function displayResults(
   sumDamages,
   totalCardinal,
@@ -3533,6 +3571,7 @@ function displayResults(
     minDamages,
     maxDamages
   );
+  window.damagesWeightedByType = damagesWeightedByType;
 }
 
 function displayFightResults(
@@ -4081,6 +4120,7 @@ function createDamageCalculatorInformation(chartSource) {
   );
   initResultTableHistory(battle);
   initChart(battle, chartSource);
+  downloadRawDataListener();
 
   var errorElements = document
     .getElementById("error-information")
