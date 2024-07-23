@@ -3586,11 +3586,11 @@ function addPotentialErrorInformation(
   }
 }
 
-function downloadRawDataListener() {
+function downloadRawDataListener(battle) {
   var button = document.getElementById("download-raw-data");
 
   button.addEventListener("click", function (e) {
-    var damagesWeightedByType = window.damagesWeightedByType;
+    var damagesWeightedByType = battle.damagesWeightedByType;
 
     if (!damagesWeightedByType) {
       return;
@@ -3645,7 +3645,7 @@ function displayResults(
     minDamages,
     maxDamages
   );
-  window.damagesWeightedByType = damagesWeightedByType;
+  battle.damagesWeightedByType = damagesWeightedByType;
 }
 
 function displayFightResults(
@@ -4170,6 +4170,7 @@ function createDamageCalculatorInformation(chartSource) {
     attackerSelection: document.getElementById("attacker-selection"),
     attackTypeSelection: document.getElementById("attack-type-selection"),
     victimSelection: document.getElementById("victim-selection"),
+    damagesWeightedByType: {},
     tableResultFight: document.getElementById("result-table-fight"),
     tableResultHistory: document.getElementById("result-table-history"),
     deleteFightTemplate: document.getElementById("delete-fight-template")
@@ -4210,7 +4211,7 @@ function createDamageCalculatorInformation(chartSource) {
   );
   initResultTableHistory(battle);
   initChart(battle, chartSource);
-  downloadRawDataListener();
+  downloadRawDataListener(battle);
 
   var errorElements = document
     .getElementById("error-information")
