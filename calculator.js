@@ -82,7 +82,7 @@ function addRowToTableResultHistory(
   cell.appendChild(deleteFightTemplate.cloneNode(true));
 }
 
-function addToTableResultAndChart(
+function addToTableResult(
   battle,
   damagesWeightedByType,
   damagesCount,
@@ -93,6 +93,8 @@ function addToTableResultAndChart(
   var constants = battle.constants;
   var tableResult = battle.tableResult;
   var noTableResult = battle.noTableResult;
+  var displayReducePoints = false;
+  var maxPoints = battle.damagesChart.maxPoints;
 
   function addSpanRow(value) {
     var newRow = tableResult.insertRow(-1);
@@ -117,10 +119,11 @@ function addToTableResultAndChart(
   var translation = battle.translation;
   var minDamages = Infinity;
   var maxDamages = 0;
-  var addToTableResult = damagesCount <= 201;
+  var addToTable = damagesCount <= 201;
   var displayThisDamagesType = true;
+  var scatterDataByType = {};
 
-  if (addToTableResult) {
+  if (addToTable) {
     showElement(tableResult);
     hideElement(noTableResult);
 
@@ -139,10 +142,14 @@ function addToTableResultAndChart(
     }
 
     var firstIteration = true;
-    var scatterData = [];
     var damagesWeighted = damagesWeightedByType[damagesTypeName];
+    var scatterData = [];
+    scatterDataByType[damagesTypeName] = {
+      display: displayThisDamagesType,
+      scatterData: scatterData,
+    };
 
-    if (addToTableResult) {
+    if (addToTable) {
       addSpanRow(translation[damagesTypeName]);
     }
 
@@ -160,21 +167,19 @@ function addToTableResultAndChart(
       damagesWeighted[damages] = weight;
       scatterData.push({ x: damages, y: weight });
 
-      if (addToTableResult) {
+      if (addToTable) {
         addRowWithResults(damages, weight);
       }
+    }
+
+    if (scatterData.length >= 2 * maxPoints) {
+      displayReducePoints = true;
     }
 
     if (damages > maxDamages) {
       maxDamages = damages;
     }
 
-    addToDamagesChart(
-      scatterData,
-      battle.damagesChart,
-      damagesTypeName,
-      displayThisDamagesType
-    );
     displayThisDamagesType = false;
   });
 
@@ -182,13 +187,19 @@ function addToTableResultAndChart(
     minDamages = 0;
   }
 
-  return [minDamages, maxDamages];
+  if (displayReducePoints) {
+    showElement(battle.reduceChartPointsContainer);
+  } else {
+    hideElement(battle.reduceChartPointsContainer);
+  }
+
+  return [minDamages, maxDamages, scatterDataByType, displayReducePoints];
 }
 
-function aggregateDamages(scatterData, maxPoints) {
+function aggregateDamages(scatterData, maxPoints, reducePoints) {
   var dataLength = scatterData.length;
 
-  if (dataLength <= maxPoints) {
+  if (dataLength <= 2 * maxPoints || !reducePoints) {
     return scatterData;
   }
 
@@ -218,21 +229,23 @@ function aggregateDamages(scatterData, maxPoints) {
   return aggregateScatterData;
 }
 
-function addToDamagesChart(
-  scatterData,
-  damagesChart,
-  damagesTypeName,
-  display
-) {
-  var chart = damagesChart.chart;
-  var dataset = copyObject(damagesChart.dataset[damagesTypeName]);
+function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
+  for (var damagesTypeName in scatterDataByType) {
+    var dataset = copyObject(damagesChart.dataset[damagesTypeName]);
+    var { display: display, scatterData: scatterData } =
+      scatterDataByType[damagesTypeName];
 
-  if (scatterData.length >= 10) {
-    dataset.data = aggregateDamages(scatterData, damagesChart.maxPoints);
-    chart.data.datasets.push(dataset);
+    if (scatterData.length >= 10) {
+      dataset.data = aggregateDamages(
+        scatterData,
+        damagesChart.maxPoints,
+        reducePoints
+      );
+      damagesChart.chart.data.datasets.push(dataset);
 
-    if (display) {
-      dataset.hidden = false;
+      if (display) {
+        dataset.hidden = false;
+      }
     }
   }
 }
@@ -3586,6 +3599,30 @@ function addPotentialErrorInformation(
   }
 }
 
+function reduceChartPointsListener(battle) {
+  var checkbox = battle.reduceChartPoints;
+  var numberFormat = battle.numberFormats.second;
+  var displayTime = battle.displayTime;
+
+  checkbox.addEventListener("change", function (event) {
+    var damagesChart = battle.damagesChart;
+
+    var startDisplayTime = performance.now();
+
+    clearDamageChart(damagesChart);
+    addToDamagesChart(
+      battle.scatterDataByType,
+      damagesChart,
+      event.target.checked
+    );
+    displayDamagesChart(damagesChart, battle.chartContainer);
+
+    displayTime.textContent = numberFormat.format(
+      (performance.now() - startDisplayTime) / 1000
+    );
+  });
+}
+
 function downloadRawDataListener(battle) {
   var button = document.getElementById("download-raw-data");
 
@@ -3630,12 +3667,16 @@ function displayResults(
   attackerName,
   victimName
 ) {
-  var [minDamages, maxDamages] = addToTableResultAndChart(
-    battle,
-    damagesWeightedByType,
-    damagesCount,
-    totalCardinal
-  );
+  var [minDamages, maxDamages, scatterDataByType, reducePoints] =
+    addToTableResult(
+      battle,
+      damagesWeightedByType,
+      damagesCount,
+      totalCardinal
+    );
+  reducePoints &&= battle.reduceChartPoints.checked;
+
+  addToDamagesChart(scatterDataByType, battle.damagesChart, reducePoints);
   displayDamagesChart(battle.damagesChart, battle.chartContainer);
   displayFightResults(
     battle,
@@ -3646,6 +3687,7 @@ function displayResults(
     maxDamages
   );
   battle.damagesWeightedByType = damagesWeightedByType;
+  battle.scatterDataByType = scatterDataByType;
 }
 
 function displayFightResults(
@@ -3960,7 +4002,7 @@ function createConstants() {
         criticalHit: "Kritischer Treffer",
         piercingHit: "Durchdringender Treffer",
         criticalPiercingHit: "Kritischer durchdringender Treffer",
-      }
+      },
     },
     damagesTypeOrder: [
       "normalHit",
@@ -4224,6 +4266,7 @@ function createDamageCalculatorInformation(chartSource) {
     attackTypeSelection: document.getElementById("attack-type-selection"),
     victimSelection: document.getElementById("victim-selection"),
     damagesWeightedByType: {},
+    scatterDataByType: {},
     tableResultFight: document.getElementById("result-table-fight"),
     tableResultHistory: document.getElementById("result-table-history"),
     deleteFightTemplate: document.getElementById("delete-fight-template")
@@ -4232,6 +4275,10 @@ function createDamageCalculatorInformation(chartSource) {
     fightResultContainer: document.getElementById("fight-result-container"),
     tableResult: document.getElementById("result-table-details"),
     noTableResult: document.getElementById("no-result-table-details"),
+    reduceChartPointsContainer: document.getElementById(
+      "reduce-chart-points-container"
+    ),
+    reduceChartPoints: document.getElementById("reduce-chart-points"),
     chartContainer: document.getElementById("chart-container"),
     plotDamages: document.getElementById("plot-damages"),
     damagesCount: document.getElementById("damages-count"),
@@ -4255,9 +4302,9 @@ function createDamageCalculatorInformation(chartSource) {
     },
     mapping: mapping,
     constants: constants,
-    translation: getTranslation(constants.translation)
+    translation: getTranslation(constants.translation),
   };
-  
+
   attackSelectonListener(
     characters,
     battle.attackerSelection,
@@ -4265,6 +4312,7 @@ function createDamageCalculatorInformation(chartSource) {
   );
   initResultTableHistory(battle);
   initChart(battle, chartSource);
+  reduceChartPointsListener(battle);
   downloadRawDataListener(battle);
 
   var errorElements = document
