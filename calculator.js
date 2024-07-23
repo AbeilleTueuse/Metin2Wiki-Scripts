@@ -3606,7 +3606,6 @@ function reduceChartPointsListener(battle) {
 
   checkbox.addEventListener("change", function (event) {
     var damagesChart = battle.damagesChart;
-
     var startDisplayTime = performance.now();
 
     clearDamageChart(damagesChart);
