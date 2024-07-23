@@ -2312,7 +2312,7 @@ function createBattleValues(
         (100 - criticalHitPercentage) *
         (100 - piercingHitPercentage) *
         (100 - missPercentage),
-      name: "hit",
+      name: "normalHit",
     },
     {
       criticalHit: true,
@@ -3920,7 +3920,7 @@ function createConstants() {
         damages: "Dégâts",
         percentage: "Pourcentage",
         miss: "Miss",
-        hit: "Coup classique",
+        normalHit: "Coup classique",
         criticalHit: "Coup critique",
         piercingHit: "Coup perçant",
         criticalPiercingHit: "Coup critique perçant",
@@ -3929,7 +3929,7 @@ function createConstants() {
         damages: "Damages",
         percentage: "Percentage",
         miss: "Miss",
-        hit: "Normal hit",
+        normalHit: "Normal hit",
         criticalHit: "Critical hit",
         piercingHit: "Piercing hit",
         criticalPiercingHit: "Critical piercing hit",
@@ -3938,7 +3938,7 @@ function createConstants() {
         damages: "Hasar",
         percentage: "Yüzde",
         miss: "Miss Vuruş",
-        hit: "Düz Vuruş",
+        normalHit: "Düz Vuruş",
         criticalHit: "Kritik Vuruş",
         piercingHit: "Delici Vuruş",
         criticalPiercingHit: "Kritikli Delici Vuruş",
@@ -3947,14 +3947,23 @@ function createConstants() {
         damages: "Daune",
         percentage: "Procent",
         miss: "Miss",
-        hit: "Lovitura normala",
+        normalHit: "Lovitura normala",
         criticalHit: "Lovitura critica",
         piercingHit: "Lovitura patrunzatoare",
         criticalPiercingHit: "Lovitura critica si patrunzatoare",
+      },
+      de: {
+        damages: "Schäden",
+        percentage: "Prozentsatz",
+        miss: "Verfehlen",
+        normalHit: "Normaler Treffer",
+        criticalHit: "Kritischer Treffer",
+        piercingHit: "Durchdringender Treffer",
+        criticalPiercingHit: "Kritischer durchdringender Treffer",
       }
     },
     damagesTypeOrder: [
-      "hit",
+      "normalHit",
       "criticalHit",
       "piercingHit",
       "criticalPiercingHit",
@@ -4086,8 +4095,8 @@ function initChart(battle, chartSource) {
     });
 
     var dataset = {
-      hit: {
-        label: translation.hit,
+      normalHit: {
+        label: translation.normalHit,
         showLine: false,
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         borderColor: "rgba(75, 192, 192, 1)",
