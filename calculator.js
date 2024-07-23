@@ -3933,6 +3933,24 @@ function createConstants() {
         criticalHit: "Critical hit",
         piercingHit: "Piercing hit",
         criticalPiercingHit: "Critical piercing hit",
+      },
+      tr: {
+        damages: "Hasar",
+        percentage: "Yüzde",
+        miss: "Miss Vuruş",
+        hit: "Düz Vuruş",
+        criticalHit: "Kritik Vuruş",
+        piercingHit: "Delici Vuruş",
+        criticalPiercingHit: "Kritikli Delici Vuruş",
+      },
+      ro: {
+        damages: "Daune",
+        percentage: "Procent",
+        miss: "Miss",
+        hit: "Lovitura normala",
+        criticalHit: "Lovitura critica",
+        piercingHit: "Lovitura patrunzatoare",
+        criticalPiercingHit: "Lovitura critica si patrunzatoare",
       }
     },
     damagesTypeOrder: [
