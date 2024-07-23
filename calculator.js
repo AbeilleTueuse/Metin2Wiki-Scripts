@@ -114,7 +114,7 @@ function addToTableResultAndChart(
     secondCell.textContent = numberFormatPercent.format(weight);
   }
 
-  var translation = constants.translation;
+  var translation = battle.translation;
   var minDamages = Infinity;
   var maxDamages = 0;
   var addToTableResult = damagesCount <= 201;
@@ -3916,11 +3916,24 @@ function createConstants() {
       lycan: [5, 8],
     },
     translation: {
-      miss: "Miss",
-      hit: "Coup classique",
-      criticalHit: "Coup critique",
-      piercingHit: "Coup perçant",
-      criticalPiercingHit: "Coup critique perçant",
+      fr: {
+        damages: "Dégâts",
+        percentage: "Pourcentage",
+        miss: "Miss",
+        hit: "Coup classique",
+        criticalHit: "Coup critique",
+        piercingHit: "Coup perçant",
+        criticalPiercingHit: "Coup critique perçant",
+      },
+      en: {
+        damages: "Damages",
+        percentage: "Percentage",
+        miss: "Miss",
+        hit: "Normal hit",
+        criticalHit: "Critical hit",
+        piercingHit: "Piercing hit",
+        criticalPiercingHit: "Critical piercing hit",
+      }
     },
     damagesTypeOrder: [
       "hit",
@@ -3997,6 +4010,7 @@ function initChart(battle, chartSource) {
 
     Chart.register(verticalLinePlugin);
 
+    var translation = battle.translation;
     var ctx = battle.plotDamages.getContext("2d");
     var chart = new Chart(ctx, {
       type: "scatter",
@@ -4035,13 +4049,13 @@ function initChart(battle, chartSource) {
             position: "bottom",
             title: {
               display: true,
-              text: "Dégâts",
+              text: translation.damages,
             },
           },
           y: {
             title: {
               display: true,
-              text: "Pourcentage",
+              text: translation.percentage,
             },
             ticks: {
               format: {
@@ -4052,8 +4066,6 @@ function initChart(battle, chartSource) {
         },
       },
     });
-
-    var translation = battle.constants.translation;
 
     var dataset = {
       hit: {
@@ -4117,6 +4129,20 @@ function attackSelectonListener(
       filterAttackTypeSelectionMonster(attackTypeSelection);
     }
   });
+}
+
+function getTranslation(translation) {
+  var userLanguage = navigator.language;
+  var langToUse = "en";
+
+  for (var lang in translation) {
+    if (userLanguage.startsWith(lang)) {
+      langToUse = lang;
+      break;
+    }
+  }
+
+  return translation[langToUse];
 }
 
 function createDamageCalculatorInformation(chartSource) {
@@ -4202,6 +4228,7 @@ function createDamageCalculatorInformation(chartSource) {
     },
     mapping: mapping,
     constants: constants,
+    translation: getTranslation(constants.translation)
   };
   
   attackSelectonListener(
