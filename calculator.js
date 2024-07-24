@@ -4132,43 +4132,40 @@ function initChart(battle, chartSource) {
             },
           },
         },
+        elements: {
+          point: {
+            borderWidth: 1,
+            radius: 3,
+            hitRadius: 3,
+            hoverRadius: 6,
+            hoverBorderWidth: 2
+          }
+        }
       },
     });
 
     var dataset = {
       normalHit: {
         label: translation.normalHit,
-        showLine: false,
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1,
-        pointRadius: 3,
       },
       piercingHit: {
         label: translation.piercingHit,
-        showLine: false,
         backgroundColor: "rgba(192, 192, 75, 0.2)",
         borderColor: "rgba(192, 192, 75, 1)",
-        borderWidth: 1,
-        pointRadius: 3,
         hidden: true,
       },
       criticalHit: {
         label: translation.criticalHit,
-        showLine: false,
         backgroundColor: "rgba(192, 75, 192, 0.2)",
         borderColor: "rgba(192, 75, 192, 1)",
-        borderWidth: 1,
-        pointRadius: 3,
         hidden: true,
       },
       criticalPiercingHit: {
         label: translation.criticalPiercingHit,
-        showLine: false,
         backgroundColor: "rgba(75, 75, 192, 0.2)",
         borderColor: "rgba(75, 75, 192, 1)",
-        borderWidth: 1,
-        pointRadius: 3,
         hidden: true,
       },
     };
