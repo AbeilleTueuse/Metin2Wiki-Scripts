@@ -4053,31 +4053,6 @@ function initResultTableHistory(battle) {
 
 function initChart(battle, chartSource) {
   function createChart() {
-    var verticalLinePlugin = {
-      id: "verticalLine",
-      afterDatasetsDraw: function (chart, easing) {
-        if (chart.tooltip._active && chart.tooltip._active.length) {
-          var ctx = chart.ctx;
-          var activePoint = chart.tooltip._active[0];
-          var x = activePoint.element.x;
-          var topY = chart.scales.y.top;
-          var bottomY = chart.scales.y.bottom;
-
-          ctx.save();
-          ctx.beginPath();
-          ctx.setLineDash([3, 2]);
-          ctx.moveTo(x, topY);
-          ctx.lineTo(x, bottomY);
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = "lightgray";
-          ctx.stroke();
-          ctx.restore();
-        }
-      },
-    };
-
-    Chart.register(verticalLinePlugin);
-
     var translation = battle.translation;
     var ctx = battle.plotDamages.getContext("2d");
     var chart = new Chart(ctx, {
@@ -4091,25 +4066,35 @@ function initChart(battle, chartSource) {
         plugins: {
           legend: {
             display: true,
-            onClick: (e, legendItem, legend) => {
-              var index = legendItem.datasetIndex;
-              var chart = legend.chart;
-              var meta = chart.getDatasetMeta(index);
-              meta.hidden =
-                meta.hidden === null
-                  ? !chart.data.datasets[index].hidden
-                  : null;
-              chart.update();
+          },
+          title: {
+            display: true,
+            text: "Répartition des dégâts",
+            font: {
+              size: 20,
             },
           },
           tooltip: {
-            mode: "index",
-            intersect: false,
+            callbacks: {
+              label: function (context) {
+                var xValue = battle.numberFormats.default.format(
+                  context.parsed.x
+                );
+                var yValue = battle.numberFormats.percent.format(
+                  context.parsed.y
+                );
+
+                return (label =
+                  " " +
+                  context.dataset.label +
+                  " : (" +
+                  xValue +
+                  ", " +
+                  yValue +
+                  ")");
+              },
+            },
           },
-        },
-        hover: {
-          mode: "index",
-          intersect: false,
         },
         scales: {
           x: {
@@ -4118,12 +4103,18 @@ function initChart(battle, chartSource) {
             title: {
               display: true,
               text: translation.damages,
+              font: {
+                size: 16,
+              },
             },
           },
           y: {
             title: {
               display: true,
               text: translation.percentage,
+              font: {
+                size: 16,
+              },
             },
             ticks: {
               format: {
@@ -4138,9 +4129,9 @@ function initChart(battle, chartSource) {
             radius: 3,
             hitRadius: 3,
             hoverRadius: 6,
-            hoverBorderWidth: 2
-          }
-        }
+            hoverBorderWidth: 2,
+          },
+        },
       },
     });
 
