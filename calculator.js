@@ -3980,34 +3980,40 @@ function initResultTableHistory(battle) {
 }
 
 function initChart(battle, chartSource) {
+  var translation = battle.translation;
+
   function createChart() {
     var percentFormat = battle.numberFormats.percent;
     var annotationPlugin = {
       id: 'annotationPlugin',
-      beforeDraw(chart, args, options) {
+      afterDraw(chart) {
         var missPercentage = chart.data.missPercentage || 0;
 
         if (!missPercentage) {
           return;
         }
-
+        console.log("oui");
         var { ctx, chartArea: { top, left, bottom, right }, scales: { x, y } } = chart;
         ctx.save();
-        var text = "Miss : " + percentFormat.format(missPercentage);
-        var textWidth = ctx.measureText(text).width;
-        var xPosition = right - textWidth - 10;
-        var yPosition = top + 20;
+        var text = translation.miss + " : " + percentFormat.format(missPercentage);
+        var padding = 4;
+        var fontSize = 14;
+    
+        ctx.font = fontSize + "px Helvetica Neue";
 
-        ctx.font = '12px Arial';
-        ctx.fillStyle = '#000';
-    
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; 
-        ctx.fillRect(xPosition - 5, yPosition - 15, textWidth + 10, 20);
-    
-        ctx.strokeStyle = '#000';
-        ctx.strokeRect(xPosition - 5, yPosition - 15, textWidth + 10, 20);
-    
-        ctx.fillText(text, xPosition, yPosition);
+        var textWidth = ctx.measureText(text).width;
+        var xPosition = right - textWidth - 5;
+        var yPosition = top + 5;
+
+        ctx.fillStyle = "rgba(255, 0, 0, .2)";
+        ctx.fillRect(xPosition - padding, yPosition - padding, textWidth + 2 * padding, fontSize + 2 * padding);
+
+        ctx.strokeStyle = "red";
+        ctx.strokeRect(xPosition - padding, yPosition - padding, textWidth + 2 * padding, fontSize + 2 * padding);
+
+        ctx.fillStyle = "#666";
+        ctx.textBaseline = "top";
+        ctx.fillText(text, xPosition, yPosition + 1);
 
         ctx.restore();
       }
@@ -4015,7 +4021,6 @@ function initChart(battle, chartSource) {
 
     Chart.register(annotationPlugin);
 
-    var translation = battle.translation;
     var ctx = battle.plotDamages.getContext("2d");
 
     var chart = new Chart(ctx, {
@@ -4058,6 +4063,7 @@ function initChart(battle, chartSource) {
                   ")");
               },
             },
+            caretPadding: 10
           },
         },
         scales: {
