@@ -93,9 +93,11 @@ function prepareDamagesData(
   var maxDamages = 0;
   var displayThisDamagesType = true;
   var scatterDataByType = {};
+  var damagesCountDistinct = 0;
 
   for (var damagesTypeName in damagesWeightedByType) {
     if (damagesTypeName === "miss") {
+      damagesCountDistinct++;
       continue;
     }
 
@@ -122,9 +124,13 @@ function prepareDamagesData(
       scatterData.push({ x: damages, y: probability });
     }
 
-    if (scatterData.length >= 2 * maxPoints) {
+    var scatterDataLength = scatterData.length;
+
+    if (scatterDataLength >= 2 * maxPoints) {
       displayReducePoints = true;
     }
+
+    damagesCountDistinct += scatterDataLength;
 
     if (damages > maxDamages) {
       maxDamages = damages;
@@ -143,7 +149,7 @@ function prepareDamagesData(
     hideElement(battle.reduceChartPointsContainer);
   }
 
-  return [minDamages, maxDamages, scatterDataByType, displayReducePoints];
+  return [minDamages, maxDamages, scatterDataByType, displayReducePoints, damagesCountDistinct];
 }
 
 function aggregateDamages(scatterData, maxPoints, reducePoints) {
@@ -202,6 +208,17 @@ function addToDamagesChart(scatterDataByType, missPercentage, damagesChart, redu
 
 function clearDamageChart(damagesChart) {
   damagesChart.chart.data.datasets = [];
+}
+
+function updateDamagesChartDescription(elements, damagesCountDistinct) {
+  elements.forEach(function (element) {
+    if (damagesCountDistinct <= 1) {
+      hideElement(element.parentElement);
+    } else {
+      showElement(element.parentElement);
+      element.textContent = damagesCountDistinct;
+    }
+  });
 }
 
 function getMonsterName(monsterVnum) {
@@ -3596,7 +3613,7 @@ function displayResults(
   attackerName,
   victimName
 ) {
-  var [minDamages, maxDamages, scatterDataByType, reducePoints] =
+  var [minDamages, maxDamages, scatterDataByType, reducePoints, damagesCountDistinct] =
     prepareDamagesData(
       battle,
       damagesWeightedByType,
@@ -3604,14 +3621,15 @@ function displayResults(
     );
   reducePoints &&= battle.reduceChartPoints.checked;
 
-  addToDamagesChart(scatterDataByType, damagesWeightedByType.miss, battle.damagesChart, reducePoints);
+  addToDamagesChart(scatterDataByType, damagesWeightedByType.miss, battle.damagesChart, reducePoints, damagesCountDistinct);
+  updateDamagesChartDescription(battle.damagesCountDistinct, damagesCountDistinct);
   displayFightResults(
     battle,
     attackerName,
     victimName,
     sumDamages / totalCardinal,
     minDamages,
-    maxDamages
+    maxDamages,
   );
   battle.damagesWeightedByType = damagesWeightedByType;
   battle.scatterDataByType = scatterDataByType;
@@ -3991,14 +4009,14 @@ function initChart(battle, chartSource) {
         var text = translation.miss + " : " + percentFormat.format(missPercentage);
         var padding = 4;
         var fontSize = 14;
-    
+
         ctx.font = fontSize + "px Helvetica Neue";
 
         var textWidth = ctx.measureText(text).width;
         var xPosition = right - textWidth - 5;
         var yPosition = top + 5;
 
-        ctx.fillStyle = "rgba(255, 0, 0, .2)";
+        ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
         ctx.fillRect(xPosition - padding, yPosition - padding, textWidth + 2 * padding, fontSize + 2 * padding);
 
         ctx.strokeStyle = "red";
@@ -4228,6 +4246,7 @@ function createDamageCalculatorInformation(chartSource) {
     ),
     reduceChartPoints: document.getElementById("reduce-chart-points"),
     plotDamages: document.getElementById("plot-damages"),
+    damagesCountDistinct: document.querySelectorAll(".damages-count-distinct"),
     damagesCount: document.getElementById("damages-count"),
     damagesTime: document.getElementById("damages-time"),
     displayTime: document.getElementById("display-time"),
