@@ -1806,7 +1806,7 @@ function calcSkillDamageWithSecondaryBonuses(
     (damages * battleValues.skillBonusByBonusCoeff) / 100
   );
 
-  damages = Math.floor((damages * battleValues.tigerStrengthCoeff) / 100);
+  damages = Math.floor((tempDamages * battleValues.tigerStrengthCoeff) / 100);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -3974,6 +3974,7 @@ function createConstants() {
         criticalHit: "Critical hit",
         piercingHit: "Piercing hit",
         criticalPiercingHit: "Critical piercing hit",
+        damagesRepartition: "Damages repartition"
       },
       tr: {
         damages: "Hasar",
