@@ -97,6 +97,7 @@ function prepareDamagesData(
 
   for (var damagesTypeName in damagesWeightedByType) {
     if (damagesTypeName === "miss") {
+      scatterDataByType.miss = damagesWeightedByType.miss;
       damagesCountDistinct++;
       continue;
     }
@@ -185,8 +186,12 @@ function aggregateDamages(scatterData, maxPoints, reducePoints) {
   return aggregateScatterData;
 }
 
-function addToDamagesChart(scatterDataByType, missPercentage, damagesChart, reducePoints) {
+function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
   for (var damagesTypeName in scatterDataByType) {
+    if (damagesTypeName === "miss") {
+      continue;
+    }
+    
     var dataset = copyObject(damagesChart.dataset[damagesTypeName]);
     var { display: display, scatterData: scatterData } =
       scatterDataByType[damagesTypeName];
@@ -202,7 +207,7 @@ function addToDamagesChart(scatterDataByType, missPercentage, damagesChart, redu
       dataset.hidden = false;
     }
   }
-  damagesChart.chart.data.missPercentage = missPercentage;
+  damagesChart.chart.data.missPercentage = scatterDataByType.miss;
   damagesChart.chart.update();
 }
 
@@ -3621,7 +3626,7 @@ function displayResults(
     );
   reducePoints &&= battle.reduceChartPoints.checked;
 
-  addToDamagesChart(scatterDataByType, damagesWeightedByType.miss, battle.damagesChart, reducePoints, damagesCountDistinct);
+  addToDamagesChart(scatterDataByType, battle.damagesChart, reducePoints);
   updateDamagesChartDescription(battle.damagesCountDistinct, damagesCountDistinct, battle.numberFormats.default);
   displayFightResults(
     battle,
@@ -3929,7 +3934,7 @@ function createConstants() {
         criticalHit: "Kritik Vuruş",
         piercingHit: "Delici Vuruş",
         criticalPiercingHit: "Kritikli Delici Vuruş",
-        damagesRepartition: ""
+        damagesRepartition: "Hasar Dağılımı"
       },
       ro: {
         damages: "Daune",
