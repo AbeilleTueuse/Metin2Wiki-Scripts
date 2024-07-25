@@ -82,59 +82,18 @@ function addRowToTableResultHistory(
   cell.appendChild(deleteFightTemplate.cloneNode(true));
 }
 
-function addToTableResult(
+function prepareDamagesData(
   battle,
   damagesWeightedByType,
-  damagesCount,
   totalCardinal
 ) {
-  var numberFormatDefault = battle.numberFormats.default;
-  var numberFormatPercent = battle.numberFormats.percent;
   var constants = battle.constants;
-  var tableResult = battle.tableResult;
-  var noTableResult = battle.noTableResult;
   var displayReducePoints = false;
   var maxPoints = battle.damagesChart.maxPoints;
-
-  function addSpanRow(value) {
-    var newRow = tableResult.insertRow(-1);
-    var firstCell = newRow.insertCell(0);
-
-    firstCell.textContent = value;
-    firstCell.colSpan = 2;
-
-    newRow.style.fontWeight = "bold";
-  }
-
-  function addRowWithResults(damages, weight) {
-    var newRow = tableResult.insertRow(-1);
-
-    var firstCell = newRow.insertCell(0);
-    firstCell.textContent = numberFormatDefault.format(damages);
-
-    var secondCell = newRow.insertCell(1);
-    secondCell.textContent = numberFormatPercent.format(weight);
-  }
-
-  var translation = battle.translation;
   var minDamages = Infinity;
   var maxDamages = 0;
-  var addToTable = damagesCount <= 201;
   var displayThisDamagesType = true;
   var scatterDataByType = {};
-
-  if (addToTable) {
-    showElement(tableResult);
-    hideElement(noTableResult);
-
-    if (damagesWeightedByType.hasOwnProperty("miss")) {
-      addSpanRow(translation.miss);
-      addRowWithResults(0, damagesWeightedByType.miss[0]);
-    }
-  } else {
-    hideElement(tableResult);
-    showElement(noTableResult);
-  }
 
   constants.damagesTypeOrder.forEach(function (damagesTypeName) {
     if (!damagesWeightedByType.hasOwnProperty(damagesTypeName)) {
@@ -149,10 +108,6 @@ function addToTableResult(
       scatterData: scatterData,
     };
 
-    if (addToTable) {
-      addSpanRow(translation[damagesTypeName]);
-    }
-
     for (var damages in damagesWeighted) {
       damages = +damages;
 
@@ -163,13 +118,9 @@ function addToTableResult(
         firstIteration = false;
       }
 
-      var weight = damagesWeighted[damages] / totalCardinal;
-      damagesWeighted[damages] = weight;
-      scatterData.push({ x: damages, y: weight });
-
-      if (addToTable) {
-        addRowWithResults(damages, weight);
-      }
+      var probability = damagesWeighted[damages] / totalCardinal;
+      damagesWeighted[damages] = probability;
+      scatterData.push({ x: damages, y: probability });
     }
 
     if (scatterData.length >= 2 * maxPoints) {
@@ -229,47 +180,29 @@ function aggregateDamages(scatterData, maxPoints, reducePoints) {
   return aggregateScatterData;
 }
 
-function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
+function addToDamagesChart(scatterDataByType, missPercentage, damagesChart, reducePoints) {
   for (var damagesTypeName in scatterDataByType) {
     var dataset = copyObject(damagesChart.dataset[damagesTypeName]);
     var { display: display, scatterData: scatterData } =
       scatterDataByType[damagesTypeName];
 
-    if (scatterData.length >= 10) {
-      dataset.data = aggregateDamages(
-        scatterData,
-        damagesChart.maxPoints,
-        reducePoints
-      );
-      damagesChart.chart.data.datasets.push(dataset);
+    dataset.data = aggregateDamages(
+      scatterData,
+      damagesChart.maxPoints,
+      reducePoints
+    );
+    damagesChart.chart.data.datasets.push(dataset);
 
-      if (display) {
-        dataset.hidden = false;
-      }
+    if (display) {
+      dataset.hidden = false;
     }
   }
+  damagesChart.chart.data.missPercentage = missPercentage;
+  damagesChart.chart.update();
 }
 
 function clearDamageChart(damagesChart) {
   damagesChart.chart.data.datasets = [];
-}
-
-function displayDamagesChart(damagesChart, chartContainer) {
-  if (damagesChart.chart.data.datasets.length) {
-    showElement(chartContainer);
-    damagesChart.chart.update();
-  } else {
-    hideElement(chartContainer);
-  }
-}
-
-function clearTableResult(tableResult) {
-  var tableHeaderRowCount = 1;
-  var rowCount = tableResult.rows.length;
-
-  for (var rowIndex = tableHeaderRowCount; rowIndex < rowCount; rowIndex++) {
-    tableResult.deleteRow(tableHeaderRowCount);
-  }
 }
 
 function getMonsterName(monsterVnum) {
@@ -1005,8 +938,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
+          pseudo +
+          " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -2521,7 +2454,7 @@ function getSkillFormula(
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2575,7 +2508,7 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-                1.1,
+              1.1,
               1
             );
           };
@@ -2585,7 +2518,7 @@ function getSkillFormula(
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2708,8 +2641,8 @@ function getSkillFormula(
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk +
-                (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
-                  skillPower,
+              (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
+              skillPower,
               1
             );
           };
@@ -2722,8 +2655,8 @@ function getSkillFormula(
             return floorMultiplication(
               (atk +
                 (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
-                  skillPower) *
-                1.2,
+                skillPower) *
+              1.2,
               1
             );
           };
@@ -2748,9 +2681,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-                2 * lv +
-                2 * int +
-                (2 * atk + 4 * str + 14 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (2 * atk + 4 * str + 14 * int) * skillPower,
               1
             );
           };
@@ -2762,9 +2695,9 @@ function getSkillFormula(
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk +
-                2 * lv +
-                2 * int +
-                (1.5 * atk + str + 12 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (1.5 * atk + str + 12 * int) * skillPower,
               1
             );
           };
@@ -2775,9 +2708,9 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (10 * int + 7 * mav + variation) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (10 * int + 7 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -2801,9 +2734,9 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (13 * int + 6 * mav + variation) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (13 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -2827,9 +2760,9 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               30 +
-                2 * lv +
-                2 * int +
-                (7 * int + 6 * mav + variation) * attackFactor * skillPower,
+              2 * lv +
+              2 * int +
+              (7 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -2850,10 +2783,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                  attackFactor *
-                  skillPower,
+              6 * lv +
+              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -2867,8 +2800,8 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                5 * lv +
-                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+              5 * lv +
+              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
               1
             );
           };
@@ -2880,10 +2813,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (16 * int + 6 * dex + 6 * mav + 120) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (16 * int + 6 * dex + 6 * mav + 120) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -2896,10 +2829,10 @@ function getSkillFormula(
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                3 * lv +
-                (20 * int + 3 * str + 10 * mav + 100) *
-                  attackFactor *
-                  skillPower,
+              3 * lv +
+              (20 * int + 3 * str + 10 * mav + 100) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -2914,10 +2847,10 @@ function getSkillFormula(
           skillFormula = function (mav, varation) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (8 * int + 2 * dex + 8 * mav + varation) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * dex + 8 * mav + varation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -2930,10 +2863,10 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                4 * lv +
-                (13 * int + 2 * str + 10 * mav + variation) *
-                  attackFactor *
-                  skillPower,
+              4 * lv +
+              (13 * int + 2 * str + 10 * mav + variation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -2947,10 +2880,10 @@ function getSkillFormula(
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               50 +
-                5 * lv +
-                (8 * int + 2 * str + 8 * mav + variation) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * str + 8 * mav + variation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3082,7 +3015,7 @@ function calcPhysicalDamages(attacker, attackerWeapon, victim, battleValues) {
   var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
 
   if (battleValues.missPercentage) {
-    damagesWeightedByType.miss = { 0: battleValues.missPercentage / 100 };
+    damagesWeightedByType.miss = battleValues.missPercentage / 100;
   }
 
   for (var damagesType of battleValues.damagesTypeCombinaison) {
@@ -3614,7 +3547,6 @@ function reduceChartPointsListener(battle) {
       damagesChart,
       event.target.checked
     );
-    displayDamagesChart(damagesChart, battle.chartContainer);
 
     displayTime.textContent = numberFormat.format(
       (performance.now() - startDisplayTime) / 1000
@@ -3661,22 +3593,19 @@ function displayResults(
   sumDamages,
   totalCardinal,
   damagesWeightedByType,
-  damagesCount,
   battle,
   attackerName,
   victimName
 ) {
   var [minDamages, maxDamages, scatterDataByType, reducePoints] =
-    addToTableResult(
+    prepareDamagesData(
       battle,
       damagesWeightedByType,
-      damagesCount,
       totalCardinal
     );
   reducePoints &&= battle.reduceChartPoints.checked;
 
-  addToDamagesChart(scatterDataByType, battle.damagesChart, reducePoints);
-  displayDamagesChart(battle.damagesChart, battle.chartContainer);
+  addToDamagesChart(scatterDataByType, damagesWeightedByType.miss, battle.damagesChart, reducePoints);
   displayFightResults(
     battle,
     attackerName,
@@ -3810,7 +3739,6 @@ function createBattle(characters, battle) {
       calcDamages = calcPhysicalSkillDamages;
     }
 
-    clearTableResult(battle.tableResult);
     clearDamageChart(battle.damagesChart);
 
     var battleValues = createBattleValues(
@@ -3838,7 +3766,6 @@ function createBattle(characters, battle) {
       sumDamages,
       totalCordinal,
       damagesWeightedByType,
-      damagesCount,
       battle,
       attacker.name,
       victim.name
@@ -4054,11 +3981,47 @@ function initResultTableHistory(battle) {
 
 function initChart(battle, chartSource) {
   function createChart() {
+    var percentFormat = battle.numberFormats.percent;
+    var annotationPlugin = {
+      id: 'annotationPlugin',
+      beforeDraw(chart, args, options) {
+        var missPercentage = chart.data.missPercentage || 0;
+
+        if (!missPercentage) {
+          return;
+        }
+
+        var { ctx, chartArea: { top, left, bottom, right }, scales: { x, y } } = chart;
+        ctx.save();
+        var text = "Miss : " + percentFormat.format(missPercentage);
+        var textWidth = ctx.measureText(text).width;
+        var xPosition = right - textWidth - 10;
+        var yPosition = top + 20;
+
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#000';
+    
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; 
+        ctx.fillRect(xPosition - 5, yPosition - 15, textWidth + 10, 20);
+    
+        ctx.strokeStyle = '#000';
+        ctx.strokeRect(xPosition - 5, yPosition - 15, textWidth + 10, 20);
+    
+        ctx.fillText(text, xPosition, yPosition);
+
+        ctx.restore();
+      }
+    };
+
+    Chart.register(annotationPlugin);
+
     var translation = battle.translation;
     var ctx = battle.plotDamages.getContext("2d");
+
     var chart = new Chart(ctx, {
       type: "scatter",
       data: {
+        missPercentage: 0,
         datasets: [],
       },
       options: {
@@ -4261,13 +4224,10 @@ function createDamageCalculatorInformation(chartSource) {
       .children[0],
     errorInformation: {},
     fightResultContainer: document.getElementById("fight-result-container"),
-    tableResult: document.getElementById("result-table-details"),
-    noTableResult: document.getElementById("no-result-table-details"),
     reduceChartPointsContainer: document.getElementById(
       "reduce-chart-points-container"
     ),
     reduceChartPoints: document.getElementById("reduce-chart-points"),
-    chartContainer: document.getElementById("chart-container"),
     plotDamages: document.getElementById("plot-damages"),
     damagesCount: document.getElementById("damages-count"),
     damagesTime: document.getElementById("damages-time"),
