@@ -87,7 +87,6 @@ function prepareDamagesData(
   damagesWeightedByType,
   totalCardinal
 ) {
-  var constants = battle.constants;
   var displayReducePoints = false;
   var maxPoints = battle.damagesChart.maxPoints;
   var minDamages = Infinity;
@@ -95,9 +94,9 @@ function prepareDamagesData(
   var displayThisDamagesType = true;
   var scatterDataByType = {};
 
-  constants.damagesTypeOrder.forEach(function (damagesTypeName) {
-    if (!damagesWeightedByType.hasOwnProperty(damagesTypeName)) {
-      return;
+  for (var damagesTypeName in damagesWeightedByType) {
+    if (damagesTypeName === "miss") {
+      continue;
     }
 
     var firstIteration = true;
@@ -132,7 +131,7 @@ function prepareDamagesData(
     }
 
     displayThisDamagesType = false;
-  });
+  };
 
   if (minDamages === Infinity) {
     minDamages = 0;
@@ -3931,12 +3930,6 @@ function createConstants() {
         criticalPiercingHit: "Kritischer durchdringender Treffer",
       },
     },
-    damagesTypeOrder: [
-      "normalHit",
-      "criticalHit",
-      "piercingHit",
-      "criticalPiercingHit",
-    ],
   };
   return constants;
 }
@@ -3992,7 +3985,7 @@ function initChart(battle, chartSource) {
         if (!missPercentage) {
           return;
         }
-        console.log("oui");
+
         var { ctx, chartArea: { top, left, bottom, right }, scales: { x, y } } = chart;
         ctx.save();
         var text = translation.miss + " : " + percentFormat.format(missPercentage);
