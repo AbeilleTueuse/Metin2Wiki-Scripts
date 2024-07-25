@@ -210,13 +210,13 @@ function clearDamageChart(damagesChart) {
   damagesChart.chart.data.datasets = [];
 }
 
-function updateDamagesChartDescription(elements, damagesCountDistinct) {
+function updateDamagesChartDescription(elements, damagesCountDistinct, formatNumber) {
   elements.forEach(function (element) {
     if (damagesCountDistinct <= 1) {
       hideElement(element.parentElement);
     } else {
       showElement(element.parentElement);
-      element.textContent = damagesCountDistinct;
+      element.textContent = formatNumber.format(damagesCountDistinct);
     }
   });
 }
@@ -3622,7 +3622,7 @@ function displayResults(
   reducePoints &&= battle.reduceChartPoints.checked;
 
   addToDamagesChart(scatterDataByType, damagesWeightedByType.miss, battle.damagesChart, reducePoints, damagesCountDistinct);
-  updateDamagesChartDescription(battle.damagesCountDistinct, damagesCountDistinct);
+  updateDamagesChartDescription(battle.damagesCountDistinct, damagesCountDistinct, battle.numberFormats.default);
   displayFightResults(
     battle,
     attackerName,
@@ -3909,6 +3909,7 @@ function createConstants() {
         criticalHit: "Coup critique",
         piercingHit: "Coup perçant",
         criticalPiercingHit: "Coup critique perçant",
+        damagesRepartition: "Distribution des dégâts"
       },
       en: {
         damages: "Damages",
@@ -3928,6 +3929,7 @@ function createConstants() {
         criticalHit: "Kritik Vuruş",
         piercingHit: "Delici Vuruş",
         criticalPiercingHit: "Kritikli Delici Vuruş",
+        damagesRepartition: ""
       },
       ro: {
         damages: "Daune",
@@ -3937,6 +3939,7 @@ function createConstants() {
         criticalHit: "Lovitura critica",
         piercingHit: "Lovitura patrunzatoare",
         criticalPiercingHit: "Lovitura critica si patrunzatoare",
+        damagesRepartition: "Distribuția daunelor"
       },
       de: {
         damages: "Schäden",
@@ -3946,6 +3949,7 @@ function createConstants() {
         criticalHit: "Kritischer Treffer",
         piercingHit: "Durchdringender Treffer",
         criticalPiercingHit: "Kritischer durchdringender Treffer",
+        damagesRepartition: ""
       },
     },
   };
@@ -4049,7 +4053,7 @@ function initChart(battle, chartSource) {
           },
           title: {
             display: true,
-            text: "Répartition des dégâts",
+            text: translation.damagesRepartition,
             font: {
               size: 20,
             },
