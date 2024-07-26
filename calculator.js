@@ -191,7 +191,7 @@ function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
     if (damagesTypeName === "miss") {
       continue;
     }
-    
+
     var dataset = copyObject(damagesChart.dataset[damagesTypeName]);
     var { display: display, scatterData: scatterData } =
       scatterDataByType[damagesTypeName];
@@ -4042,6 +4042,8 @@ function initChart(battle, chartSource) {
     Chart.register(annotationPlugin);
 
     var ctx = battle.plotDamages.getContext("2d");
+    var maxLabelsInTooltip = 10;
+    var nullLabelText = " ...";
 
     var chart = new Chart(ctx, {
       type: "scatter",
@@ -4066,6 +4068,10 @@ function initChart(battle, chartSource) {
           tooltip: {
             callbacks: {
               label: function (context) {
+                if (context.label === null) {
+                  return nullLabelText;
+                }
+
                 var xValue = battle.numberFormats.default.format(
                   context.parsed.x
                 );
@@ -4073,14 +4079,22 @@ function initChart(battle, chartSource) {
                   context.parsed.y
                 );
 
-                return (label =
+                label =
                   " " +
                   context.dataset.label +
                   " : (" +
                   xValue +
                   ", " +
                   yValue +
-                  ")");
+                  ")";
+
+                return label
+              },
+              beforeBody: function (tooltipItems) {
+                if (tooltipItems.length > maxLabelsInTooltip + 1) {
+                  tooltipItems.splice(maxLabelsInTooltip + 1);
+                  tooltipItems[maxLabelsInTooltip].label = null;
+                }
               },
             },
             caretPadding: 10
