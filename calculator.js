@@ -4006,7 +4006,7 @@ function initChart(battle, chartSource) {
     var percentFormat = battle.numberFormats.percent;
     var annotationPlugin = {
       id: 'annotationPlugin',
-      afterDraw(chart) {
+      afterRender(chart) {
         var missPercentage = chart.data.missPercentage || 0;
 
         if (!missPercentage) {
