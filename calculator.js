@@ -1615,12 +1615,16 @@ function calcSecondaryAttackValue(attacker) {
     minAttackValue: minAttackValue,
     maxAttackValue: maxAttackValue,
     attackValueOther: attackValueOther,
-    minInterval: minInterval,
     totalCardinal: totalCardinal,
+    weights: calcWeights(minAttackValue, maxAttackValue, minInterval),
   };
 }
 
 function calcMagicAttackValue(attacker) {
+  if (!isPC(attacker)) {
+    return;
+  }
+
   var minMagicAttackValue = 0;
   var maxMagicAttackValue = 0;
 
@@ -1668,8 +1672,8 @@ function calcMagicAttackValue(attacker) {
   return {
     minMagicAttackValue: minMagicAttackValue,
     maxMagicAttackValue: maxMagicAttackValue,
-    minInterval: minInterval,
     totalCardinal: totalCardinal,
+    weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
   };
 }
 
@@ -1975,7 +1979,10 @@ function magicResistanceToCoeff(magicResistance) {
   return 1;
 }
 
-function createBattleValues(attacker, victim, mapping, constants, skillType) {
+function createBattleValues(attacker, victim, battle, skillType) {
+  var { mapping, constants } = battle;
+  var calcAttackValues;
+
   var missPercentage = 0;
   var adjustCoeff = 0;
   var attackValuePercent = 0;
@@ -2261,6 +2268,9 @@ function createBattleValues(attacker, victim, mapping, constants, skillType) {
       magicResistance = victim.magicResistance;
     }
     weaponDefense = 0;
+    calcAttackValues = calcMagicAttackValue;
+  } else {
+    calcAttackValues = calcSecondaryAttackValue;
   }
 
   missPercentage = Math.min(100, missPercentage);
@@ -2349,19 +2359,21 @@ function createBattleValues(attacker, victim, mapping, constants, skillType) {
     victim: victim,
     attackFactor: calcAttackFactor(attacker, victim),
     mainAttackValue: calcMainAttackValue(attacker),
-    secondaryAttackValue: calcSecondaryAttackValue(attacker),
-    magicAttackValue: calcMagicAttackValue(attacker),
+    attackValues: calcAttackValues(attacker),
     bonusValues: bonusValues,
     damagesTypeCombinaison: damagesTypeCombinaison,
   };
 }
 
-function updateBonusValues(battleValues, skillInfo) {
+function updateBattleValues(battleValues, skillFormula, skillInfo) {
   var weaponBonus = 0;
   var skillWard = 0;
   var skillBonus = 0;
   var skillBonusByBonus = 0;
   var { attacker: attacker, bonusValues: bonusValues } = battleValues;
+  var {
+    range: [minVariation, maxVariation],
+  } = skillInfo;
 
   if (skillInfo.hasOwnProperty("weaponBonus")) {
     var [weaponType, weaponBonusValue] = skillInfo.weaponBonus;
@@ -2391,6 +2403,10 @@ function updateBonusValues(battleValues, skillInfo) {
   bonusValues.skillWardCoeff = 1 - skillWard / 100;
   bonusValues.skillBonusCoeff = 1 + skillBonus / 100;
   bonusValues.skillBonusByBonusCoeff = 100 + skillBonusByBonus;
+
+  battleValues.skillFormula = skillFormula;
+  battleValues.skillRange = skillInfo.range;
+  battleValues.attackValues.totalCardinal *= maxVariation - minVariation + 1;
 }
 
 function calcWeights(minValue, maxValue, minInterval) {
@@ -2448,13 +2464,10 @@ function calcBlessingBonus(skillPowerTable, victim) {
   return blessingBonus;
 }
 
-function getSkillFormula(
-  skillPowerTable,
-  skillId,
-  attacker,
-  attackFactor,
-  victim
-) {
+function getSkillFormula(battle, skillId, battleValues) {
+  var { attacker, victim, attackFactor } = battleValues;
+  var skillPowerTable = battle.constants.skillPowerTable;
+
   var skillFormula;
   var skillInfo = { range: [0, 0] };
 
@@ -3061,25 +3074,18 @@ function getSkillFormula(
     }
   }
 
-  return [skillFormula, skillInfo];
+  updateBattleValues(battleValues, skillFormula, skillInfo);
 }
 
 function calcPhysicalDamages(battleValues) {
   var {
     attackFactor,
     mainAttackValue,
-    secondaryAttackValue: {
-      minAttackValue,
-      maxAttackValue,
-      attackValueOther,
-      minInterval,
-      totalCardinal,
-    },
+    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
     bonusValues,
     damagesTypeCombinaison,
   } = battleValues;
 
-  var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
   var damagesWeightedByType = {};
 
   if (bonusValues.missPercentage) {
@@ -3161,46 +3167,21 @@ function calcPhysicalDamages(battleValues) {
     }
   }
 
-  return [
-    totalCardinal,
-    damagesWeightedByType,
-    maxAttackValue - minAttackValue + 1,
-  ];
+  return damagesWeightedByType;
 }
 
-function calcPhysicalSkillDamages(battleValues, constants, skillId) {
+function calcPhysicalSkillDamages(battleValues) {
   var {
-    attacker,
-    victim,
     attackFactor,
     mainAttackValue,
-    secondaryAttackValue: {
-      minAttackValue,
-      maxAttackValue,
-      attackValueOther,
-      minInterval,
-      totalCardinal,
-    },
+    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
     bonusValues,
     damagesTypeCombinaison,
+    skillFormula,
+    skillRange: [minVariation, maxVariation],
   } = battleValues;
 
-  var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
   var damagesWeightedByType = {};
-
-  var [skillFormula, skillInfo] = getSkillFormula(
-    constants.skillPowerTable,
-    skillId,
-    attacker,
-    attackFactor,
-    victim
-  );
-
-  var [minVariation, maxVariation] = skillInfo.range;
-
-  totalCardinal *= maxVariation - minVariation + 1;
-
-  updateBonusValues(battleValues, skillInfo);
 
   for (var damagesType of damagesTypeCombinaison) {
     if (!damagesType.weight) {
@@ -3311,48 +3292,19 @@ function calcPhysicalSkillDamages(battleValues, constants, skillId) {
     }
   }
 
-  return [
-    totalCardinal,
-    damagesWeightedByType,
-    (maxAttackValue - minAttackValue + 1) * (maxVariation - minVariation + 1),
-  ];
+  return damagesWeightedByType;
 }
 
-function calcMagicSkillDamages(battleValues, constants, skillId) {
+function calcMagicSkillDamages(battleValues) {
   var {
-    attacker,
-    victim,
-    attackFactor,
-    magicAttackValue: {
-      minMagicAttackValue,
-      maxMagicAttackValue,
-      minInterval,
-      totalCardinal,
-    },
+    attackValues: { minMagicAttackValue, maxMagicAttackValue, weights },
     bonusValues,
     damagesTypeCombinaison,
+    skillFormula,
+    skillRange: [minVariation, maxVariation],
   } = battleValues;
 
-  var weights = calcWeights(
-    minMagicAttackValue,
-    maxMagicAttackValue,
-    minInterval
-  );
   var damagesWeightedByType = {};
-
-  var [skillFormula, skillInfo] = getSkillFormula(
-    constants.skillPowerTable,
-    skillId,
-    attacker,
-    attackFactor,
-    victim
-  );
-
-  var [minVariation, maxVariation] = skillInfo.range;
-
-  totalCardinal *= maxVariation - minVariation + 1;
-
-  updateBonusValues(battleValues, skillInfo);
 
   for (var damagesType of damagesTypeCombinaison) {
     if (!damagesType.weight) {
@@ -3438,12 +3390,7 @@ function calcMagicSkillDamages(battleValues, constants, skillId) {
     }
   }
 
-  return [
-    totalCardinal,
-    damagesWeightedByType,
-    (maxMagicAttackValue - minMagicAttackValue + 1) *
-      (maxVariation - minVariation + 1),
-  ];
+  return damagesWeightedByType;
 }
 
 function calcDamages(attacker, victim, attackType, battle) {
@@ -3467,15 +3414,16 @@ function calcDamages(attacker, victim, attackType, battle) {
     damageCalculator = calcPhysicalSkillDamages;
   }
 
-  var battleValues = createBattleValues(
-    attacker,
-    victim,
-    battle.mapping,
-    battle.constants,
-    skillType
-  );
+  var battleValues = createBattleValues(attacker, victim, battle, skillType);
 
-  return damageCalculator(battleValues, battle.constants, skillId);
+  if (skillId) {
+    getSkillFormula(battle, skillId, battleValues);
+  }
+
+  return {
+    damagesWeightedByType: damageCalculator(battleValues),
+    totalCardinal: battleValues.attackValues.totalCardinal,
+  };
 }
 
 function changeMonsterValues(monster, instance, attacker) {
@@ -3636,11 +3584,13 @@ function addPotentialErrorInformation(
 }
 
 function reduceChartPointsListener(battle) {
-  var checkbox = battle.reduceChartPoints;
-  var numberFormat = battle.numberFormats.second;
-  var displayTime = battle.displayTime;
+  var {
+    reduceChartPoints,
+    numberFormats: { second: numberFormat },
+    displayTime,
+  } = battle;
 
-  checkbox.addEventListener("change", function (event) {
+  reduceChartPoints.addEventListener("change", function (event) {
     var damagesChart = battle.damagesChart;
     var startDisplayTime = performance.now();
 
@@ -3744,11 +3694,14 @@ function displayFightResults(
   minDamages,
   maxDamages
 ) {
-  var tableResultFight = battle.tableResultFight;
-  var tableResultHistory = battle.tableResultHistory;
-  var attackTypeSelection = battle.attackTypeSelection;
-  var savedFights = battle.savedFights;
-  var numberFormat = battle.numberFormats.default;
+  var {
+    tableResultFight,
+    tableResultHistory,
+    attackTypeSelection,
+    savedFights,
+    numberFormats: { default: numberFormat },
+    deleteFightTemplate,
+  } = battle;
 
   showElement(tableResultFight.parentElement);
   hideElement(tableResultHistory.rows[1]);
@@ -3769,7 +3722,7 @@ function displayFightResults(
   addRowToTableResultHistory(
     tableResultHistory,
     valuesToDisplay,
-    battle.deleteFightTemplate,
+    deleteFightTemplate,
     numberFormat
   );
 }
@@ -3829,7 +3782,7 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    var [totalCordinal, damagesWeightedByType, damagesCount] = calcDamages(
+    var { damagesWeightedByType, totalCardinal } = calcDamages(
       attacker,
       victim,
       attackType,
@@ -3839,8 +3792,8 @@ function createBattle(characters, battle) {
     endDamagesTime = performance.now();
 
     damagesCount = displayResults(
-      damagesCount,
-      totalCordinal,
+      0, // damagesCount
+      totalCardinal,
       damagesWeightedByType,
       battle,
       attacker.name,
@@ -4016,19 +3969,23 @@ function createConstants() {
 }
 
 function initResultTableHistory(battle) {
-  var tableResultHistory = battle.tableResultHistory;
-  var savedFights = battle.savedFights;
+  var {
+    tableResultHistory,
+    savedFights,
+    deleteFightTemplate,
+    numberFormats: { default: numberFormat },
+  } = battle;
   var startIndex = 3;
 
   if (savedFights.length) {
     hideElement(tableResultHistory.rows[1]);
 
-    for (var savedFight of battle.savedFights) {
+    for (var savedFight of savedFights) {
       addRowToTableResultHistory(
         tableResultHistory,
         savedFight,
-        battle.deleteFightTemplate,
-        battle.numberFormats.default
+        deleteFightTemplate,
+        numberFormat
       );
     }
   }
