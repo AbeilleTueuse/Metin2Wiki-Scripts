@@ -203,6 +203,8 @@ function aggregateDamages(scatterData, maxPoints, reducePoints) {
 }
 
 function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
+  clearDamageChart(damagesChart);
+
   for (var damagesTypeName in scatterDataByType) {
     if (damagesTypeName === "miss") {
       continue;
@@ -462,7 +464,11 @@ function filterForm(characters, battle) {
         );
 
         var newWeapon = getSelectedWeapon(characters.weaponCategory);
-        handleWeaponDisplay(characters.weaponDisplay, newWeapon, weaponElement.value);
+        handleWeaponDisplay(
+          characters.weaponDisplay,
+          newWeapon,
+          weaponElement.value
+        );
         filterUpgrade(
           selectedRace,
           characterCreation.weaponUpgrade,
@@ -1605,13 +1611,13 @@ function calcSecondaryAttackValue(attacker) {
   minAttackValue += minAttackValueSlash;
   maxAttackValue += maxAttackValueSlash;
 
-  return [
-    minAttackValue,
-    maxAttackValue,
-    attackValueOther,
-    minInterval,
-    totalCardinal,
-  ];
+  return {
+    minAttackValue: minAttackValue,
+    maxAttackValue: maxAttackValue,
+    attackValueOther: attackValueOther,
+    minInterval: minInterval,
+    totalCardinal: totalCardinal,
+  };
 }
 
 function calcMagicAttackValue(attacker) {
@@ -1635,8 +1641,10 @@ function calcMagicAttackValue(attacker) {
       rawWeaponAttackValue = 0;
     }
 
-    minMagicAttackValue = attackerWeapon.minMagicAttackValue + rawWeaponAttackValue;
-    maxMagicAttackValue = attackerWeapon.maxMagicAttackValue + rawWeaponAttackValue;
+    minMagicAttackValue =
+      attackerWeapon.minMagicAttackValue + rawWeaponAttackValue;
+    maxMagicAttackValue =
+      attackerWeapon.maxMagicAttackValue + rawWeaponAttackValue;
   }
 
   minMagicAttackValueSlash = Math.min(
@@ -1657,7 +1665,12 @@ function calcMagicAttackValue(attacker) {
   minMagicAttackValue += minMagicAttackValueSlash;
   maxMagicAttackValue += maxMagicAttackValueSlash;
 
-  return [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal];
+  return {
+    minMagicAttackValue: minMagicAttackValue,
+    maxMagicAttackValue: maxMagicAttackValue,
+    minInterval: minInterval,
+    totalCardinal: totalCardinal,
+  };
 }
 
 function getPolymorphPower(polymorphPoint, polymorphPowerTable) {
@@ -2335,6 +2348,9 @@ function createBattleValues(attacker, victim, mapping, constants, skillType) {
     attacker: attacker,
     victim: victim,
     attackFactor: calcAttackFactor(attacker, victim),
+    mainAttackValue: calcMainAttackValue(attacker),
+    secondaryAttackValue: calcSecondaryAttackValue(attacker),
+    magicAttackValue: calcMagicAttackValue(attacker),
     bonusValues: bonusValues,
     damagesTypeCombinaison: damagesTypeCombinaison,
   };
@@ -3050,20 +3066,18 @@ function getSkillFormula(
 
 function calcPhysicalDamages(battleValues) {
   var {
-    attacker,
     attackFactor,
+    mainAttackValue,
+    secondaryAttackValue: {
+      minAttackValue,
+      maxAttackValue,
+      attackValueOther,
+      minInterval,
+      totalCardinal,
+    },
     bonusValues,
     damagesTypeCombinaison,
   } = battleValues;
-  
-  var mainAttackValue = calcMainAttackValue(attacker);
-  var [
-    minAttackValue,
-    maxAttackValue,
-    attackValueOther,
-    minInterval,
-    totalCardinal,
-  ] = calcSecondaryAttackValue(attacker);
 
   var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
   var damagesWeightedByType = {};
@@ -3159,18 +3173,17 @@ function calcPhysicalSkillDamages(battleValues, constants, skillId) {
     attacker,
     victim,
     attackFactor,
+    mainAttackValue,
+    secondaryAttackValue: {
+      minAttackValue,
+      maxAttackValue,
+      attackValueOther,
+      minInterval,
+      totalCardinal,
+    },
     bonusValues,
     damagesTypeCombinaison,
   } = battleValues;
-
-  var mainAttackValue = calcMainAttackValue(attacker);
-  var [
-    minAttackValue,
-    maxAttackValue,
-    attackValueOther,
-    minInterval,
-    totalCardinal,
-  ] = calcSecondaryAttackValue(attacker);
 
   var weights = calcWeights(minAttackValue, maxAttackValue, minInterval);
   var damagesWeightedByType = {};
@@ -3310,12 +3323,15 @@ function calcMagicSkillDamages(battleValues, constants, skillId) {
     attacker,
     victim,
     attackFactor,
+    magicAttackValue: {
+      minMagicAttackValue,
+      maxMagicAttackValue,
+      minInterval,
+      totalCardinal,
+    },
     bonusValues,
     damagesTypeCombinaison,
   } = battleValues;
-
-  var [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal] =
-    calcMagicAttackValue(attacker);
 
   var weights = calcWeights(
     minMagicAttackValue,
@@ -3430,6 +3446,38 @@ function calcMagicSkillDamages(battleValues, constants, skillId) {
   ];
 }
 
+function calcDamages(attacker, victim, attackType, battle) {
+  var damageCalculator, skillId, skillType;
+
+  if (attackType === "physical") {
+    damageCalculator = calcPhysicalDamages;
+  } else if (attackType.startsWith("attackSkill")) {
+    skillId = Number(attackType.split("attackSkill")[1]);
+
+    if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
+      skillType = "magic";
+      damageCalculator = calcMagicSkillDamages;
+    } else {
+      skillType = "physical";
+      damageCalculator = calcPhysicalSkillDamages;
+    }
+  } else if (attackType.startsWith("horseSkill")) {
+    skillType = "physical";
+    skillId = Number(attackType.split("horseSkill")[1]);
+    damageCalculator = calcPhysicalSkillDamages;
+  }
+
+  var battleValues = createBattleValues(
+    attacker,
+    victim,
+    battle.mapping,
+    battle.constants,
+    skillType
+  );
+
+  return damageCalculator(battleValues, battle.constants, skillId);
+}
+
 function changeMonsterValues(monster, instance, attacker) {
   switch (instance) {
     case "SungMahiTower":
@@ -3481,8 +3529,8 @@ function createWeapon(weaponVnum) {
     minMagicAttackValue: weapon[2][0],
     maxMagicAttackValue: weapon[2][1],
     upgrades: weapon[3],
-    isSerpent: isValueInArray("serpent", weaponName.toLowerCase())
-  }
+    isSerpent: isValueInArray("serpent", weaponName.toLowerCase()),
+  };
 }
 
 function createMonster(monsterVnum, attacker) {
@@ -3596,7 +3644,6 @@ function reduceChartPointsListener(battle) {
     var damagesChart = battle.damagesChart;
     var startDisplayTime = performance.now();
 
-    clearDamageChart(damagesChart);
     addToDamagesChart(
       battle.scatterDataByType,
       damagesChart,
@@ -3782,40 +3829,11 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    var calcDamages, skillId, skillType;
-
-    if (attackType === "physical") {
-      calcDamages = calcPhysicalDamages;
-    } else if (attackType.startsWith("attackSkill")) {
-      skillId = Number(attackType.split("attackSkill")[1]);
-
-      if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
-        skillType = "magic";
-        calcDamages = calcMagicSkillDamages;
-      } else {
-        skillType = "physical";
-        calcDamages = calcPhysicalSkillDamages;
-      }
-    } else if (attackType.startsWith("horseSkill")) {
-      skillType = "physical";
-      skillId = Number(attackType.split("horseSkill")[1]);
-      calcDamages = calcPhysicalSkillDamages;
-    }
-
-    clearDamageChart(battle.damagesChart);
-
-    var battleValues = createBattleValues(
+    var [totalCordinal, damagesWeightedByType, damagesCount] = calcDamages(
       attacker,
       victim,
-      battle.mapping,
-      battle.constants,
-      skillType
-    );
-
-    var [totalCordinal, damagesWeightedByType, damagesCount] = calcDamages(
-      battleValues,
-      battle.constants,
-      skillId
+      attackType,
+      battle
     );
 
     endDamagesTime = performance.now();
