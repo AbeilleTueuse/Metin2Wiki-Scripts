@@ -203,7 +203,9 @@ function aggregateDamages(scatterData, maxPoints, reducePoints) {
 }
 
 function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
-  clearDamageChart(damagesChart);
+  var chart = damagesChart.chart;
+
+  clearDamageChart(chart);
 
   for (var damagesTypeName in scatterDataByType) {
     if (damagesTypeName === "miss") {
@@ -219,18 +221,39 @@ function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
       damagesChart.maxPoints,
       reducePoints
     );
-    damagesChart.chart.data.datasets.push(dataset);
+    chart.data.datasets.push(dataset);
 
     if (display) {
       dataset.hidden = false;
     }
   }
-  damagesChart.chart.data.missPercentage = scatterDataByType.miss;
+  chart.data.missPercentage = scatterDataByType.miss;
+
+  if (reducePoints) {
+    addChartAnimation(chart);
+  } else {
+    removeChartAnimation(chart);
+  }
+
   damagesChart.chart.update();
 }
 
-function clearDamageChart(damagesChart) {
-  damagesChart.chart.data.datasets = [];
+function addChartAnimation(chart) {
+  chart.options.animation = true;
+  chart.options.animations.colors = true;
+  chart.options.animations.x = true;
+  chart.options.transitions.active.animation.duration = 1000;
+}
+
+function removeChartAnimation(chart) {
+  chart.options.animation = false;
+  chart.options.animations.colors = false;
+  chart.options.animations.x = false;
+  chart.options.transitions.active.animation.duration = 0;
+}
+
+function clearDamageChart(chart) {
+  chart.data.datasets = [];
 }
 
 function updateDamagesChartDescription(
