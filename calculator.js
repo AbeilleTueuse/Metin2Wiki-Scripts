@@ -2566,7 +2566,7 @@ function calcPhysicalDamages(
   ] = calcSecondaryAttackValue(attacker, attackerWeapon);
 
   totalCardinal *= 100;
-  var damagesWeightedByType = {totalCardinal: totalCardinal};
+  var damagesWeightedByType = {};
 
   if (battleValues.missPercentage) {
     damagesWeightedByType.miss = battleValues.missPercentage / 100;
@@ -2651,7 +2651,12 @@ function calcPhysicalDamages(
   if (minMaxDamages.min === Infinity) {
     minMaxDamages.min = 0;
   }
-  console.log(JSON.stringify(damagesWeightedByType));
+  damagesWeightedByType.totalCardinal = totalCardinal;
+  navigator.clipboard.writeText(JSON.stringify(damagesWeightedByType)).then(() => {
+      console.log('Texte copié avec succès');
+  }).catch(err => {
+      console.error('Erreur lors de la copie du texte: ', err);
+  });
   return [sumDamages / totalCardinal, minMaxDamages];
 }
 
