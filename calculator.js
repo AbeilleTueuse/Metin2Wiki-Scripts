@@ -2941,11 +2941,11 @@ function getSkillFormula(battle, skillId, battleValues) {
       switch (skillId) {
         // Jet de foudre
         case 1:
-          skillFormula = function (mav, varation) {
+          skillFormula = function (mav, variation) {
             return floorMultiplication(
               60 +
               5 * lv +
-              (8 * int + 2 * dex + 8 * mav + varation) *
+              (8 * int + 2 * dex + 8 * mav + variation) *
               attackFactor *
               skillPower,
               1
