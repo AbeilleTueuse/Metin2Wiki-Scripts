@@ -687,7 +687,7 @@ ALLOWED_SKILLS = {
     HEAL: [],
     LYCAN_CLASS: [2, 3, 4]
 }
-HORSE_SKILLS = {
+ALLOWED_HORSE_SKILLS = {
     BODY: [137, 138, 139],
     MENTAL: [137, 138, 139],
     BLADE_FIGHT: [137, 138, 139, 140],
@@ -761,11 +761,12 @@ def create_fights(number_of_fights=1000):
                 attacker_class = attacker[CLASS]
 
                 skills_to_use = ALLOWED_SKILLS[attacker_class]
+                print(skills_to_use)
 
                 if attacker[STATE] == HORSE:
-                    skills_to_use += HORSE_SKILLS[attacker_class]
+                    skills_to_use += ALLOWED_HORSE_SKILLS[attacker_class]
 
-                skills_to_use = [SKILL_MAPPING[skill] for skill in ALLOWED_SKILLS[attacker_class] if attacker[SKILL_MAPPING[skill]]]
+                skills_to_use = [SKILL_MAPPING[skill] for skill in skills_to_use if attacker[SKILL_MAPPING[skill]]]
 
                 attack_type = rd.choice(["physical"] + skills_to_use)
 
@@ -786,4 +787,4 @@ def create_fights(number_of_fights=1000):
 
 
 if __name__ == "__main__":
-    print(create_fights())
+    create_fights()
