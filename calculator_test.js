@@ -2061,20 +2061,20 @@ for (let { attackerName, victimName, attackType, resultsName } of fights) {
     if (isNaN(Number(attackerName))) {
         attacker = {...characters[attackerName]};
     } else {
-        attacker = {...monsterData[attackerName]};
+        attacker = {...createMonster(attackerName)};
     }
     
     if (isNaN(Number(victimName))) {
         victim = {...characters[victimName]};
     } else {
-        victim = {...monsterData[victimName]};
+        victim = {...createMonster(victimName)};
     }
 
     let {damagesWeightedByType, totalCardinal} = calcDamages(attacker, victim, attackType, battle);
-
+    
     damagesWeightedByType.totalCardinal = totalCardinal;
 
-    console.log("oui")
+    console.log(damagesWeightedByType)
     // let savedResults = results[resultsName];
     // let currentResults = JSON.stringify(damagesWeightedByType);
 
