@@ -7,13 +7,13 @@ function hideElement(element) {
 }
 
 function removeAccent(str) {
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function toNormalForm(str) {
-  return removeAccent(str).replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
+  return removeAccent(str)
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .toLowerCase();
 }
 
 function pseudoFormat(str) {
@@ -489,7 +489,9 @@ function getSavedCharacters() {
 }
 
 function getSavedMonsters() {
-  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (num) {
+  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (
+    num
+  ) {
     return !isNaN(Number(num));
   });
 }
@@ -642,7 +644,7 @@ function uploadCharacter(
             );
           }
         } catch (error) {
-          console.log(error)
+          console.log(error);
           if (error.name === "TypeError") {
             // delete the character
           }
@@ -1687,13 +1689,16 @@ function calcSkillDamageWithSecondaryBonuses(
 ) {
   damages = floorMultiplication(damages, battleValues.magicResistanceCoeff);
   damages = floorMultiplication(damages, battleValues.weaponDefenseCoeff);
-  
+
   damages -= battleValues.defense;
-  
+
   damages = floorMultiplication(damages, battleValues.skillWardCoeff);
   damages = floorMultiplication(damages, battleValues.skillBonusCoeff);
 
-  var tempDamages = floorMultiplication(damages, battleValues.skillBonusByBonusCoeff);
+  var tempDamages = floorMultiplication(
+    damages,
+    battleValues.skillBonusByBonusCoeff
+  );
 
   damages = floorMultiplication(tempDamages, battleValues.tigerStrengthCoeff);
 
@@ -2157,14 +2162,8 @@ function createPhysicalBattleValues(
     steelDragonElixirCoeff: 1 - steelDragonElixir / 100,
   };
 
-  criticalHitPercentage = Math.min(
-    criticalHitPercentage,
-    100
-  );
-  piercingHitPercentage = Math.min(
-    piercingHitPercentage,
-    100
-  );
+  criticalHitPercentage = Math.min(criticalHitPercentage, 100);
+  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
   battleValues.damagesTypeCombinaison = [
     {
@@ -2461,10 +2460,7 @@ function createSkillBattleValues(
   };
 
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
-  piercingHitPercentage = Math.min(
-    piercingHitPercentage,
-    100
-  );
+  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
   battleValues.damagesTypeCombinaison = [
     {
@@ -2638,11 +2634,7 @@ function calcPhysicalDamages(
           damagesWithPrimaryBonuses
         );
 
-        addKeyValue(
-          damagesWeighted,
-          finalDamages,
-          (weight * damagesType.weight)
-        );
+        addKeyValue(damagesWeighted, finalDamages, weight * damagesType.weight);
         sumDamages += finalDamages * weight * damagesType.weight;
       }
     }
@@ -2651,13 +2643,8 @@ function calcPhysicalDamages(
   if (minMaxDamages.min === Infinity) {
     minMaxDamages.min = 0;
   }
-  damagesWeightedByType.totalCardinal = totalCardinal;
-  navigator.clipboard.writeText(JSON.stringify(damagesWeightedByType)).then(() => {
-      console.log('Texte copié avec succès');
-  }).catch(err => {
-      console.error('Erreur lors de la copie du texte: ', err);
-  });
-  return [sumDamages / totalCardinal, minMaxDamages];
+
+  return {damagesWeightedByType: damagesWeightedByType, totalCardinal: totalCardinal};
 }
 
 function calcBlessingBonus(skillPowerTable, victim) {
@@ -3325,12 +3312,15 @@ function calcPhysicalSkillDamages(
 
   updateBattleValues(battleValues, skillInfo, attackerWeapon);
 
+  var damagesWeightedByType = {};
+
   for (var damagesType of battleValues.damagesTypeCombinaison) {
     if (!damagesType.weight) {
       continue;
     }
 
     var damagesWeighted = {};
+    damagesWeightedByType[damagesType.name] = damagesWeighted;
 
     for (
       var attackValue = minAttackValue;
@@ -3413,7 +3403,7 @@ function calcPhysicalSkillDamages(
     minMaxDamages.min = 0;
   }
 
-  return [sumDamages / totalCardinal, minMaxDamages];
+  return {damagesWeightedByType: damagesWeightedByType, totalCardinal: totalCardinal};
 }
 
 function calcMagicSkillDamages(
@@ -3456,12 +3446,15 @@ function calcMagicSkillDamages(
 
   updateBattleValues(battleValues, skillInfo, attackerWeapon);
 
+  var damagesWeightedByType = {};
+
   for (var damagesType of battleValues.damagesTypeCombinaison) {
     if (!damagesType.weight) {
       continue;
     }
 
     var damagesWeighted = {};
+    damagesWeightedByType[damagesType.name] = damagesWeighted;
 
     for (
       var magicAttackValue = minMagicAttackValue;
@@ -3530,7 +3523,60 @@ function calcMagicSkillDamages(
     minMaxDamages.min = 0;
   }
 
-  return [sumDamages / totalCardinal, minMaxDamages];
+  return {damagesWeightedByType: damagesWeightedByType, totalCardinal: totalCardinal};
+}
+
+function calcDamages(attacker, victim, attackType, battle) {
+  var damagesCalculator;
+  var skillId = 0;
+
+  var attackerWeapon = null;
+
+  if (isPC(attacker)) {
+    if (weaponData.hasOwnProperty(attacker.weapon)) {
+      attackerWeapon = weaponData[attacker.weapon];
+    } else {
+      attackerWeapon = weaponData[0];
+    }
+  }
+
+  if (attackType === "physical") {
+    damagesCalculator = calcPhysicalDamages;
+  } else if (attackType.startsWith("attackSkill")) {
+    skillId = Number(attackType.split("attackSkill")[1]);
+
+    if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
+      damagesCalculator = calcMagicSkillDamages;
+    } else {
+      damagesCalculator = calcPhysicalSkillDamages;
+    }
+  } else if (attackType.startsWith("horseSkill")) {
+    skillId = Number(attackType.split("horseSkill")[1]);
+    damagesCalculator = calcPhysicalSkillDamages;
+  }
+
+  var damagesWeightedByType = damagesCalculator(
+    attacker,
+    attackerWeapon,
+    victim,
+    battle.tableResult,
+    battle.mapping,
+    battle.constants,
+    battle.damagesChart,
+    battle.numberFormat,
+    skillId
+  );
+
+  // navigator.clipboard
+  //   .writeText(JSON.stringify(damagesWeightedByType))
+  //   .then(() => {
+  //     console.log("Texte copié avec succès");
+  //   })
+  //   .catch((err) => {
+  //     console.error("Erreur lors de la copie du texte: ", err);
+  //   });
+
+  return damagesWeightedByType;
 }
 
 function changeMonsterValues(monster, instance, attacker) {
@@ -3740,36 +3786,7 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    var meanDamages, minMaxDamages;
-    var calcDamages;
-    var skillId = 0;
-
-    if (attackType === "physical") {
-      calcDamages = calcPhysicalDamages;
-    } else if (attackType.startsWith("attackSkill")) {
-      skillId = Number(attackType.split("attackSkill")[1]);
-
-      if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
-        calcDamages = calcMagicSkillDamages;
-      } else {
-        calcDamages = calcPhysicalSkillDamages;
-      }
-    } else if (attackType.startsWith("horseSkill")) {
-      skillId = Number(attackType.split("horseSkill")[1]);
-      calcDamages = calcPhysicalSkillDamages;
-    }
-
-    [meanDamages, minMaxDamages] = calcDamages(
-      attacker,
-      attackerWeapon,
-      victim,
-      battle.tableResult,
-      battle.mapping,
-      battle.constants,
-      battle.damagesChart,
-      battle.numberFormat,
-      skillId
-    );
+    calcDamages(attacker, victim, attackType, battle);
   });
 
   battle.attackerSelection.addEventListener("change", function (event) {
