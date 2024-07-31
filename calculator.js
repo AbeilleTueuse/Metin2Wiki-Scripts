@@ -3567,15 +3567,6 @@ function calcDamages(attacker, victim, attackType, battle) {
     skillId
   );
 
-  // navigator.clipboard
-  //   .writeText(JSON.stringify(damagesWeightedByType))
-  //   .then(() => {
-  //     console.log("Texte copié avec succès");
-  //   })
-  //   .catch((err) => {
-  //     console.error("Erreur lors de la copie du texte: ", err);
-  //   });
-
   return damagesWeightedByType;
 }
 
