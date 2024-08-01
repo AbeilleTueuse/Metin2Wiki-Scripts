@@ -129,7 +129,7 @@ function referenceCalculation(attacker, victim, attackType, battle) {
     var weaponInterval = maxAttackValue - minAttackValue + 1;
     var slashInterval = maxAttackValueSlash - minAttackValueSlash + 1;
 
-    var totalCardinal = weaponInterval * slashInterval * 10000;
+    var totalCardinal = weaponInterval * slashInterval * 1000000;
     var minInterval = Math.min(weaponInterval, slashInterval);
 
     minAttackValue += minAttackValueSlash;
@@ -179,7 +179,7 @@ function referenceCalculation(attacker, victim, attackType, battle) {
     var weaponInterval = maxMagicAttackValue - minMagicAttackValue + 1;
     var slashInterval = maxMagicAttackValueSlash - minMagicAttackValueSlash + 1;
 
-    var totalCardinal = weaponInterval * slashInterval * 10000;
+    var totalCardinal = weaponInterval * slashInterval * 1000000;
     var minInterval = Math.min(weaponInterval, slashInterval);
 
     minMagicAttackValue += minMagicAttackValueSlash;
@@ -1080,25 +1080,25 @@ function referenceCalculation(attacker, victim, attackType, battle) {
       {
         criticalHit: false,
         piercingHit: false,
-        weight: (100 - criticalHitPercentage) * (100 - piercingHitPercentage),
+        weight: (100 - criticalHitPercentage) * (100 - piercingHitPercentage) * 100,
         name: "normalHit",
       },
       {
         criticalHit: true,
         piercingHit: false,
-        weight: criticalHitPercentage * (100 - piercingHitPercentage),
+        weight: criticalHitPercentage * (100 - piercingHitPercentage) * 100,
         name: "criticalHit",
       },
       {
         criticalHit: false,
         piercingHit: true,
-        weight: (100 - criticalHitPercentage) * piercingHitPercentage,
+        weight: (100 - criticalHitPercentage) * piercingHitPercentage * 100,
         name: "piercingHit",
       },
       {
         criticalHit: true,
         piercingHit: true,
-        weight: criticalHitPercentage * piercingHitPercentage,
+        weight: criticalHitPercentage * piercingHitPercentage * 100,
         name: "criticalPiercingHit",
       },
     ];
@@ -1162,9 +1162,6 @@ function referenceCalculation(attacker, victim, attackType, battle) {
       constants.skillPowerTable
     );
 
-    var sumDamages = 0;
-    var minMaxDamages = { min: Infinity, max: 0 };
-
     var attackFactor = calcAttackFactor(attacker, victim);
     var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
     var [
@@ -1175,7 +1172,6 @@ function referenceCalculation(attacker, victim, attackType, battle) {
       totalCardinal,
     ] = calcSecondaryAttackValue(attacker, attackerWeapon);
 
-    totalCardinal *= 100;
     var damagesWeightedByType = {};
 
     if (battleValues.missPercentage) {
@@ -1237,7 +1233,6 @@ function referenceCalculation(attacker, victim, attackType, battle) {
               finalDamages,
               (weight * damagesType.weight) / 5
             );
-            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
           }
         } else {
           var finalDamages = calcDamageWithSecondaryBonuses(
@@ -1249,13 +1244,8 @@ function referenceCalculation(attacker, victim, attackType, battle) {
           );
 
           addKeyValue(damagesWeighted, finalDamages, weight * damagesType.weight);
-          sumDamages += finalDamages * weight * damagesType.weight;
         }
       }
-    }
-
-    if (minMaxDamages.min === Infinity) {
-      minMaxDamages.min = 0;
     }
 
     return { damagesWeightedByType: damagesWeightedByType, totalCardinal: totalCardinal };
@@ -1900,9 +1890,6 @@ function referenceCalculation(attacker, victim, attackType, battle) {
       constants.marriageTable
     );
 
-    var sumDamages = 0;
-    var minMaxDamages = { min: Infinity, max: 0 };
-
     var attackFactor = calcAttackFactor(attacker, victim);
     var mainAttackValue = calcMainAttackValue(attacker, attackerWeapon);
     var [
@@ -1982,9 +1969,8 @@ function referenceCalculation(attacker, victim, attackType, battle) {
             addKeyValue(
               damagesWeighted,
               finalDamages,
-              (weight * damagesType.weight) / (5 * totalCardinal)
+              (weight * damagesType.weight) / 5
             );
-            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
           }
         } else {
           damagesWithPrimaryBonuses *= battleValues.useDamages;
@@ -2006,15 +1992,10 @@ function referenceCalculation(attacker, victim, attackType, battle) {
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            (weight * damagesType.weight) / totalCardinal
+            (weight * damagesType.weight)
           );
-          sumDamages += finalDamages * weight * damagesType.weight;
         }
       }
-    }
-
-    if (minMaxDamages.min === Infinity) {
-      minMaxDamages.min = 0;
     }
 
     return { damagesWeightedByType: damagesWeightedByType, totalCardinal: totalCardinal };
@@ -2039,9 +2020,6 @@ function referenceCalculation(attacker, victim, attackType, battle) {
       constants.marriageTable,
       true
     );
-
-    var sumDamages = 0;
-    var minMaxDamages = { min: Infinity, max: 0 };
 
     var attackFactor = calcAttackFactor(attacker, victim);
     var [minMagicAttackValue, maxMagicAttackValue, minInterval, totalCardinal] =
@@ -2110,9 +2088,8 @@ function referenceCalculation(attacker, victim, attackType, battle) {
             addKeyValue(
               damagesWeighted,
               finalDamages,
-              (weight * damagesType.weight) / (5 * totalCardinal)
-            );
-            sumDamages += (finalDamages * weight * damagesType.weight) / 5;
+              (weight * damagesType.weight) / 5
+            )
           }
         } else {
           var finalDamages = calcSkillDamageWithSecondaryBonuses(
@@ -2126,15 +2103,10 @@ function referenceCalculation(attacker, victim, attackType, battle) {
           addKeyValue(
             damagesWeighted,
             finalDamages,
-            (weight * damagesType.weight) / totalCardinal
+            (weight * damagesType.weight)
           );
-          sumDamages += finalDamages * weight * damagesType.weight;
         }
       }
-    }
-
-    if (minMaxDamages.min === Infinity) {
-      minMaxDamages.min = 0;
     }
 
     return { damagesWeightedByType: damagesWeightedByType, totalCardinal: totalCardinal };
@@ -2583,7 +2555,7 @@ function main() {
         attackType = randomChoice(["physical"].concat(skillsToUse));
       }
     } else {
-      attacker = { ...createMonster(randomChoice(MONSTERS_NO_STONES)) };
+      attacker = createMonster(randomChoice(MONSTERS_NO_STONES));
       attackType = "physical";
     }
 
@@ -2591,12 +2563,12 @@ function main() {
       victim = createRandomCharacter(charIndex);
       charIndex++;
     } else {
-      victim = { ...createMonster(randomChoice(MONSTERS)) };
+      victim = createMonster(randomChoice(MONSTERS));
     }
 
     const { damagesWeightedByType: damagesWeightedByTypeReference, totalCardinal: totalCardinalReference } = referenceCalculation(
-      attacker,
-      victim,
+      {...attacker},
+      {...victim},
       attackType,
       battle
     );
@@ -2604,8 +2576,8 @@ function main() {
     damagesWeightedByTypeReference.totalCardinal = totalCardinalReference;
 
     const { damagesWeightedByType, totalCardinal } = calcDamages(
-      attacker,
-      victim,
+      {...attacker},
+      {...victim},
       attackType,
       battle
     );
@@ -2613,9 +2585,10 @@ function main() {
     damagesWeightedByType.totalCardinal = totalCardinal;
 
     if (JSON.stringify(damagesWeightedByType) !== JSON.stringify(damagesWeightedByTypeReference)) {
-      console.log(attacker, victim, attackType);
-      console.log(damagesWeightedByType);
-      console.log(damagesWeightedByTypeReference);
+      console.log(attacker, victim);
+      console.log(attackType);
+      console.log(JSON.parse(JSON.stringify(damagesWeightedByType)));
+      console.log(JSON.parse(JSON.stringify(damagesWeightedByTypeReference)));
       break;
     } else {
       console.log("good")
