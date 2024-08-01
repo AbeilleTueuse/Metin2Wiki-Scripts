@@ -3440,7 +3440,7 @@ function calcDamages(attacker, victim, attackType, battle) {
   var { attackValues: { totalCardinal, possibleDamagesCount } } = battleValues;
 
   return {
-    damagesWeightedByType: damageCalculator(battleValues),
+    damagesWeightedByType: damagesCalculator(battleValues),
     totalCardinal: totalCardinal,
     possibleDamagesCount: possibleDamagesCount
   };
