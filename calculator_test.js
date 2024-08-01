@@ -2613,12 +2613,12 @@ function main() {
     damagesWeightedByType.totalCardinal = totalCardinal;
 
     if (JSON.stringify(damagesWeightedByType) !== JSON.stringify(damagesWeightedByTypeReference)) {
-        console.log(attacker, victim, attackType);
-        console.log(damagesWeightedByType);
-        console.log(damagesWeightedByTypeReference);
-        break;
+      console.log(attacker, victim, attackType);
+      console.log(damagesWeightedByType);
+      console.log(damagesWeightedByTypeReference);
+      break;
     } else {
-        console.log("good")
+      console.log("good")
     }
   }
 }
