@@ -3411,24 +3411,24 @@ function calcMagicSkillDamages(battleValues) {
 }
 
 function calcDamages(attacker, victim, attackType, battle) {
-  var damageCalculator, skillId, skillType;
+  var damagesCalculator, skillId, skillType;
 
   if (attackType === "physical") {
-    damageCalculator = calcPhysicalDamages;
+    damagesCalculator = calcPhysicalDamages;
   } else if (attackType.startsWith("attackSkill")) {
     skillId = Number(attackType.split("attackSkill")[1]);
 
     if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
       skillType = "magic";
-      damageCalculator = calcMagicSkillDamages;
+      damagesCalculator = calcMagicSkillDamages;
     } else {
       skillType = "physical";
-      damageCalculator = calcPhysicalSkillDamages;
+      damagesCalculator = calcPhysicalSkillDamages;
     }
   } else if (attackType.startsWith("horseSkill")) {
     skillType = "physical";
     skillId = Number(attackType.split("horseSkill")[1]);
-    damageCalculator = calcPhysicalSkillDamages;
+    damagesCalculator = calcPhysicalSkillDamages;
   }
 
   var battleValues = createBattleValues(attacker, victim, battle, skillType);
