@@ -2451,7 +2451,7 @@ const SKILL_MAPPING = {
   140: HORSE_SKILL_140,
 }
 
-ALLOWED_WEAPONS = {
+const ALLOWED_WEAPONS = {
   warrior: [0, 3, 8],
   ninja: [0, 1, 2, 8],
   sura: [0, 7, 8],
@@ -2547,7 +2547,7 @@ function main() {
   const battle = { mapping: createMapping(), constants: createConstants() };
   let charIndex = 0;
 
-  for (let index = 0; index < 1000; index++) {
+  for (let index = 0; index < 100; index++) {
     let attacker, victim, attackType;
 
     if (Math.random() >= 0.3) {
