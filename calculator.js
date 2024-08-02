@@ -1702,6 +1702,7 @@ function calcMagicAttackValue(attacker) {
     maxMagicAttackValue: maxMagicAttackValue,
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
+    possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1
   };
 }
 
