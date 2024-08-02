@@ -88,11 +88,10 @@ function prepareDamagesData(
   possibleDamagesCount,
   totalCardinal
 ) {
-  var displayReducePoints = false;
+  var displayReducePoints = {};
   var maxPoints = battle.damagesChart.maxPoints;
   var minDamages = Infinity;
   var maxDamages = 0;
-  var displayThisDamagesType = true;
   var scatterDataByType = {};
   var sumDamages = 0;
   var possibleDamagesCountTemp = possibleDamagesCount;
@@ -109,10 +108,7 @@ function prepareDamagesData(
     var firstIteration = true;
     var damagesWeighted = damagesWeightedByType[damagesTypeName];
     var scatterData = [];
-    scatterDataByType[damagesTypeName] = {
-      display: displayThisDamagesType,
-      scatterData: scatterData,
-    };
+    scatterDataByType[damagesTypeName] = scatterData;
 
     for (var damages in damagesWeighted) {
       damages = +damages;
@@ -135,7 +131,7 @@ function prepareDamagesData(
     var scatterDataLength = scatterData.length;
 
     if (scatterDataLength >= 2 * maxPoints) {
-      displayReducePoints = true;
+      displayReducePoints[damagesTypeName] = true;
     }
 
     possibleDamagesCount += possibleDamagesCountTemp;
@@ -144,18 +140,10 @@ function prepareDamagesData(
     if (damages > maxDamages) {
       maxDamages = damages;
     }
-
-    displayThisDamagesType = false;
   }
 
   if (minDamages === Infinity) {
     minDamages = 0;
-  }
-
-  if (displayReducePoints) {
-    showElement(battle.reduceChartPointsContainer);
-  } else {
-    hideElement(battle.reduceChartPointsContainer);
   }
 
   return [
@@ -213,8 +201,7 @@ function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
     }
 
     var dataset = copyObject(damagesChart.dataset[damagesTypeName]);
-    var { display: display, scatterData: scatterData } =
-      scatterDataByType[damagesTypeName];
+    var scatterData = scatterDataByType[damagesTypeName];
 
     dataset.data = aggregateDamages(
       scatterData,
@@ -222,10 +209,6 @@ function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
       reducePoints
     );
     chart.data.datasets.push(dataset);
-
-    if (display) {
-      dataset.hidden = false;
-    }
   }
   chart.data.missPercentage = scatterDataByType.miss;
 
@@ -3967,11 +3950,12 @@ function initResultTableHistory(battle) {
 
 function initChart(battle, chartSource) {
   var translation = battle.translation;
+  var maxPoints = 500;
 
   function createChart() {
     var percentFormat = battle.numberFormats.percent;
-    var annotationPlugin = {
-      id: "annotationPlugin",
+    var customPlugins = {
+      id: "customPlugins",
       afterDraw(chart) {
         var missPercentage = chart.data.missPercentage;
 
@@ -4017,9 +4001,20 @@ function initChart(battle, chartSource) {
 
         ctx.restore();
       },
+      beforeUpdate(chart) {
+        var datasets = chart.data.datasets;
+
+        if (datasets.length > 0) {
+          datasets[0].hidden = false;
+
+          for (let index = 1; index < datasets.length; index++) {
+            datasets[index].hidden = true;
+          }
+        }
+      }
     };
 
-    Chart.register(annotationPlugin);
+    Chart.register(customPlugins);
 
     var ctx = battle.plotDamages.getContext("2d");
     var maxLabelsInTooltip = 10;
@@ -4129,19 +4124,16 @@ function initChart(battle, chartSource) {
         label: translation.piercingHit,
         backgroundColor: "rgba(192, 192, 75, 0.2)",
         borderColor: "rgba(192, 192, 75, 1)",
-        hidden: true,
       },
       criticalHit: {
         label: translation.criticalHit,
         backgroundColor: "rgba(192, 75, 192, 0.2)",
         borderColor: "rgba(192, 75, 192, 1)",
-        hidden: true,
       },
       criticalPiercingHit: {
         label: translation.criticalPiercingHit,
         backgroundColor: "rgba(75, 75, 192, 0.2)",
         borderColor: "rgba(75, 75, 192, 1)",
-        hidden: true,
       },
     };
     battle.damagesChart = {
