@@ -1547,7 +1547,14 @@ function calcMainAttackValue(attacker) {
   var rawWeaponAttackValue = 0;
 
   if (isPC(attacker)) {
-    var rawWeaponAttackValue = attacker.weapon.upgrades[attacker.weaponUpgrade];
+    var weaponUpgrades = attacker.weapon.upgrades;
+
+    // rare bug when weaponUpgrade is deleted
+    if (attacker.hasOwnProperty("weaponUpgrade")) {
+      rawWeaponAttackValue = weaponUpgrades[attacker.weaponUpgrade];
+    } else {
+      rawWeaponAttackValue = weaponUpgrades[weaponUpgrades.length - 1];
+    }
 
     if (!rawWeaponAttackValue) {
       rawWeaponAttackValue = 0;
