@@ -1553,6 +1553,7 @@ function calcMainAttackValue(attacker) {
     if (attacker.hasOwnProperty("weaponUpgrade")) {
       rawWeaponAttackValue = weaponUpgrades[attacker.weaponUpgrade];
     } else {
+      console.log("Warming: weaponUpgrade is missing.")
       rawWeaponAttackValue = weaponUpgrades[weaponUpgrades.length - 1];
     }
 
