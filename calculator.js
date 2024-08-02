@@ -2417,7 +2417,7 @@ function updateBattleValues(battleValues, skillFormula, skillInfo) {
   }
 
   if (skillInfo.removeWeaponReduction) {
-    bonusValues.weaponDefenseCoeff = 1;
+    bonusValues.weaponDefenseCoeff = 100;
   }
 
   bonusValues.weaponBonusCoeff = 100 + weaponBonus;
@@ -2449,16 +2449,6 @@ function calcWeights(minValue, maxValue, minInterval) {
   }
 
   return weights;
-}
-
-function calcRemainingWeight(weights, currentIndex) {
-  var remainingWeight = 0;
-
-  for (var index = 0; index <= currentIndex; index++) {
-    remainingWeight += weights[index];
-  }
-
-  return remainingWeight;
 }
 
 function calcBlessingBonus(skillPowerTable, victim) {
@@ -3118,9 +3108,9 @@ function calcPhysicalDamages(battleValues) {
     damagesWeightedByType[damagesType.name] = damagesWeighted;
 
     for (
-      var attackValue = maxAttackValue;
-      attackValue >= minAttackValue;
-      attackValue--
+      var attackValue = minAttackValue;
+      attackValue <= maxAttackValue;
+      attackValue++
     ) {
       var weight = weights[attackValue - minAttackValue] * damagesType.weight;
 
@@ -3140,35 +3130,16 @@ function calcPhysicalDamages(battleValues) {
         bonusValues.defenseMarriage;
 
       if (minPiercingDamages <= 2) {
-        if (damagesType.piercingHit) {
-          for (var damages = 1; damages <= 5; damages++) {
-            var finalDamages = calcDamageWithSecondaryBonuses(
-              damages,
-              bonusValues,
-              damagesType,
-              minPiercingDamages,
-              damagesWithPrimaryBonuses
-            );
+        for (var damages = 1; damages <= 5; damages++) {
+          var finalDamages = calcDamageWithSecondaryBonuses(
+            damages,
+            bonusValues,
+            damagesType,
+            minPiercingDamages,
+            damagesWithPrimaryBonuses
+          );
 
-            addKeyValue(damagesWeighted, finalDamages, weight / 5);
-          }
-        } else {
-          var remainingWeight =
-            calcRemainingWeight(weights, attackValue - minAttackValue) *
-            damagesType.weight;
-
-          for (var damages = 1; damages <= 5; damages++) {
-            var finalDamages = calcDamageWithSecondaryBonuses(
-              damages,
-              bonusValues,
-              damagesType,
-              minPiercingDamages,
-              damagesWithPrimaryBonuses
-            );
-
-            addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
-          }
-          break;
+          addKeyValue(damagesWeighted, finalDamages, weight / 5);
         }
       } else {
         var finalDamages = calcDamageWithSecondaryBonuses(
@@ -3211,9 +3182,9 @@ function calcPhysicalSkillDamages(battleValues) {
     damagesWeightedByType[damagesType.name] = damagesWeighted;
 
     for (
-      var attackValue = maxAttackValue;
-      attackValue >= minAttackValue;
-      attackValue--
+      var attackValue = minAttackValue;
+      attackValue <= maxAttackValue;
+      attackValue++
     ) {
       var weight = weights[attackValue - minAttackValue] * damagesType.weight;
 
@@ -3233,49 +3204,23 @@ function calcPhysicalSkillDamages(battleValues) {
         variation++
       ) {
         if (damagesWithPrimaryBonuses <= 2) {
-          if (damagesType.piercingHit) {
-            for (var damages = 1; damages <= 5; damages++) {
-              damages *= bonusValues.useDamages;
+          for (var damages = 1; damages <= 5; damages++) {
+            damages *= bonusValues.useDamages;
 
-              var damagesWithFormula = skillFormula(damages, variation);
+            var damagesWithFormula = skillFormula(damages, variation);
 
-              damagesWithFormula = Math.floor(
-                (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
-              );
+            damagesWithFormula = Math.floor(
+              (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
+            );
 
-              var finalDamages = calcSkillDamageWithSecondaryBonuses(
-                damagesWithFormula,
-                bonusValues,
-                damagesType,
-                damagesWithPrimaryBonuses
-              );
+            var finalDamages = calcSkillDamageWithSecondaryBonuses(
+              damagesWithFormula,
+              bonusValues,
+              damagesType,
+              damagesWithPrimaryBonuses
+            );
 
-              addKeyValue(damagesWeighted, finalDamages, weight / 5);
-            }
-          } else {
-            var remainingWeight =
-              calcRemainingWeight(weights, attackValue - minAttackValue) *
-              damagesType.weight;
-
-            for (var damages = 1; damages <= 5; damages++) {
-              damages *= bonusValues.useDamages;
-
-              var damagesWithFormula = skillFormula(damages, variation);
-
-              damagesWithFormula = Math.floor(
-                (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
-              );
-
-              var finalDamages = calcSkillDamageWithSecondaryBonuses(
-                damagesWithFormula,
-                bonusValues,
-                damagesType,
-                damagesWithPrimaryBonuses
-              );
-
-              addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
-            }
-            break;
+            addKeyValue(damagesWeighted, finalDamages, weight / 5);
           }
         } else {
           damagesWithPrimaryBonuses *= bonusValues.useDamages;
@@ -3334,9 +3279,9 @@ function calcMagicSkillDamages(battleValues) {
     damagesWeightedByType[damagesType.name] = damagesWeighted;
 
     for (
-      var magicAttackValue = maxMagicAttackValue;
-      magicAttackValue >= minMagicAttackValue;
-      magicAttackValue--
+      var magicAttackValue = minMagicAttackValue;
+      magicAttackValue <= maxMagicAttackValue;
+      magicAttackValue++
     ) {
       var weight =
         weights[magicAttackValue - minMagicAttackValue] * damagesType.weight;
@@ -3364,33 +3309,14 @@ function calcMagicSkillDamages(battleValues) {
         );
 
         if (damagesWithPrimaryBonuses <= 2) {
-          if (damagesType.piercingHit) {
-            for (var damages = 1; damages <= 5; damages++) {
-              var finalDamages = calcSkillDamageWithSecondaryBonuses(
-                damages,
-                bonusValues,
-                damagesType,
-                damagesWithPrimaryBonuses
-              );
-              addKeyValue(damagesWeighted, finalDamages, weight / 5);
-            }
-          } else {
-            var remainingWeight =
-              calcRemainingWeight(
-                weights,
-                magicAttackValue - minMagicAttackValue
-              ) * damagesType.weight;
-
-            for (var damages = 1; damages <= 5; damages++) {
-              var finalDamages = calcSkillDamageWithSecondaryBonuses(
-                damages,
-                bonusValues,
-                damagesType,
-                damagesWithPrimaryBonuses
-              );
-
-              addKeyValue(damagesWeighted, finalDamages, remainingWeight / 5);
-            }
+          for (var damages = 1; damages <= 5; damages++) {
+            var finalDamages = calcSkillDamageWithSecondaryBonuses(
+              damages,
+              bonusValues,
+              damagesType,
+              damagesWithPrimaryBonuses
+            );
+            addKeyValue(damagesWeighted, finalDamages, weight / 5);
           }
         } else {
           var finalDamages = calcSkillDamageWithSecondaryBonuses(

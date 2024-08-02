@@ -2585,16 +2585,26 @@ function main() {
     damagesWeightedByType.totalCardinal = totalCardinal;
 
     if (JSON.stringify(damagesWeightedByType) !== JSON.stringify(damagesWeightedByTypeReference)) {
-      console.log(attacker, victim);
+      console.log("Error. A difference appeared in the results")
+      console.log(attacker);
+      console.log(victim);
       console.log(attackType);
       console.log(JSON.parse(JSON.stringify(damagesWeightedByType)));
       console.log(JSON.parse(JSON.stringify(damagesWeightedByTypeReference)));
+
+      if (isPC(attacker)) {
+        downloadCharacter(attacker);
+      }
+
+      if (isPC(victim)) {
+        downloadCharacter(victim);
+      }
+      
       break;
     } else {
-      console.log("good")
+      console.log("Success! The simulations generated the same results")
     }
   }
 }
 
 main();
-
