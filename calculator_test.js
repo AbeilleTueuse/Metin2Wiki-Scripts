@@ -31,6 +31,10 @@ function referenceCalculation(attacker, victim, attackType, battle) {
     }
   }
 
+  function isBow(weapon) {
+    return weapon[1] === 2;
+  }
+
   function calcAttackFactor(attacker, victim) {
     function calcCoeffK(dex, level) {
       return Math.min(90, Math.floor((2 * dex + level) / 3));
@@ -1205,7 +1209,6 @@ function referenceCalculation(attacker, victim, attackType, battle) {
         }
 
         var secondaryAttackValue = 2 * attackValue + attackValueOther;
-        console.log(attackValue, attackValueOther)
         var rawDamages =
           mainAttackValue +
           floorMultiplication(attackFactor, secondaryAttackValue);
@@ -1247,7 +1250,6 @@ function referenceCalculation(attacker, victim, attackType, battle) {
 
           addKeyValue(damagesWeighted, finalDamages, weight * damagesType.weight);
         }
-        break;
       }
     }
 
@@ -2568,10 +2570,6 @@ function main() {
     } else {
       victim = createMonster(randomChoice(MONSTERS));
     }
-
-    attacker = {"name":"random_char_137","race":"ninja","level":22,"state":"normal","polymorphMonster":502,"vit":79,"int":49,"str":48,"dex":95,"defense":1047,"magicDefense":1373,"attackSpeed":38,"sungmaStr":167,"sungmaStrMalus":82,"minAttackValueRandom":488,"maxAttackValueRandom":1489,"minMagicAttackValueRandom":1136,"maxMagicAttackValueRandom":549,"minAttackValueSlash":162,"maxAttackValueSlash":61,"minMagicAttackValueSlash":116,"maxMagicAttackValueSlash":39,"stoneBonus":5,"humanBonus":56,"humanResistance":9,"orcBonus":130,"undeadBonus":339,"monsterBonus":120,"zodiacBonus":42,"monsterResistance":14,"animalBonus":124,"mysticBonus":132,"devilBonus":76,"desertBonus":15,"insectBonus":310,"attackValuePercent":270,"attackValue":1121,"defensePercent":6,"defenseUseless":1,"averageDamage":-1,"averageDamageResistance":4,"skillDamage":-25,"skillDamageResistance":134,"attackMeleeMagic":71,"attackMagic":25,"magicAttackValue":14,"criticalHit":135,"piercingHit":99,"criticalHitResistance":7,"piercingHitResistance":5,"magicResistance":45,"antiMagic":44,"lightningResistance":206,"fireResistance":132,"iceResistance":86,"windResistance":1,"earthResistance":69,"darknessResistance":56,"lightningBonus":68,"fireBonus":185,"iceBonus":106,"windBonus":347,"earthBonus":205,"darknessBonus":47,"warriorBonus":96,"ninjaBonus":147,"suraBonus":18,"shamanBonus":72,"lycanBonus":106,"warriorResistance":72,"ninjaResistance":15,"suraResistance":98,"shamanResistance":128,"lycanResistance":38,"swordDefense":28,"twoHandedSwordDefense":90,"daggerDefense":79,"clawDefense":2,"bellDefense":20,"fanDefense":85,"arrowDefense":3,"breakSwordDefense":7,"breakTwoHandedSwordDefense":7,"breakDaggerDefense":1,"breakBellDefense":8,"breakFanDefense":3,"breakArrowDefense":10,"breakClawDefense":2,"meleeBlock":60,"arrowBlock":58,"precision":153,"leadership":60,"bossDamage":15,"skillBossDamage":13,"damageBonus":5,"meleeArrowBlock":6,"biologist70":"on","empireMalus":"","tigerStrength":"on","whiteDragonElixir":"on","steelDragonElixir":"on","lowRank":"","playerRank":"cruel","attackSkill1":6,"attackSkill2":10,"attackSkill3":15,"attackSkill4":19,"attackSkill5":15,"attackSkill6":21,"attackSkill9":28,"skillBlessing":"on","intBlessing":88,"dexBlessing":75,"blessingOnself":"on","skillWardChoice":"archery","skillWard":19,"skillBonus":23,"polymorphPoint":13,"horsePoint":14,"horseSkill137":10,"horseSkill138":0,"horseSkill139":10,"horseSkill140":3,"skillBonus1":1,"skillBonus2":0,"skillBonus3":0,"skillBonus4":4,"skillBonus5":0,"skillBonus6":1,"isMarried":"","lovePoint":66,"harmonyBracelet":"","loveNecklace":"on","harmonyNecklace":"","loveEarrings":"","harmonyEarrings":"","class":"blade_fight","weapon":2130,"weaponUpgrade":3}
-    victim = {"name":"random_char_138","race":"ninja","level":13,"state":"polymorph","polymorphMonster":502,"vit":112,"int":73,"str":126,"dex":19,"defense":1839,"magicDefense":1300,"attackSpeed":2,"sungmaStr":32,"sungmaStrMalus":48,"minAttackValueRandom":261,"maxAttackValueRandom":1493,"minMagicAttackValueRandom":591,"maxMagicAttackValueRandom":623,"minAttackValueSlash":38,"maxAttackValueSlash":126,"minMagicAttackValueSlash":54,"maxMagicAttackValueSlash":95,"stoneBonus":59,"humanBonus":77,"humanResistance":73,"orcBonus":15,"undeadBonus":360,"monsterBonus":113,"zodiacBonus":33,"monsterResistance":6,"animalBonus":18,"mysticBonus":115,"devilBonus":196,"desertBonus":62,"insectBonus":192,"attackValuePercent":48,"attackValue":1836,"defensePercent":81,"defenseUseless":70,"averageDamage":147,"averageDamageResistance":67,"skillDamage":-5,"skillDamageResistance":96,"attackMeleeMagic":75,"attackMagic":14,"magicAttackValue":15,"criticalHit":123,"piercingHit":69,"criticalHitResistance":31,"piercingHitResistance":23,"magicResistance":13,"antiMagic":41,"lightningResistance":96,"fireResistance":162,"iceResistance":159,"windResistance":160,"earthResistance":351,"darknessResistance":32,"lightningBonus":18,"fireBonus":56,"iceBonus":225,"windBonus":122,"earthBonus":154,"darknessBonus":179,"warriorBonus":114,"ninjaBonus":12,"suraBonus":16,"shamanBonus":23,"lycanBonus":31,"warriorResistance":74,"ninjaResistance":23,"suraResistance":99,"shamanResistance":82,"lycanResistance":125,"swordDefense":63,"twoHandedSwordDefense":83,"daggerDefense":18,"clawDefense":17,"bellDefense":1,"fanDefense":15,"arrowDefense":12,"breakSwordDefense":8,"breakTwoHandedSwordDefense":4,"breakDaggerDefense":0,"breakBellDefense":1,"breakFanDefense":2,"breakArrowDefense":0,"breakClawDefense":2,"meleeBlock":125,"arrowBlock":45,"precision":117,"leadership":7,"bossDamage":13,"skillBossDamage":14,"damageBonus":4,"meleeArrowBlock":8,"biologist70":"on","empireMalus":"on","tigerStrength":"on","whiteDragonElixir":"on","steelDragonElixir":"","lowRank":"on","playerRank":"cruel","attackSkill1":17,"attackSkill2":2,"attackSkill3":20,"attackSkill4":13,"attackSkill5":2,"attackSkill6":29,"attackSkill9":14,"skillBlessing":"","intBlessing":155,"dexBlessing":27,"blessingOnself":"on","skillWardChoice":0,"skillWard":29,"skillBonus":7,"polymorphPoint":28,"horsePoint":31,"horseSkill137":13,"horseSkill138":7,"horseSkill139":1,"horseSkill140":15,"skillBonus1":2,"skillBonus2":1,"skillBonus3":1,"skillBonus4":4,"skillBonus5":0,"skillBonus6":0,"isMarried":"","lovePoint":59,"harmonyBracelet":"","loveNecklace":"","harmonyNecklace":"","loveEarrings":"","harmonyEarrings":"","class":"archery","weapon":2110,"weaponUpgrade":8}
-    attackType = "physical"
 
     const { damagesWeightedByType: damagesWeightedByTypeReference, totalCardinal: totalCardinalReference } = referenceCalculation(
       {...attacker},
