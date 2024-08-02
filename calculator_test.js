@@ -2534,7 +2534,7 @@ function main() {
   const battle = { mapping: createMapping(), constants: createConstants() };
   let charIndex = 0;
 
-  for (let index = 0; index < 100; index++) {
+  for (let index = 0; index < 1000; index++) {
     let attacker, victim, attackType;
 
     if (Math.random() >= 0.3) {
