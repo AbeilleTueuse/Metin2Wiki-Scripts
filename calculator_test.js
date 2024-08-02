@@ -12,10 +12,18 @@ function referenceCalculation(attacker, victim, attackType, battle) {
   }
 
   function floorMultiplicationWithNegative(firstFactor, secondFactor) {
-    if (secondFactor < 0) {
-      return -floorMultiplication(firstFactor, -secondFactor);
+    if (firstFactor < 0) {
+      if (secondFactor < 0) {
+        return floorMultiplication(-firstFactor, -secondFactor);
+      } else {
+        return -floorMultiplication(-firstFactor, secondFactor);
+      }
     } else {
-      return floorMultiplication(firstFactor, secondFactor);
+      if (secondFactor < 0) {
+        return -floorMultiplication(firstFactor, -secondFactor);
+      } else {
+        return floorMultiplication(firstFactor, secondFactor);
+      }
     }
   }
 
@@ -2570,6 +2578,8 @@ function main() {
     } else {
       victim = createMonster(randomChoice(MONSTERS));
     }
+
+    victim.magicResistance = 0;
 
     const { damagesWeightedByType: damagesWeightedByTypeReference, totalCardinal: totalCardinalReference } = referenceCalculation(
       {...attacker},
