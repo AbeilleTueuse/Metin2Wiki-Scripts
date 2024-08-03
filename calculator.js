@@ -177,7 +177,7 @@ function aggregateDamages(scatterData, maxPoints) {
   return aggregateScatterData;
 }
 
-function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
+function addToDamagesChart(scatterDataByType, damagesChart, isReducePointsChecked) {
   var { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
     damagesChart;
   var isFirstDataset = true;
@@ -203,7 +203,7 @@ function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
       canRemoveAnimation = true;
     }
 
-    if (canBeReduced && reducePoints) {
+    if (canBeReduced && isReducePointsChecked) {
       dataset.data = aggregateDamages(scatterData, maxPoints);
     } else {
       dataset.data = scatterData;
@@ -224,7 +224,7 @@ function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
 
   chart.data.missPercentage = scatterDataByType.miss;
 
-  if (!canRemoveAnimation && reducePoints) {
+  if (!canRemoveAnimation && isReducePointsChecked) {
     addChartAnimation(chart);
   } else {
     removeChartAnimation(chart);
@@ -3538,15 +3538,23 @@ function reduceChartPointsListener(battle) {
     displayTime,
   } = battle;
 
-  reduceChartPoints.addEventListener("change", function (event) {
-    var damagesChart = battle.damagesChart;
+  reduceChartPoints.addEventListener("change", function () {
     var startDisplayTime = performance.now();
+    var scatterDataByType = battle.scatterDataByType;
+    var {chart, maxPoints, chart: {data: {datasets}}} = battle.damagesChart;
 
-    addToDamagesChart(
-      battle.scatterDataByType,
-      damagesChart,
-      event.target.checked
-    );
+    for (var index = 0; index < datasets.length; index++) {
+      var dataset = datasets[index];  
+      var scatterData = scatterDataByType[dataset.name];
+  
+      if (dataset.canBeReduced && reduceChartPoints.checked) {
+        dataset.data = aggregateDamages(scatterData, maxPoints);
+      } else {
+        dataset.data = scatterData;
+      }
+    }
+
+    chart.update();
 
     displayTime.textContent = numberFormat.format(
       (performance.now() - startDisplayTime) / 1000
