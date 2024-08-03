@@ -83,13 +83,10 @@ function addRowToTableResultHistory(
 }
 
 function prepareDamagesData(
-  battle,
   damagesWeightedByType,
   possibleDamagesCount,
   totalCardinal
 ) {
-  var displayReducePoints = {};
-  var maxPoints = battle.damagesChart.maxPoints;
   var minDamages = Infinity;
   var maxDamages = 0;
   var scatterDataByType = {};
@@ -130,10 +127,6 @@ function prepareDamagesData(
 
     var scatterDataLength = scatterData.length;
 
-    if (scatterDataLength >= 2 * maxPoints) {
-      displayReducePoints[damagesTypeName] = true;
-    }
-
     possibleDamagesCount += possibleDamagesCountTemp;
     uniqueDamagesCount += scatterDataLength;
 
@@ -151,19 +144,13 @@ function prepareDamagesData(
     minDamages,
     maxDamages,
     scatterDataByType,
-    displayReducePoints,
     possibleDamagesCount,
     uniqueDamagesCount,
   ];
 }
 
-function aggregateDamages(scatterData, maxPoints, reducePoints) {
+function aggregateDamages(scatterData, maxPoints) {
   var dataLength = scatterData.length;
-
-  if (dataLength <= 2 * maxPoints || !reducePoints) {
-    return scatterData;
-  }
-
   var remainingData = dataLength;
   var aggregateScatterData = [];
 
@@ -191,34 +178,59 @@ function aggregateDamages(scatterData, maxPoints, reducePoints) {
 }
 
 function addToDamagesChart(scatterDataByType, damagesChart, reducePoints) {
-  var chart = damagesChart.chart;
+  var { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
+    damagesChart;
+  var isFirstDataset = true;
+  var datasets = chart.data.datasets;
+  var canRemoveAnimation = false;
 
-  clearDamageChart(chart);
+  datasets.length = 0;
 
-  for (var damagesTypeName in scatterDataByType) {
-    if (damagesTypeName === "miss") {
+  for (var index = 0; index < datasetsStyle.length; index++) {
+    var dataset = copyObject(datasetsStyle[index]);
+
+    if (!scatterDataByType.hasOwnProperty(dataset.name)) {
       continue;
     }
 
-    var dataset = copyObject(damagesChart.dataset[damagesTypeName]);
-    var scatterData = scatterDataByType[damagesTypeName];
+    var scatterData = scatterDataByType[dataset.name];
+    var canBeReduced = scatterData.length > 2 * maxPoints;
 
-    dataset.data = aggregateDamages(
-      scatterData,
-      damagesChart.maxPoints,
-      reducePoints
-    );
-    chart.data.datasets.push(dataset);
+    dataset.hidden = !isFirstDataset;
+    dataset.canBeReduced = canBeReduced;
+
+    if (canBeReduced) {
+      canRemoveAnimation = true;
+    }
+
+    if (canBeReduced && reducePoints) {
+      dataset.data = aggregateDamages(scatterData, maxPoints);
+    } else {
+      dataset.data = scatterData;
+    }
+
+    if (isFirstDataset) {
+      isFirstDataset = false;
+
+      if (canBeReduced) {
+        showElement(reduceChartPointsContainer);
+      } else {
+        hideElement(reduceChartPointsContainer);
+      }
+    }
+
+    datasets.push(dataset);
   }
+
   chart.data.missPercentage = scatterDataByType.miss;
 
-  if (reducePoints) {
+  if (!canRemoveAnimation && reducePoints) {
     addChartAnimation(chart);
   } else {
     removeChartAnimation(chart);
   }
 
-  damagesChart.chart.update();
+  chart.update();
 }
 
 function addChartAnimation(chart) {
@@ -233,10 +245,6 @@ function removeChartAnimation(chart) {
   chart.options.animations.colors = false;
   chart.options.animations.x = false;
   chart.options.transitions.active.animation.duration = 0;
-}
-
-function clearDamageChart(chart) {
-  chart.data.datasets = [];
 }
 
 function updateDamagesChartDescription(
@@ -991,8 +999,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-          pseudo +
-          " ?"
+            pseudo +
+            " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -1536,7 +1544,7 @@ function calcMainAttackValue(attacker) {
     if (attacker.hasOwnProperty("weaponUpgrade")) {
       rawWeaponAttackValue = weaponUpgrades[attacker.weaponUpgrade];
     } else {
-      console.log("Warming: weaponUpgrade is missing.")
+      console.log("Warming: weaponUpgrade is missing.");
       rawWeaponAttackValue = weaponUpgrades[weaponUpgrades.length - 1];
     }
 
@@ -1631,7 +1639,7 @@ function calcSecondaryAttackValue(attacker) {
     attackValueOther: attackValueOther,
     totalCardinal: totalCardinal,
     weights: calcWeights(minAttackValue, maxAttackValue, minInterval),
-    possibleDamagesCount: maxAttackValue - minAttackValue + 1
+    possibleDamagesCount: maxAttackValue - minAttackValue + 1,
   };
 }
 
@@ -1685,7 +1693,7 @@ function calcMagicAttackValue(attacker) {
     maxMagicAttackValue: maxMagicAttackValue,
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
-    possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1
+    possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1,
   };
 }
 
@@ -2533,7 +2541,7 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2587,7 +2595,7 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-              1.1,
+                1.1,
               1
             );
           };
@@ -2597,7 +2605,7 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2720,8 +2728,8 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk +
-              (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
-              skillPower,
+                (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
+                  skillPower,
               1
             );
           };
@@ -2734,8 +2742,8 @@ function getSkillFormula(battle, skillId, battleValues) {
             return floorMultiplication(
               (atk +
                 (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
-                skillPower) *
-              1.2,
+                  skillPower) *
+                1.2,
               1
             );
           };
@@ -2760,9 +2768,9 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-              2 * lv +
-              2 * int +
-              (2 * atk + 4 * str + 14 * int) * skillPower,
+                2 * lv +
+                2 * int +
+                (2 * atk + 4 * str + 14 * int) * skillPower,
               1
             );
           };
@@ -2774,9 +2782,9 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk +
-              2 * lv +
-              2 * int +
-              (1.5 * atk + str + 12 * int) * skillPower,
+                2 * lv +
+                2 * int +
+                (1.5 * atk + str + 12 * int) * skillPower,
               1
             );
           };
@@ -2787,9 +2795,9 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              5 * lv +
-              2 * int +
-              (10 * int + 7 * mav + variation) * attackFactor * skillPower,
+                5 * lv +
+                2 * int +
+                (10 * int + 7 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -2813,9 +2821,9 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              5 * lv +
-              2 * int +
-              (13 * int + 6 * mav + variation) * attackFactor * skillPower,
+                5 * lv +
+                2 * int +
+                (13 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -2839,9 +2847,9 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               30 +
-              2 * lv +
-              2 * int +
-              (7 * int + 6 * mav + variation) * attackFactor * skillPower,
+                2 * lv +
+                2 * int +
+                (7 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -2862,10 +2870,10 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav) {
             return floorMultiplication(
               120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-              attackFactor *
-              skillPower,
+                6 * lv +
+                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -2879,8 +2887,8 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-              5 * lv +
-              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+                5 * lv +
+                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
               1
             );
           };
@@ -2892,10 +2900,10 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-              5 * lv +
-              (16 * int + 6 * dex + 6 * mav + 120) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (16 * int + 6 * dex + 6 * mav + 120) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -2908,10 +2916,10 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-              3 * lv +
-              (20 * int + 3 * str + 10 * mav + 100) *
-              attackFactor *
-              skillPower,
+                3 * lv +
+                (20 * int + 3 * str + 10 * mav + 100) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -2926,10 +2934,10 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               60 +
-              5 * lv +
-              (8 * int + 2 * dex + 8 * mav + variation) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (8 * int + 2 * dex + 8 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -2942,10 +2950,10 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              4 * lv +
-              (13 * int + 2 * str + 10 * mav + variation) *
-              attackFactor *
-              skillPower,
+                4 * lv +
+                (13 * int + 2 * str + 10 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -2959,10 +2967,10 @@ function getSkillFormula(battle, skillId, battleValues) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               50 +
-              5 * lv +
-              (8 * int + 2 * str + 8 * mav + variation) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (8 * int + 2 * str + 8 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3355,12 +3363,14 @@ function calcDamages(attacker, victim, attackType, battle) {
     getSkillFormula(battle, skillId, battleValues);
   }
 
-  var { attackValues: { totalCardinal, possibleDamagesCount } } = battleValues;
+  var {
+    attackValues: { totalCardinal, possibleDamagesCount },
+  } = battleValues;
 
   return {
     damagesWeightedByType: damagesCalculator(battleValues),
     totalCardinal: totalCardinal,
-    possibleDamagesCount: possibleDamagesCount
+    possibleDamagesCount: possibleDamagesCount,
   };
 }
 
@@ -3592,19 +3602,19 @@ function displayResults(
     minDamages,
     maxDamages,
     scatterDataByType,
-    reducePoints,
     possibleDamagesCount,
     uniqueDamagesCount,
   ] = prepareDamagesData(
-    battle,
     damagesWeightedByType,
     possibleDamagesCount,
     totalCardinal
   );
 
-  reducePoints &&= battle.reduceChartPoints.checked;
-
-  addToDamagesChart(scatterDataByType, battle.damagesChart, reducePoints);
+  addToDamagesChart(
+    scatterDataByType,
+    battle.damagesChart,
+    battle.reduceChartPoints.checked
+  );
   updateDamagesChartDescription(
     battle.uniqueDamagesCounters,
     uniqueDamagesCount,
@@ -3665,7 +3675,12 @@ function displayFightResults(
   );
 }
 
-function displayFightInfo(possibleDamagesCount, damagesTime, displayTime, battle) {
+function displayFightInfo(
+  possibleDamagesCount,
+  damagesTime,
+  displayTime,
+  battle
+) {
   var container = battle.possibleDamagesCounter.parentElement;
 
   if (possibleDamagesCount <= 1) {
@@ -3675,7 +3690,8 @@ function displayFightInfo(possibleDamagesCount, damagesTime, displayTime, battle
     showElement(container);
   }
 
-  possibleDamagesCount = battle.numberFormats.default.format(possibleDamagesCount);
+  possibleDamagesCount =
+    battle.numberFormats.default.format(possibleDamagesCount);
   damagesTime = battle.numberFormats.second.format(damagesTime / 1000);
   displayTime = battle.numberFormats.second.format(displayTime / 1000);
 
@@ -3720,12 +3736,8 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    var { damagesWeightedByType, totalCardinal, possibleDamagesCount } = calcDamages(
-      attacker,
-      victim,
-      attackType,
-      battle
-    );
+    var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
+      calcDamages(attacker, victim, attackType, battle);
 
     endDamagesTime = performance.now();
 
@@ -3949,8 +3961,7 @@ function initResultTableHistory(battle) {
 }
 
 function initChart(battle, chartSource) {
-  var translation = battle.translation;
-  var maxPoints = 500;
+  var { translation, reduceChartPointsContainer } = battle;
 
   function createChart() {
     var percentFormat = battle.numberFormats.percent;
@@ -4001,17 +4012,6 @@ function initChart(battle, chartSource) {
 
         ctx.restore();
       },
-      beforeUpdate(chart) {
-        var datasets = chart.data.datasets;
-
-        if (datasets.length > 0) {
-          datasets[0].hidden = false;
-
-          for (let index = 1; index < datasets.length; index++) {
-            datasets[index].hidden = true;
-          }
-        }
-      }
     };
 
     Chart.register(customPlugins);
@@ -4032,6 +4032,35 @@ function initChart(battle, chartSource) {
         plugins: {
           legend: {
             display: true,
+            onClick: function (e, legendItem, legend) {
+              var index = legendItem.datasetIndex;
+              var ci = legend.chart;
+              var datasets = ci.data.datasets;
+              var hideReducePoints = true;
+
+              if (ci.isDatasetVisible(index)) {
+                ci.hide(index);
+                legendItem.hidden = true;
+              } else {
+                ci.show(index);
+                legendItem.hidden = false;
+              }
+
+              for (var index in datasets) {
+                if (
+                  ci.isDatasetVisible(index) &&
+                  datasets[index].canBeReduced
+                ) {
+                  showElement(reduceChartPointsContainer);
+                  hideReducePoints = false;
+                  break;
+                }
+              }
+
+              if (hideReducePoints) {
+                hideElement(reduceChartPointsContainer);
+              }
+            },
           },
           title: {
             display: true,
@@ -4114,32 +4143,41 @@ function initChart(battle, chartSource) {
       },
     });
 
-    var dataset = {
-      normalHit: {
+    var datasetsStyle = [
+      {
+        name: "normalHit",
+        canBeReduced: false,
         label: translation.normalHit,
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         borderColor: "rgba(75, 192, 192, 1)",
       },
-      piercingHit: {
+      {
+        name: "piercingHit",
+        canBeReduced: false,
         label: translation.piercingHit,
         backgroundColor: "rgba(192, 192, 75, 0.2)",
         borderColor: "rgba(192, 192, 75, 1)",
       },
-      criticalHit: {
+      {
+        name: "criticalHit",
+        canBeReduced: false,
         label: translation.criticalHit,
         backgroundColor: "rgba(192, 75, 192, 0.2)",
         borderColor: "rgba(192, 75, 192, 1)",
       },
-      criticalPiercingHit: {
+      {
+        name: "criticalPiercingHit",
+        canBeReduced: false,
         label: translation.criticalPiercingHit,
         backgroundColor: "rgba(75, 75, 192, 0.2)",
         borderColor: "rgba(75, 75, 192, 1)",
       },
-    };
+    ];
     battle.damagesChart = {
       chart: chart,
-      dataset: dataset,
+      datasetsStyle: datasetsStyle,
       maxPoints: 500,
+      reduceChartPointsContainer: reduceChartPointsContainer,
     };
   }
 
