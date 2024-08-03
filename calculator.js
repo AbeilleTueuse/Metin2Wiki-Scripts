@@ -3244,9 +3244,6 @@ function calcPhysicalSkillDamages(battleValues) {
           savedDamages[damagesWithFormula] = finalDamages;
           addKeyValue(damagesWeighted, finalDamages, weight);
         }
-        if (damagesType.name === "normalHit") {
-          break;
-        }
       }
     }
   }
