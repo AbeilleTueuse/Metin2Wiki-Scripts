@@ -679,14 +679,13 @@ function characterCreationListener(characters, battle) {
   });
 }
 
-function downloadCharacter(character) {
-  var content = JSON.stringify(character);
+function downloadData(content, type, filename) {
   var link = document.createElement("a");
-  var blob = new Blob([content], { type: "text/plain" });
+  var blob = new Blob([content], { type: type });
   var blobURL = URL.createObjectURL(blob);
 
   link.href = blobURL;
-  link.download = character.name + ".txt";
+  link.download = filename;
   document.body.appendChild(link);
 
   link.click();
@@ -997,7 +996,12 @@ function handleClickOnCharacter(
         break;
 
       case "download":
-        downloadCharacter(characters.savedCharacters[pseudo]);
+        var character = characters.savedCharacters[pseudo];
+        downloadData(
+          JSON.stringify(character),
+          "text/plain",
+          character.name + ".txt"
+        );
         break;
 
       case "delete":
@@ -3574,6 +3578,8 @@ function reduceChartPointsListener(battle) {
 
 function downloadRawDataListener(battle) {
   var button = document.getElementById("download-raw-data");
+  var fileType = "text/csv;charset=utf-8;";
+  var filename = "raw_damages.csv";
 
   button.addEventListener("click", function (e) {
     var damagesWeightedByType = battle.damagesWeightedByType;
@@ -3593,17 +3599,7 @@ function downloadRawDataListener(battle) {
       }
     }
 
-    var link = document.createElement("a");
-    var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    var blobURL = URL.createObjectURL(blob);
-
-    link.href = blobURL;
-    link.download = "raw_damages.csv";
-    document.body.appendChild(link);
-
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(blobURL);
+    downloadData(csvContent, fileType, filename);
   });
 }
 
