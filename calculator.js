@@ -234,7 +234,7 @@ function handleChartAnimations(chart, addAnimations) {
   chart.options.animation = addAnimations;
   chart.options.animations.colors = addAnimations;
   chart.options.animations.x = addAnimations;
-  chart.options.transitions.active.animation.duration = addAnimations  * 1000;
+  chart.options.transitions.active.animation.duration = addAnimations * 1000;
 }
 
 function updateDamagesChartDescription(
