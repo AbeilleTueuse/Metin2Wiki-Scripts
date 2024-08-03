@@ -177,7 +177,11 @@ function aggregateDamages(scatterData, maxPoints) {
   return aggregateScatterData;
 }
 
-function addToDamagesChart(scatterDataByType, damagesChart, isReducePointsChecked) {
+function addToDamagesChart(
+  scatterDataByType,
+  damagesChart,
+  isReducePointsChecked
+) {
   var { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
     damagesChart;
   var isFirstDataset = true;
@@ -3541,12 +3545,18 @@ function reduceChartPointsListener(battle) {
   reduceChartPoints.addEventListener("change", function () {
     var startDisplayTime = performance.now();
     var scatterDataByType = battle.scatterDataByType;
-    var {chart, maxPoints, chart: {data: {datasets}}} = battle.damagesChart;
+    var {
+      chart,
+      maxPoints,
+      chart: {
+        data: { datasets },
+      },
+    } = battle.damagesChart;
 
     for (var index = 0; index < datasets.length; index++) {
-      var dataset = datasets[index];  
+      var dataset = datasets[index];
       var scatterData = scatterDataByType[dataset.name];
-  
+
       if (dataset.canBeReduced && reduceChartPoints.checked) {
         dataset.data = aggregateDamages(scatterData, maxPoints);
       } else {
