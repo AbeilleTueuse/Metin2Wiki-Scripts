@@ -12,6 +12,7 @@ function removeAccent(str) {
 
 function toNormalForm(str) {
   return removeAccent(str)
+    .replace("-", " ")
     .replace(/[^a-zA-Z0-9 ]/g, "")
     .toLowerCase();
 }
