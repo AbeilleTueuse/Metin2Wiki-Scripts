@@ -186,7 +186,6 @@ function addToDamagesChart(
     damagesChart;
   var isFirstDataset = true;
   var datasets = chart.data.datasets;
-  var canRemoveAnimation = false;
 
   datasets.length = 0;
 
@@ -203,10 +202,6 @@ function addToDamagesChart(
     dataset.hidden = !isFirstDataset;
     dataset.canBeReduced = canBeReduced;
 
-    if (canBeReduced) {
-      canRemoveAnimation = true;
-    }
-
     if (canBeReduced && isReducePointsChecked) {
       dataset.data = aggregateDamages(scatterData, maxPoints);
     } else {
@@ -218,8 +213,13 @@ function addToDamagesChart(
 
       if (canBeReduced) {
         showElement(reduceChartPointsContainer);
+
+        if (!isReducePointsChecked) {
+          handleChartAnimations(chart, false);
+        }
       } else {
         hideElement(reduceChartPointsContainer);
+        handleChartAnimations(chart, true);
       }
     }
 
