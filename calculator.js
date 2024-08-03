@@ -4040,17 +4040,13 @@ function initChart(battle, chartSource) {
             onClick: function (e, legendItem, legend) {
               var currentIndex = legendItem.datasetIndex;
               var ci = legend.chart;
+              var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
               var datasets = ci.data.datasets;
               var hideReducePoints = true;
               var isReducePointsChecked = reduceChartPoints.checked;
 
-              if (ci.isDatasetVisible(currentIndex)) {
-                ci.hide(currentIndex);
-                legendItem.hidden = true;
-              } else {
-                ci.show(currentIndex);
-                legendItem.hidden = false;
-              }
+              datasets[currentIndex].hidden = isCurrentDatasetVisible;
+              legendItem.hidden = isCurrentDatasetVisible;
 
               for (var index in datasets) {
                 if (
@@ -4069,6 +4065,8 @@ function initChart(battle, chartSource) {
               } else {
                 handleChartAnimations(ci, isReducePointsChecked);
               }
+
+              ci.update();
             },
           },
           title: {
