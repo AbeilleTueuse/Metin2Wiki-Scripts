@@ -227,28 +227,14 @@ function addToDamagesChart(
   }
 
   chart.data.missPercentage = scatterDataByType.miss;
-
-  if (!canRemoveAnimation && isReducePointsChecked) {
-    addChartAnimation(chart);
-  } else {
-    removeChartAnimation(chart);
-  }
-
   chart.update();
 }
 
-function addChartAnimation(chart) {
-  chart.options.animation = true;
-  chart.options.animations.colors = true;
-  chart.options.animations.x = true;
-  chart.options.transitions.active.animation.duration = 1000;
-}
-
-function removeChartAnimation(chart) {
-  chart.options.animation = false;
-  chart.options.animations.colors = false;
-  chart.options.animations.x = false;
-  chart.options.transitions.active.animation.duration = 0;
+function handleChartAnimations(chart, addAnimations) {
+  chart.options.animation = addAnimations;
+  chart.options.animations.colors = addAnimations;
+  chart.options.animations.x = addAnimations;
+  chart.options.transitions.active.animation.duration = addAnimations  * 1000;
 }
 
 function updateDamagesChartDescription(
@@ -3556,6 +3542,7 @@ function reduceChartPointsListener(battle) {
         data: { datasets },
       },
     } = battle.damagesChart;
+    var addAnimations = false;
 
     for (var index = 0; index < datasets.length; index++) {
       var dataset = datasets[index];
@@ -3563,11 +3550,12 @@ function reduceChartPointsListener(battle) {
 
       if (dataset.canBeReduced && reduceChartPoints.checked) {
         dataset.data = aggregateDamages(scatterData, maxPoints);
+        addAnimations = true;
       } else {
         dataset.data = scatterData;
       }
     }
-
+    handleChartAnimations(chart, addAnimations);
     chart.update();
 
     displayTime.textContent = numberFormat.format(
