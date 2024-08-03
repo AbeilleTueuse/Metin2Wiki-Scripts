@@ -3244,6 +3244,9 @@ function calcPhysicalSkillDamages(battleValues) {
           savedDamages[damagesWithFormula] = finalDamages;
           addKeyValue(damagesWeighted, finalDamages, weight);
         }
+        if (damagesType.name === "normalHit") {
+          break;
+        }
       }
     }
   }
@@ -3963,7 +3966,7 @@ function initResultTableHistory(battle) {
 }
 
 function initChart(battle, chartSource) {
-  var { translation, reduceChartPointsContainer } = battle;
+  var { translation, reduceChartPointsContainer, reduceChartPoints } = battle;
 
   function createChart() {
     var percentFormat = battle.numberFormats.percent;
@@ -4035,16 +4038,17 @@ function initChart(battle, chartSource) {
           legend: {
             display: true,
             onClick: function (e, legendItem, legend) {
-              var index = legendItem.datasetIndex;
+              var currentIndex = legendItem.datasetIndex;
               var ci = legend.chart;
               var datasets = ci.data.datasets;
               var hideReducePoints = true;
+              var isReducePointsChecked = reduceChartPoints.checked;
 
-              if (ci.isDatasetVisible(index)) {
-                ci.hide(index);
+              if (ci.isDatasetVisible(currentIndex)) {
+                ci.hide(currentIndex);
                 legendItem.hidden = true;
               } else {
-                ci.show(index);
+                ci.show(currentIndex);
                 legendItem.hidden = false;
               }
 
@@ -4061,6 +4065,9 @@ function initChart(battle, chartSource) {
 
               if (hideReducePoints) {
                 hideElement(reduceChartPointsContainer);
+                handleChartAnimations(ci, true);
+              } else {
+                handleChartAnimations(ci, isReducePointsChecked);
               }
             },
           },

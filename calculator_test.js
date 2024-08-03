@@ -2608,11 +2608,11 @@ function main() {
       console.log(JSON.parse(JSON.stringify(damagesWeightedByTypeReference)));
 
       if (isPC(attacker)) {
-        downloadCharacter(attacker);
+        downloadCharacter(JSON.stringify(attacker));
       }
 
       if (isPC(victim)) {
-        downloadCharacter(victim);
+        downloadCharacter(JSON.stringify(victim));
       }
       
       break;
