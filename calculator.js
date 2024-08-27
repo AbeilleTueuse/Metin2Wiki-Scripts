@@ -1232,7 +1232,6 @@ function characterManagement(characters, battle) {
   window.addEventListener("beforeunload", function (event) {
     if (characters.unsavedChanges) {
       event.preventDefault();
-      event.returnValue = "";
       return "";
     }
   });
