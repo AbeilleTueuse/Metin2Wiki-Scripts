@@ -1173,8 +1173,33 @@ function handleFocus() {
   });
 }
 
+function handleBonusVariation(target, bonusVariation) {
+  var {tab, input, inputDisplay, container, minValue, maxValue, step } = bonusVariation;
+  var targetValue = Number(target.value);
+
+  tab.click();
+  tab.scrollIntoView(true);
+
+  input.value = target.name;
+  inputDisplay.value = target.parentElement.textContent;
+
+  minValue.min = target.min;
+  minValue.max = target.max;
+  minValue.value = Math.max(targetValue - 10, target.min);
+
+  maxValue.min = target.min;
+  maxValue.max = target.max;
+  maxValue.value = Math.min(targetValue + 10, target.max);
+
+  step.min = target.min;
+  step.max = target.max;
+  step.value = 1;
+
+  showElement(container);
+}
+
 function characterManagement(characters, battle) {
-  var { newCharacterTemplate: characterTemplate, charactersContainer, addNewCharacterButton, saveButton, characterCreation } = characters;
+  var { newCharacterTemplate: characterTemplate, charactersContainer, addNewCharacterButton, saveButton, characterCreation, bonusVariation } = characters;
 
   Object.keys(characters.savedCharacters).forEach(function (pseudo) {
     handleNewCharacter(
@@ -1236,8 +1261,7 @@ function characterManagement(characters, battle) {
         return;
       }
 
-      console.log(target.name);
-      console.log(target.parentElement.textContent);
+      handleBonusVariation(target, bonusVariation);
     }
   });
 
@@ -4261,6 +4285,15 @@ function createDamageCalculatorInformation(chartSource) {
     yoharaCreation: document.getElementById("yohara-creation"),
     blessingCreation: document.getElementById("blessing-creation"),
     marriageCreation: document.getElementById("marriage-creation"),
+    bonusVariation: {
+      tab: document.getElementById("Variation"),
+      input: document.getElementById("bonus-variation"),
+      inputDisplay: document.getElementById("bonus-variation-display"),
+      container: document.getElementById("bonus-variation-range"),
+      minValue: document.getElementById("bonus-variation-min-value"),
+      maxValue: document.getElementById("bonus-variation-max-value"),
+      step: document.getElementById("bonus-variation-step"),
+    }
   };
 
   delete characters.newCharacterTemplate.dataset.click;
