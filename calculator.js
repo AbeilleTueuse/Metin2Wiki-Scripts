@@ -1175,15 +1175,34 @@ function handleFocus() {
 }
 
 function handleBonusVariation(target, bonusVariation) {
-  var { tab, input, inputDisplay, container, minValue, maxValue, step } =
+  var { tab, input, inputDisplay, container, referenceValue, minValue, maxValue, step } =
     bonusVariation;
+
+  if (container.contains(target)) {
+    return;
+  }
+
   var targetValue = Number(target.value);
+  var targetParent = target.parentElement;
+  var targetContent;
+  
+  if (targetParent.children.length <= 1) {
+    targetContent = targetParent.textContent;
+  } else {
+    targetContent = targetParent.querySelector("span:not(.tabber-noactive)").textContent;
+  }
 
   tab.click();
   tab.scrollIntoView(true);
 
   input.value = target.name;
-  inputDisplay.value = target.parentElement.textContent;
+
+  inputDisplay.value = targetContent;
+  inputDisplay.style.width = targetContent.length * 0.55 + "em";
+
+  referenceValue.min = target.min;
+  referenceValue.max = target.max;
+  referenceValue.value = targetValue;
 
   minValue.min = target.min;
   minValue.max = target.max;
@@ -4301,6 +4320,7 @@ function createDamageCalculatorInformation(chartSource) {
       input: document.getElementById("bonus-variation"),
       inputDisplay: document.getElementById("bonus-variation-display"),
       container: document.getElementById("bonus-variation-range"),
+      referenceValue: document.getElementById("bonus-variation-reference"),
       minValue: document.getElementById("bonus-variation-min-value"),
       maxValue: document.getElementById("bonus-variation-max-value"),
       step: document.getElementById("bonus-variation-step"),
