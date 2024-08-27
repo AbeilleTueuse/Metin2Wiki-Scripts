@@ -335,6 +335,14 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
   weaponDisplay.replaceChild(newText, oldText);
 }
 
+function handleBonusVariationDisplay(characterCreation, bonusVariation) {
+  var selectedBonus = characterCreation.bonusVariation.value;
+
+  if (characterCreation.hasOwnProperty(selectedBonus)) {
+    console.log(characterCreation[selectedBonus]);
+  }
+}
+
 function filterUpgrade(
   selectedRace,
   weaponUpgrade,
@@ -908,6 +916,7 @@ function updateForm(
   filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
   filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
   filterSkills(classChoice.value, characters.skillElementsToFilter);
+  handleBonusVariationDisplay(characterCreation, characters.bonusVariation);
 }
 
 function handleClickOnCharacter(
@@ -1175,8 +1184,16 @@ function handleFocus() {
 }
 
 function handleBonusVariation(target, bonusVariation) {
-  var { tab, input, inputDisplay, container, referenceValue, minValue, maxValue, step } =
-    bonusVariation;
+  var {
+    tab,
+    input,
+    inputDisplay,
+    container,
+    referenceValue,
+    minValue,
+    maxValue,
+    step,
+  } = bonusVariation;
 
   if (container.contains(target)) {
     return;
@@ -1185,11 +1202,13 @@ function handleBonusVariation(target, bonusVariation) {
   var targetValue = Number(target.value);
   var targetParent = target.parentElement;
   var targetContent;
-  
+
   if (targetParent.children.length <= 1) {
     targetContent = targetParent.textContent;
   } else {
-    targetContent = targetParent.querySelector("span:not(.tabber-noactive)").textContent;
+    targetContent = targetParent.querySelector(
+      "span:not(.tabber-noactive)"
+    ).textContent;
   }
 
   tab.click();
@@ -3788,6 +3807,8 @@ function createBattle(characters, battle) {
     var attackerName = battleInfo.get("attacker");
     var attackType = battleInfo.get("attackTypeSelection");
     var victimName = battleInfo.get("victim");
+    var attackerVariation;
+    var victimVariation;
 
     if (!attackerName && !attackType && !victimName) {
       return;
@@ -3795,14 +3816,22 @@ function createBattle(characters, battle) {
 
     if (isPseudoSaved(characters, attackerName)) {
       var attacker = copyObject(characters.savedCharacters[attackerName]);
+      attackerVariation = attacker.bonusVariation;
     } else {
       var attacker = createMonster(attackerName);
     }
 
     if (isPseudoSaved(characters, victimName)) {
       var victim = copyObject(characters.savedCharacters[victimName]);
+      victimVariation = victim.bonusVariation;
     } else {
       var victim = createMonster(victimName, attacker);
+    }
+
+    if (attackerVariation && attacker.hasOwnProperty(attackerVariation)) {
+      console.log(attacker[attackerVariation]);
+    } else if (victimVariation && victim.hasOwnProperty(victimVariation)) {
+      console.log(victim[victimVariation]);
     }
 
     var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
