@@ -335,14 +335,6 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
   weaponDisplay.replaceChild(newText, oldText);
 }
 
-function handleBonusVariationDisplay(characterCreation, bonusVariation) {
-  var selectedBonus = characterCreation.bonusVariation.value;
-
-  if (characterCreation.hasOwnProperty(selectedBonus)) {
-    // console.log(characterCreation[selectedBonus]);
-  }
-}
-
 function filterUpgrade(
   selectedRace,
   weaponUpgrade,
@@ -916,7 +908,7 @@ function updateForm(
   filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
   filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
   filterSkills(classChoice.value, characters.skillElementsToFilter);
-  handleBonusVariationDisplay(characterCreation, characters.bonusVariation);
+  handleBonusVariationUpdate(characterCreation, characters.bonusVariation);
 }
 
 function handleClickOnCharacter(
@@ -1183,24 +1175,32 @@ function handleFocus() {
   });
 }
 
-function handleBonusVariation(target, bonusVariation) {
-  var {
-    tab,
-    input,
-    inputDisplay,
-    container,
-    referenceValue,
-    minValue,
-    maxValue,
-    step,
-  } = bonusVariation;
+function handleBonusVariationUpdate(characterCreation, bonusVariation) {
+  var selectedBonus = characterCreation.bonusVariation.value;
 
-  if (container.contains(target)) {
+  if (characterCreation.hasOwnProperty(selectedBonus)) {
+    handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
+  } else {
+    showElement(bonusVariation.container);
+  }
+}
+
+function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
+  var { inputDisplay, referenceValue, minValue, maxValue, step, container } =
+    bonusVariation;
+
+  var {
+    min: targetMin,
+    max: targetMax,
+    name: targetName,
+    value: targetValue,
+    parentElement: targetParent,
+  } = target;
+
+  if (container.contains(target) || targetValue == 0) {
     return;
   }
 
-  var targetValue = Number(target.value);
-  var targetParent = target.parentElement;
   var targetContent;
 
   if (targetParent.children.length <= 1) {
@@ -1211,30 +1211,33 @@ function handleBonusVariation(target, bonusVariation) {
     ).textContent;
   }
 
-  tab.click();
-  tab.scrollIntoView(true);
-
-  input.value = target.name;
-  input.dispatchEvent(new Event("change", { bubbles: true }));
-
   inputDisplay.value = targetContent;
   inputDisplay.style.width = targetContent.length * 0.55 + "em";
 
-  referenceValue.min = target.min;
-  referenceValue.max = target.max;
-  referenceValue.value = targetValue;
+  referenceValue.min = targetMin;
+  referenceValue.max = targetMax;
 
-  minValue.min = target.min;
-  minValue.max = target.max;
-  minValue.value = Math.max(targetValue - 10, target.min);
+  minValue.min = targetMin;
+  minValue.max = targetMax;
 
-  maxValue.min = target.min;
-  maxValue.max = target.max;
-  maxValue.value = Math.min(targetValue + 10, target.max);
+  maxValue.min = targetMin;
+  maxValue.max = targetMax;
 
-  step.min = target.min;
-  step.max = target.max;
-  step.value = 1;
+  step.min = 1;
+  step.max = targetMax - targetMin;
+
+  if (isSelectedByUser) {
+    input.value = targetName;
+    referenceValue.value = targetValue;
+    minValue.value = Math.max(targetValue - 10, targetMin);
+    maxValue.value = Math.min(targetValue + 10, targetMax);
+    step.value = 1;
+
+    tab.click();
+    tab.scrollIntoView(true);
+
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
 
   showElement(container);
 }
@@ -1309,7 +1312,7 @@ function characterManagement(characters, battle) {
         return;
       }
 
-      handleBonusVariation(target, bonusVariation);
+      handleBonusVariation(target, bonusVariation, true);
     }
   });
 
@@ -1623,9 +1626,10 @@ function calcMainAttackValue(attacker) {
     var maxUpgrade = weaponUpgrades.length - 1;
 
     if (attacker.hasOwnProperty("weaponUpgrade")) {
-      rawWeaponAttackValue = weaponUpgrades[Math.min(attacker.weaponUpgrade, maxUpgrade)];
-    
-    // rare bug when weaponUpgrade is deleted
+      rawWeaponAttackValue =
+        weaponUpgrades[Math.min(attacker.weaponUpgrade, maxUpgrade)];
+
+      // rare bug when weaponUpgrade is deleted
     } else {
       console.log("Warming: weaponUpgrade is missing.");
       rawWeaponAttackValue = weaponUpgrades[maxUpgrade];
