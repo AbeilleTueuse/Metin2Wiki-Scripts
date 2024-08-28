@@ -339,7 +339,7 @@ function handleBonusVariationDisplay(characterCreation, bonusVariation) {
   var selectedBonus = characterCreation.bonusVariation.value;
 
   if (characterCreation.hasOwnProperty(selectedBonus)) {
-    console.log(characterCreation[selectedBonus]);
+    // console.log(characterCreation[selectedBonus]);
   }
 }
 
@@ -370,21 +370,21 @@ function filterUpgrade(
     hideElement(weaponUpgrade.parentElement);
   } else {
     showElement(weaponUpgrade.parentElement);
+  }
 
-    weaponUpgrade.innerHTML = "";
+  weaponUpgrade.innerHTML = "";
 
-    for (var upgrade = 0; upgrade < upgradeNumber; upgrade++) {
-      var option = document.createElement("option");
-      option.value = upgrade;
-      option.textContent = "+" + upgrade;
-      weaponUpgrade.appendChild(option);
-    }
-    if (currentUpgrade === undefined) {
-      option.selected = true;
-    } else {
-      weaponUpgrade.value = currentUpgrade;
-      currentUpgrade = undefined;
-    }
+  for (var upgrade = 0; upgrade < upgradeNumber; upgrade++) {
+    var option = document.createElement("option");
+    option.value = upgrade;
+    option.textContent = "+" + upgrade;
+    weaponUpgrade.appendChild(option);
+  }
+  if (currentUpgrade === undefined) {
+    option.selected = true;
+  } else {
+    weaponUpgrade.value = currentUpgrade;
+    currentUpgrade = undefined;
   }
 }
 
@@ -1620,16 +1620,13 @@ function calcMainAttackValue(attacker) {
   if (isPC(attacker)) {
     var weaponUpgrades = attacker.weapon.upgrades;
 
-    // rare bug when weaponUpgrade is deleted
     if (attacker.hasOwnProperty("weaponUpgrade")) {
       rawWeaponAttackValue = weaponUpgrades[attacker.weaponUpgrade];
+    
+    // rare bug when weaponUpgrade is deleted
     } else {
       console.log("Warming: weaponUpgrade is missing.");
       rawWeaponAttackValue = weaponUpgrades[weaponUpgrades.length - 1];
-    }
-
-    if (!rawWeaponAttackValue) {
-      rawWeaponAttackValue = 0;
     }
 
     leadership = attacker.leadership;
@@ -3829,9 +3826,9 @@ function createBattle(characters, battle) {
     }
 
     if (attackerVariation && attacker.hasOwnProperty(attackerVariation)) {
-      console.log(attacker[attackerVariation]);
+      // console.log(attacker[attackerVariation]);
     } else if (victimVariation && victim.hasOwnProperty(victimVariation)) {
-      console.log(victim[victimVariation]);
+      // console.log(victim[victimVariation]);
     }
 
     var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
