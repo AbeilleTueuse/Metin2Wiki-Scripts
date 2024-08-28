@@ -1215,6 +1215,7 @@ function handleBonusVariation(target, bonusVariation) {
   tab.scrollIntoView(true);
 
   input.value = target.name;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
 
   inputDisplay.value = targetContent;
   inputDisplay.style.width = targetContent.length * 0.55 + "em";
