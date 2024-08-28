@@ -85,14 +85,14 @@ function addRowToTableResultHistory(
 
 function prepareDamagesData(
   damagesWeightedByType,
-  possibleDamagesCount,
+  possibleDamagesCountTemp,
   totalCardinal
 ) {
   var minDamages = Infinity;
   var maxDamages = 0;
   var scatterDataByType = {};
   var sumDamages = 0;
-  var possibleDamagesCountTemp = possibleDamagesCount;
+  var possibleDamagesCount = 0;
   var uniqueDamagesCount = 0;
 
   for (var damagesTypeName in damagesWeightedByType) {
