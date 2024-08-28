@@ -335,6 +335,14 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
   weaponDisplay.replaceChild(newText, oldText);
 }
 
+function handleBonusVariationDisplay(characterCreation, bonusVariation) {
+  var selectedBonus = characterCreation.bonusVariation.value;
+
+  if (characterCreation.hasOwnProperty(selectedBonus)) {
+    // console.log(characterCreation[selectedBonus]);
+  }
+}
+
 function filterUpgrade(
   selectedRace,
   weaponUpgrade,
@@ -362,21 +370,21 @@ function filterUpgrade(
     hideElement(weaponUpgrade.parentElement);
   } else {
     showElement(weaponUpgrade.parentElement);
+  }
 
-    weaponUpgrade.innerHTML = "";
+  weaponUpgrade.innerHTML = "";
 
-    for (var upgrade = 0; upgrade < upgradeNumber; upgrade++) {
-      var option = document.createElement("option");
-      option.value = upgrade;
-      option.textContent = "+" + upgrade;
-      weaponUpgrade.appendChild(option);
-    }
-    if (currentUpgrade === undefined) {
-      option.selected = true;
-    } else {
-      weaponUpgrade.value = currentUpgrade;
-      currentUpgrade = undefined;
-    }
+  for (var upgrade = 0; upgrade < upgradeNumber; upgrade++) {
+    var option = document.createElement("option");
+    option.value = upgrade;
+    option.textContent = "+" + upgrade;
+    weaponUpgrade.appendChild(option);
+  }
+  if (currentUpgrade === undefined) {
+    option.selected = true;
+  } else {
+    weaponUpgrade.value = currentUpgrade;
+    currentUpgrade = undefined;
   }
 }
 
@@ -908,6 +916,7 @@ function updateForm(
   filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
   filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
   filterSkills(classChoice.value, characters.skillElementsToFilter);
+  handleBonusVariationDisplay(characterCreation, characters.bonusVariation);
 }
 
 function handleClickOnCharacter(
@@ -1174,9 +1183,70 @@ function handleFocus() {
   });
 }
 
+function handleBonusVariation(target, bonusVariation) {
+  var {
+    tab,
+    input,
+    inputDisplay,
+    container,
+    referenceValue,
+    minValue,
+    maxValue,
+    step,
+  } = bonusVariation;
+
+  if (container.contains(target)) {
+    return;
+  }
+
+  var targetValue = Number(target.value);
+  var targetParent = target.parentElement;
+  var targetContent;
+
+  if (targetParent.children.length <= 1) {
+    targetContent = targetParent.textContent;
+  } else {
+    targetContent = targetParent.querySelector(
+      "span:not(.tabber-noactive)"
+    ).textContent;
+  }
+
+  tab.click();
+  tab.scrollIntoView(true);
+
+  input.value = target.name;
+
+  inputDisplay.value = targetContent;
+  inputDisplay.style.width = targetContent.length * 0.55 + "em";
+
+  referenceValue.min = target.min;
+  referenceValue.max = target.max;
+  referenceValue.value = targetValue;
+
+  minValue.min = target.min;
+  minValue.max = target.max;
+  minValue.value = Math.max(targetValue - 10, target.min);
+
+  maxValue.min = target.min;
+  maxValue.max = target.max;
+  maxValue.value = Math.min(targetValue + 10, target.max);
+
+  step.min = target.min;
+  step.max = target.max;
+  step.value = 1;
+
+  showElement(container);
+}
+
 function characterManagement(characters, battle) {
-  var characterTemplate = characters.newCharacterTemplate;
-  var charactersContainer = characters.charactersContainer;
+  var {
+    newCharacterTemplate: characterTemplate,
+    charactersContainer,
+    addNewCharacterButton,
+    saveButton,
+    characterCreation,
+    bonusVariation,
+  } = characters;
 
   Object.keys(characters.savedCharacters).forEach(function (pseudo) {
     handleNewCharacter(
@@ -1188,7 +1258,7 @@ function characterManagement(characters, battle) {
     );
   });
 
-  characters.addNewCharacterButton.addEventListener("click", function (event) {
+  addNewCharacterButton.addEventListener("click", function (event) {
     if (!characters.unsavedChanges) {
       addNewCharacter(
         characters,
@@ -1208,7 +1278,7 @@ function characterManagement(characters, battle) {
           charactersContainer,
           battle
         );
-        saveButtonGreen(characters.saveButton);
+        saveButtonGreen(saveButton);
         characters.unsavedChanges = false;
       }
     }
@@ -1221,9 +1291,25 @@ function characterManagement(characters, battle) {
     battle
   );
 
-  characters.characterCreation.addEventListener("change", function () {
-    saveButtonOrange(characters.saveButton);
+  characterCreation.addEventListener("change", function () {
+    saveButtonOrange(saveButton);
     characters.unsavedChanges = true;
+  });
+
+  characterCreation.addEventListener("click", function (event) {
+    if (event.shiftKey || event.ctrlKey) {
+      var target = event.target;
+
+      if (target.tagName !== "INPUT") {
+        target = target.querySelector("input");
+      }
+
+      if (!target || target.type !== "number") {
+        return;
+      }
+
+      handleBonusVariation(target, bonusVariation);
+    }
   });
 
   filterForm(characters, battle);
@@ -1233,7 +1319,6 @@ function characterManagement(characters, battle) {
   window.addEventListener("beforeunload", function (event) {
     if (characters.unsavedChanges) {
       event.preventDefault();
-      event.returnValue = "";
       return "";
     }
   });
@@ -1534,17 +1619,15 @@ function calcMainAttackValue(attacker) {
 
   if (isPC(attacker)) {
     var weaponUpgrades = attacker.weapon.upgrades;
+    var maxUpgrade = weaponUpgrades.length - 1;
 
-    // rare bug when weaponUpgrade is deleted
     if (attacker.hasOwnProperty("weaponUpgrade")) {
-      rawWeaponAttackValue = weaponUpgrades[attacker.weaponUpgrade];
+      rawWeaponAttackValue = weaponUpgrades[Math.min(attacker.weaponUpgrade, maxUpgrade)];
+    
+    // rare bug when weaponUpgrade is deleted
     } else {
       console.log("Warming: weaponUpgrade is missing.");
-      rawWeaponAttackValue = weaponUpgrades[weaponUpgrades.length - 1];
-    }
-
-    if (!rawWeaponAttackValue) {
-      rawWeaponAttackValue = 0;
+      rawWeaponAttackValue = weaponUpgrades[maxUpgrade];
     }
 
     leadership = attacker.leadership;
@@ -3722,6 +3805,8 @@ function createBattle(characters, battle) {
     var attackerName = battleInfo.get("attacker");
     var attackType = battleInfo.get("attackTypeSelection");
     var victimName = battleInfo.get("victim");
+    var attackerVariation;
+    var victimVariation;
 
     if (!attackerName && !attackType && !victimName) {
       return;
@@ -3729,14 +3814,22 @@ function createBattle(characters, battle) {
 
     if (isPseudoSaved(characters, attackerName)) {
       var attacker = copyObject(characters.savedCharacters[attackerName]);
+      attackerVariation = attacker.bonusVariation;
     } else {
       var attacker = createMonster(attackerName);
     }
 
     if (isPseudoSaved(characters, victimName)) {
       var victim = copyObject(characters.savedCharacters[victimName]);
+      victimVariation = victim.bonusVariation;
     } else {
       var victim = createMonster(victimName, attacker);
+    }
+
+    if (attackerVariation && attacker.hasOwnProperty(attackerVariation)) {
+      // console.log(attacker[attackerVariation]);
+    } else if (victimVariation && victim.hasOwnProperty(victimVariation)) {
+      // console.log(victim[victimVariation]);
     }
 
     var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
@@ -4249,6 +4342,16 @@ function createDamageCalculatorInformation(chartSource) {
     yoharaCreation: document.getElementById("yohara-creation"),
     blessingCreation: document.getElementById("blessing-creation"),
     marriageCreation: document.getElementById("marriage-creation"),
+    bonusVariation: {
+      tab: document.getElementById("Variation"),
+      input: document.getElementById("bonus-variation"),
+      inputDisplay: document.getElementById("bonus-variation-display"),
+      container: document.getElementById("bonus-variation-range"),
+      referenceValue: document.getElementById("bonus-variation-reference"),
+      minValue: document.getElementById("bonus-variation-min-value"),
+      maxValue: document.getElementById("bonus-variation-max-value"),
+      step: document.getElementById("bonus-variation-step"),
+    },
   };
 
   delete characters.newCharacterTemplate.dataset.click;
