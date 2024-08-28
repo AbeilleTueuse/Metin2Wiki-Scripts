@@ -1619,14 +1619,15 @@ function calcMainAttackValue(attacker) {
 
   if (isPC(attacker)) {
     var weaponUpgrades = attacker.weapon.upgrades;
+    var maxUpgrade = weaponUpgrades.length - 1;
 
     if (attacker.hasOwnProperty("weaponUpgrade")) {
-      rawWeaponAttackValue = weaponUpgrades[attacker.weaponUpgrade];
+      rawWeaponAttackValue = weaponUpgrades[Math.min(attacker.weaponUpgrade, maxUpgrade)];
     
     // rare bug when weaponUpgrade is deleted
     } else {
       console.log("Warming: weaponUpgrade is missing.");
-      rawWeaponAttackValue = weaponUpgrades[weaponUpgrades.length - 1];
+      rawWeaponAttackValue = weaponUpgrades[maxUpgrade];
     }
 
     leadership = attacker.leadership;
