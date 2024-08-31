@@ -1181,7 +1181,7 @@ function handleBonusVariationUpdate(characterCreation, bonusVariation) {
   if (characterCreation.hasOwnProperty(selectedBonus)) {
     handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
   } else {
-    showElement(bonusVariation.container);
+    hideElement(bonusVariation.container);
   }
 }
 
@@ -1198,6 +1198,7 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   } = target;
 
   if (container.contains(target) || targetValue == 0) {
+    hideElement(container);
     return;
   }
 
@@ -1227,6 +1228,9 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   step.max = targetMax - targetMin;
 
   if (isSelectedByUser) {
+    var {input, tab} = bonusVariation;
+
+    targetValue = Number(targetValue);
     input.value = targetName;
     referenceValue.value = targetValue;
     minValue.value = Math.max(targetValue - 10, targetMin);
