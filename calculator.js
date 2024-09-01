@@ -83,6 +83,24 @@ function addRowToTableResultHistory(
   cell.appendChild(deleteFightTemplate.cloneNode(true));
 }
 
+function calcMeanDamages(damagesWeightedByType, totalCardinal) {
+  var sumDamages = 0;
+
+  for (var damagesTypeName in damagesWeightedByType) {
+    if (damagesTypeName === "miss") {
+      continue;
+    }
+
+    var damagesWeighted = damagesWeightedByType[damagesTypeName];
+
+    for (var damages in damagesWeighted) {
+      sumDamages += damages * damagesWeighted[damages];
+    }
+  }
+
+  return sumDamages / totalCardinal;
+}
+
 function prepareDamagesData(
   damagesWeightedByType,
   possibleDamagesCountTemp,
@@ -3500,6 +3518,74 @@ function calcDamages(attacker, victim, attackType, battle) {
   };
 }
 
+function damagesWithoutVariation(
+  attacker,
+  victim,
+  attackType,
+  battle,
+  characters
+) {
+  startDamagesTime = performance.now();
+
+  var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
+    calcDamages(attacker, victim, attackType, battle);
+
+  endDamagesTime = performance.now();
+
+  possibleDamagesCount = displayResults(
+    possibleDamagesCount,
+    totalCardinal,
+    damagesWeightedByType,
+    battle,
+    attacker.name,
+    victim.name
+  );
+
+  endDisplayTime = performance.now();
+
+  displayFightInfo(
+    possibleDamagesCount,
+    endDamagesTime - startDamagesTime,
+    endDisplayTime - endDamagesTime,
+    battle
+  );
+  addPotentialErrorInformation(
+    battle.errorInformation,
+    attacker,
+    victim,
+    characters
+  );
+
+  hideElement(battle.bonusVariationResultContainer);
+  showElement(battle.fightResultContainer);
+}
+
+function damagesWithVariation(attacker, victim, attackType, battle, entity, entityVariation) {
+  startDamagesTime = performance.now();
+
+  for (
+    var bonusValue = entity.bonusVariationMinValue;
+    bonusValue <= entity.bonusVariationMaxValue;
+    bonusValue += entity.bonusVariationStep
+  ) {
+    entity[entityVariation] = bonusValue;
+
+    var { damagesWeightedByType, totalCardinal } = calcDamages(
+      attacker,
+      victim,
+      attackType,
+      battle
+    );
+
+    meanDamages = calcMeanDamages(damagesWeightedByType, totalCardinal);
+  }
+
+  endDamagesTime = performance.now();
+
+  hideElement(battle.fightResultContainer);
+  showElement(battle.bonusVariationResultContainer);
+}
+
 function changeMonsterValues(monster, instance, attacker) {
   switch (instance) {
     case "SungMahiTower":
@@ -3841,8 +3927,6 @@ function createBattle(characters, battle) {
   battle.battleForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    startDamagesTime = performance.now();
-
     // auto save
     if (characters.unsavedChanges) {
       characters.saveButton.click();
@@ -3874,40 +3958,12 @@ function createBattle(characters, battle) {
     }
 
     if (attackerVariation && attacker.hasOwnProperty(attackerVariation)) {
-      // console.log(attacker[attackerVariation]);
+      damagesWithVariation(attacker, victim, attackType, battle, attacker, attackerVariation);
     } else if (victimVariation && victim.hasOwnProperty(victimVariation)) {
-      // console.log(victim[victimVariation]);
+      damagesWithVariation(attacker, victim, attackType, battle, victim, victimVariation);
+    } else {
+      damagesWithoutVariation(attacker, victim, attackType, battle, characters);
     }
-
-    var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
-      calcDamages(attacker, victim, attackType, battle);
-
-    endDamagesTime = performance.now();
-
-    possibleDamagesCount = displayResults(
-      possibleDamagesCount,
-      totalCardinal,
-      damagesWeightedByType,
-      battle,
-      attacker.name,
-      victim.name
-    );
-
-    endDisplayTime = performance.now();
-
-    displayFightInfo(
-      possibleDamagesCount,
-      endDamagesTime - startDamagesTime,
-      endDisplayTime - endDamagesTime,
-      battle
-    );
-    addPotentialErrorInformation(
-      battle.errorInformation,
-      attacker,
-      victim,
-      characters
-    );
-    showElement(battle.fightResultContainer);
   });
 }
 
