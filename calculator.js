@@ -1228,7 +1228,7 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   step.max = targetMax - targetMin;
 
   if (isSelectedByUser) {
-    var {input, tab} = bonusVariation;
+    var { input, tab } = bonusVariation;
 
     targetValue = Number(targetValue);
     input.value = targetName;
@@ -2966,6 +2966,20 @@ function getSkillFormula(battle, skillId, battleValues) {
           };
           improvedByBonus = true;
           break;
+        // Vague mortelle
+        case 9:
+          skillFormula = function (mav, variation) {
+            return floorMultiplication(
+              120 +
+                6 * lv +
+                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          skillInfo.range = [1, 1000];
+          break;
       }
     } else if (attackerClass === "dragon") {
       switch (skillId) {
@@ -3012,6 +3026,20 @@ function getSkillFormula(battle, skillId, battleValues) {
           };
           skillInfo.weaponBonus = [4, 10];
           improvedByBonus = true;
+          break;
+        // Météore
+        case 9:
+          skillFormula = function (mav, variation) {
+            return floorMultiplication(
+              120 +
+                6 * lv +
+                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+                  attackFactor *
+                  skillPower,
+              1
+            );
+          };
+          skillInfo.range = [1, 1000];
           break;
       }
     } else if (attackerClass === "heal") {
@@ -3110,6 +3138,16 @@ function getSkillFormula(battle, skillId, battleValues) {
             );
           };
           improvedByBonus = true;
+          break;
+        // Tempête cinglante
+        case 9:
+          skillFormula = function (atk, variation) {
+            return floorMultiplication(
+              1.8 * atk + (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
+              1
+            );
+          };
+          skillInfo.range = [1, 1000];
           break;
       }
     }
