@@ -3143,7 +3143,8 @@ function getSkillFormula(battle, skillId, battleValues) {
         case 9:
           skillFormula = function (atk, variation) {
             return floorMultiplication(
-              1.8 * atk + (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
+              1.8 * atk +
+                (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
               1
             );
           };
@@ -3783,7 +3784,7 @@ function displayFightResults(
     numberFormats: { default: numberFormat },
     deleteFightTemplate,
   } = battle;
-  
+
   hideElement(tableResultHistory.rows[1]);
 
   var valuesToDisplay = [
@@ -4428,7 +4429,9 @@ function createDamageCalculatorInformation(chartSource) {
       .children[0],
     errorInformation: {},
     fightResultContainer: document.getElementById("fight-result-container"),
-    bonusVariationResultContainer: document.getElementById("bonus-variation-result-container"),
+    bonusVariationResultContainer: document.getElementById(
+      "bonus-variation-result-container"
+    ),
     reduceChartPointsContainer: document.getElementById(
       "reduce-chart-points-container"
     ),
