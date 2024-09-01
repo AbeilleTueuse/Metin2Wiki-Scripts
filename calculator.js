@@ -3783,8 +3783,7 @@ function displayFightResults(
     numberFormats: { default: numberFormat },
     deleteFightTemplate,
   } = battle;
-
-  showElement(tableResultFight.parentElement);
+  
   hideElement(tableResultHistory.rows[1]);
 
   var valuesToDisplay = [
@@ -4429,6 +4428,7 @@ function createDamageCalculatorInformation(chartSource) {
       .children[0],
     errorInformation: {},
     fightResultContainer: document.getElementById("fight-result-container"),
+    bonusVariationResultContainer: document.getElementById("bonus-variation-result-container"),
     reduceChartPointsContainer: document.getElementById(
       "reduce-chart-points-container"
     ),
