@@ -1233,7 +1233,7 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     parentElement: targetParent,
   } = target;
 
-  if (container.contains(target) || targetValue == 0) {
+  if (container.contains(target) || targetName == 0) {
     hideElement(container);
     return;
   }
@@ -3594,7 +3594,7 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
   }
 
   endDamagesTime = performance.now();
-  console.log(scatterData);
+
   addToBonusVariationChart(scatterData, battle.bonusVariationChart)
 
   hideElement(battle.fightResultContainer);
