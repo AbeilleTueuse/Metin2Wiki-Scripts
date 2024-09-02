@@ -1208,27 +1208,21 @@ function handleBonusVariationUpdate(characterCreation, bonusVariation) {
   if (characterCreation.hasOwnProperty(selectedBonus)) {
     handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
   } else {
-    var { referenceValue, minValue, maxValue, step } =
+    var { minValue, maxValue } =
       bonusVariation;
-      
-    referenceValue.removeAttribute("min");
-    referenceValue.removeAttribute("max");
   
     minValue.removeAttribute("min");
     minValue.removeAttribute("max");
   
     maxValue.removeAttribute("min");
     maxValue.removeAttribute("max");
-  
-    step.removeAttribute("min");
-    step.removeAttribute("max");
-    
+
     hideElement(bonusVariation.container);
   }
 }
 
 function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
-  var { inputDisplay, referenceValue, minValue, maxValue, step, container } =
+  var { inputDisplay, minValue, maxValue, container } =
     bonusVariation;
 
   var {
@@ -1257,27 +1251,19 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   inputDisplay.value = targetContent;
   inputDisplay.style.width = targetContent.length * 0.55 + "em";
 
-  referenceValue.min = targetMin;
-  referenceValue.max = targetMax;
-
   minValue.min = targetMin;
   minValue.max = targetMax;
 
   maxValue.min = targetMin;
   maxValue.max = targetMax;
 
-  step.min = 1;
-  step.max = targetMax - targetMin;
-
   if (isSelectedByUser) {
     var { input, tab } = bonusVariation;
 
     targetValue = Number(targetValue);
     input.value = targetName;
-    referenceValue.value = targetValue;
     minValue.value = Math.max(targetValue - 10, targetMin);
     maxValue.value = Math.min(targetValue + 10, targetMax);
-    step.value = 1;
 
     tab.click();
     tab.scrollIntoView(true);
@@ -3587,17 +3573,19 @@ function damagesWithoutVariation(
 function damagesWithVariation(attacker, victim, attackType, battle, entity, entityVariation) {
   startDamagesTime = performance.now();
   var scatterData = [];
+  var { bonusVariationMinValue: minVariation, bonusVariationMaxValue: maxVariation } = entity;
+  var step = Math.ceil((maxVariation - minVariation + 1) / 500);
 
   for (
-    var bonusValue = entity.bonusVariationMinValue;
-    bonusValue <= entity.bonusVariationMaxValue;
-    bonusValue += entity.bonusVariationStep
+    var bonusValue = minVariation;
+    bonusValue <= maxVariation;
+    bonusValue += step
   ) {
     entity[entityVariation] = bonusValue;
 
     var { damagesWeightedByType, totalCardinal } = calcDamages(
-      attacker,
-      victim,
+      copyObject(attacker),
+      copyObject(victim),
       attackType,
       battle
     );
@@ -4409,19 +4397,14 @@ function initDamagesChart(battle) {
 
 function initBonusVariationChart(battle) {
   var translation = battle.translation;
-  var percentFormat = battle.numberFormats.percent;
 
   var ctx = battle.plotBonusVariation.getContext("2d");
-  var maxLabelsInTooltip = 10;
-  var nullLabelText = " ...";
 
   var chart = new Chart(ctx, {
     type: "line",
     data: {
       datasets: [
         {
-          name: "normalHit",
-          label: translation.normalHit,
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
         }
@@ -4432,7 +4415,7 @@ function initBonusVariationChart(battle) {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: true,
+          display: false,
         },
         title: {
           display: true,
@@ -4442,37 +4425,6 @@ function initBonusVariationChart(battle) {
           },
         },
         tooltip: {
-          callbacks: {
-            label: function (context) {
-              if (context.label === null) {
-                return nullLabelText;
-              }
-
-              var xValue = battle.numberFormats.default.format(
-                context.parsed.x
-              );
-              var yValue = battle.numberFormats.percent.format(
-                context.parsed.y
-              );
-
-              label =
-                " " +
-                context.dataset.label +
-                " : (" +
-                xValue +
-                ", " +
-                yValue +
-                ")";
-
-              return label;
-            },
-            beforeBody: function (tooltipItems) {
-              if (tooltipItems.length > maxLabelsInTooltip + 1) {
-                tooltipItems.splice(maxLabelsInTooltip + 1);
-                tooltipItems[maxLabelsInTooltip].label = null;
-              }
-            },
-          },
           caretPadding: 10,
         },
       },
@@ -4482,7 +4434,7 @@ function initBonusVariationChart(battle) {
           position: "bottom",
           title: {
             display: true,
-            text: translation.damages,
+            text: "Bonus",
             font: {
               size: 16,
             },
@@ -4491,14 +4443,9 @@ function initBonusVariationChart(battle) {
         y: {
           title: {
             display: true,
-            text: translation.percentage,
+            text: translation.damages,
             font: {
               size: 16,
-            },
-          },
-          ticks: {
-            format: {
-              style: "percent",
             },
           },
         },
@@ -4585,10 +4532,8 @@ function createDamageCalculatorInformation(chartSource) {
       input: document.getElementById("bonus-variation"),
       inputDisplay: document.getElementById("bonus-variation-display"),
       container: document.getElementById("bonus-variation-range"),
-      referenceValue: document.getElementById("bonus-variation-reference"),
       minValue: document.getElementById("bonus-variation-min-value"),
       maxValue: document.getElementById("bonus-variation-max-value"),
-      step: document.getElementById("bonus-variation-step"),
     },
   };
 
