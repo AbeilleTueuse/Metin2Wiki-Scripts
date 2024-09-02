@@ -249,6 +249,15 @@ function addToDamagesChart(
   chart.update();
 }
 
+function addToBonusVariationChart(
+  scatterData,
+  bonusVariationChart,
+) {
+  var chart = bonusVariationChart.chart;
+  chart.data.datasets[0].data = scatterData;
+  chart.update();
+}
+
 function handleChartAnimations(chart, addAnimations) {
   chart.options.animation = addAnimations;
   chart.options.animations.colors = addAnimations;
@@ -1199,6 +1208,21 @@ function handleBonusVariationUpdate(characterCreation, bonusVariation) {
   if (characterCreation.hasOwnProperty(selectedBonus)) {
     handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
   } else {
+    var { referenceValue, minValue, maxValue, step } =
+      bonusVariation;
+      
+    referenceValue.removeAttribute("min");
+    referenceValue.removeAttribute("max");
+  
+    minValue.removeAttribute("min");
+    minValue.removeAttribute("max");
+  
+    maxValue.removeAttribute("min");
+    maxValue.removeAttribute("max");
+  
+    step.removeAttribute("min");
+    step.removeAttribute("max");
+    
     hideElement(bonusVariation.container);
   }
 }
@@ -3562,6 +3586,7 @@ function damagesWithoutVariation(
 
 function damagesWithVariation(attacker, victim, attackType, battle, entity, entityVariation) {
   startDamagesTime = performance.now();
+  var scatterData = [];
 
   for (
     var bonusValue = entity.bonusVariationMinValue;
@@ -3577,10 +3602,12 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
       battle
     );
 
-    meanDamages = calcMeanDamages(damagesWeightedByType, totalCardinal);
+    scatterData.push({x: bonusValue, y: calcMeanDamages(damagesWeightedByType, totalCardinal)})
   }
 
   endDamagesTime = performance.now();
+  console.log(scatterData);
+  addToBonusVariationChart(scatterData, battle.bonusVariationChart)
 
   hideElement(battle.fightResultContainer);
   showElement(battle.bonusVariationResultContainer);
@@ -4159,230 +4186,338 @@ function initResultTableHistory(battle) {
   });
 }
 
-function initChart(battle, chartSource) {
+function initDamagesChart(battle) {
   var { translation, reduceChartPointsContainer, reduceChartPoints } = battle;
+  var percentFormat = battle.numberFormats.percent;
+  var customPlugins = {
+    id: "customPlugins",
+    afterDraw(chart) {
+      var missPercentage = chart.data.missPercentage;
 
-  function createChart() {
-    var percentFormat = battle.numberFormats.percent;
-    var customPlugins = {
-      id: "customPlugins",
-      afterDraw(chart) {
-        var missPercentage = chart.data.missPercentage;
+      if (!missPercentage) {
+        return;
+      }
 
-        if (!missPercentage) {
-          return;
-        }
+      var {
+        ctx,
+        chartArea: { top, right },
+      } = chart;
+      ctx.save();
+      var text =
+        translation.miss + " : " + percentFormat.format(missPercentage);
+      var padding = 4;
+      var fontSize = 14;
 
-        var {
-          ctx,
-          chartArea: { top, right },
-        } = chart;
-        ctx.save();
-        var text =
-          translation.miss + " : " + percentFormat.format(missPercentage);
-        var padding = 4;
-        var fontSize = 14;
+      ctx.font = fontSize + "px Helvetica Neue";
 
-        ctx.font = fontSize + "px Helvetica Neue";
+      var textWidth = ctx.measureText(text).width;
+      var xPosition = right - textWidth - 5;
+      var yPosition = top + 5;
 
-        var textWidth = ctx.measureText(text).width;
-        var xPosition = right - textWidth - 5;
-        var yPosition = top + 5;
+      ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
+      ctx.fillRect(
+        xPosition - padding,
+        yPosition - padding,
+        textWidth + 2 * padding,
+        fontSize + 2 * padding
+      );
 
-        ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
-        ctx.fillRect(
-          xPosition - padding,
-          yPosition - padding,
-          textWidth + 2 * padding,
-          fontSize + 2 * padding
-        );
+      ctx.strokeStyle = "red";
+      ctx.strokeRect(
+        xPosition - padding,
+        yPosition - padding,
+        textWidth + 2 * padding,
+        fontSize + 2 * padding
+      );
 
-        ctx.strokeStyle = "red";
-        ctx.strokeRect(
-          xPosition - padding,
-          yPosition - padding,
-          textWidth + 2 * padding,
-          fontSize + 2 * padding
-        );
+      ctx.fillStyle = "#666";
+      ctx.textBaseline = "top";
+      ctx.fillText(text, xPosition, yPosition + 1);
 
-        ctx.fillStyle = "#666";
-        ctx.textBaseline = "top";
-        ctx.fillText(text, xPosition, yPosition + 1);
+      ctx.restore();
+    },
+  };
 
-        ctx.restore();
-      },
-    };
+  Chart.register(customPlugins);
 
-    Chart.register(customPlugins);
+  var ctx = battle.plotDamages.getContext("2d");
+  var maxLabelsInTooltip = 10;
+  var nullLabelText = " ...";
 
-    var ctx = battle.plotDamages.getContext("2d");
-    var maxLabelsInTooltip = 10;
-    var nullLabelText = " ...";
+  var chart = new Chart(ctx, {
+    type: "scatter",
+    data: {
+      missPercentage: 0,
+      datasets: [],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          onClick: function (e, legendItem, legend) {
+            var currentIndex = legendItem.datasetIndex;
+            var ci = legend.chart;
+            var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
+            var datasets = ci.data.datasets;
+            var hideReducePoints = true;
+            var isReducePointsChecked = reduceChartPoints.checked;
 
-    var chart = new Chart(ctx, {
-      type: "scatter",
-      data: {
-        missPercentage: 0,
-        datasets: [],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            onClick: function (e, legendItem, legend) {
-              var currentIndex = legendItem.datasetIndex;
-              var ci = legend.chart;
-              var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
-              var datasets = ci.data.datasets;
-              var hideReducePoints = true;
-              var isReducePointsChecked = reduceChartPoints.checked;
+            datasets[currentIndex].hidden = isCurrentDatasetVisible;
+            legendItem.hidden = isCurrentDatasetVisible;
 
-              datasets[currentIndex].hidden = isCurrentDatasetVisible;
-              legendItem.hidden = isCurrentDatasetVisible;
+            for (var index in datasets) {
+              if (
+                ci.isDatasetVisible(index) &&
+                datasets[index].canBeReduced
+              ) {
+                showElement(reduceChartPointsContainer);
+                hideReducePoints = false;
+                break;
+              }
+            }
 
-              for (var index in datasets) {
-                if (
-                  ci.isDatasetVisible(index) &&
-                  datasets[index].canBeReduced
-                ) {
-                  showElement(reduceChartPointsContainer);
-                  hideReducePoints = false;
-                  break;
-                }
+            if (hideReducePoints) {
+              hideElement(reduceChartPointsContainer);
+              handleChartAnimations(ci, true);
+            } else {
+              handleChartAnimations(ci, isReducePointsChecked);
+            }
+
+            ci.update();
+          },
+        },
+        title: {
+          display: true,
+          text: translation.damagesRepartition,
+          font: {
+            size: 20,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              if (context.label === null) {
+                return nullLabelText;
               }
 
-              if (hideReducePoints) {
-                hideElement(reduceChartPointsContainer);
-                handleChartAnimations(ci, true);
-              } else {
-                handleChartAnimations(ci, isReducePointsChecked);
-              }
+              var xValue = battle.numberFormats.default.format(
+                context.parsed.x
+              );
+              var yValue = battle.numberFormats.percent.format(
+                context.parsed.y
+              );
 
-              ci.update();
+              label =
+                " " +
+                context.dataset.label +
+                " : (" +
+                xValue +
+                ", " +
+                yValue +
+                ")";
+
+              return label;
+            },
+            beforeBody: function (tooltipItems) {
+              if (tooltipItems.length > maxLabelsInTooltip + 1) {
+                tooltipItems.splice(maxLabelsInTooltip + 1);
+                tooltipItems[maxLabelsInTooltip].label = null;
+              }
             },
           },
+          caretPadding: 10,
+        },
+      },
+      scales: {
+        x: {
+          type: "linear",
+          position: "bottom",
           title: {
             display: true,
-            text: translation.damagesRepartition,
+            text: translation.damages,
             font: {
-              size: 20,
-            },
-          },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                if (context.label === null) {
-                  return nullLabelText;
-                }
-
-                var xValue = battle.numberFormats.default.format(
-                  context.parsed.x
-                );
-                var yValue = battle.numberFormats.percent.format(
-                  context.parsed.y
-                );
-
-                label =
-                  " " +
-                  context.dataset.label +
-                  " : (" +
-                  xValue +
-                  ", " +
-                  yValue +
-                  ")";
-
-                return label;
-              },
-              beforeBody: function (tooltipItems) {
-                if (tooltipItems.length > maxLabelsInTooltip + 1) {
-                  tooltipItems.splice(maxLabelsInTooltip + 1);
-                  tooltipItems[maxLabelsInTooltip].label = null;
-                }
-              },
-            },
-            caretPadding: 10,
-          },
-        },
-        scales: {
-          x: {
-            type: "linear",
-            position: "bottom",
-            title: {
-              display: true,
-              text: translation.damages,
-              font: {
-                size: 16,
-              },
-            },
-          },
-          y: {
-            title: {
-              display: true,
-              text: translation.percentage,
-              font: {
-                size: 16,
-              },
-            },
-            ticks: {
-              format: {
-                style: "percent",
-              },
+              size: 16,
             },
           },
         },
-        elements: {
-          point: {
-            borderWidth: 1,
-            radius: 3,
-            hitRadius: 3,
-            hoverRadius: 6,
-            hoverBorderWidth: 2,
+        y: {
+          title: {
+            display: true,
+            text: translation.percentage,
+            font: {
+              size: 16,
+            },
+          },
+          ticks: {
+            format: {
+              style: "percent",
+            },
           },
         },
       },
-    });
+      elements: {
+        point: {
+          borderWidth: 1,
+          radius: 3,
+          hitRadius: 3,
+          hoverRadius: 6,
+          hoverBorderWidth: 2,
+        },
+      },
+    },
+  });
 
-    var datasetsStyle = [
-      {
-        name: "normalHit",
-        canBeReduced: false,
-        label: translation.normalHit,
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        borderColor: "rgba(75, 192, 192, 1)",
-      },
-      {
-        name: "piercingHit",
-        canBeReduced: false,
-        label: translation.piercingHit,
-        backgroundColor: "rgba(192, 192, 75, 0.2)",
-        borderColor: "rgba(192, 192, 75, 1)",
-      },
-      {
-        name: "criticalHit",
-        canBeReduced: false,
-        label: translation.criticalHit,
-        backgroundColor: "rgba(192, 75, 192, 0.2)",
-        borderColor: "rgba(192, 75, 192, 1)",
-      },
-      {
-        name: "criticalPiercingHit",
-        canBeReduced: false,
-        label: translation.criticalPiercingHit,
-        backgroundColor: "rgba(75, 75, 192, 0.2)",
-        borderColor: "rgba(75, 75, 192, 1)",
-      },
-    ];
-    battle.damagesChart = {
-      chart: chart,
-      datasetsStyle: datasetsStyle,
-      maxPoints: 500,
-      reduceChartPointsContainer: reduceChartPointsContainer,
-    };
-  }
+  var datasetsStyle = [
+    {
+      name: "normalHit",
+      canBeReduced: false,
+      label: translation.normalHit,
+      backgroundColor: "rgba(75, 192, 192, 0.2)",
+      borderColor: "rgba(75, 192, 192, 1)",
+    },
+    {
+      name: "piercingHit",
+      canBeReduced: false,
+      label: translation.piercingHit,
+      backgroundColor: "rgba(192, 192, 75, 0.2)",
+      borderColor: "rgba(192, 192, 75, 1)",
+    },
+    {
+      name: "criticalHit",
+      canBeReduced: false,
+      label: translation.criticalHit,
+      backgroundColor: "rgba(192, 75, 192, 0.2)",
+      borderColor: "rgba(192, 75, 192, 1)",
+    },
+    {
+      name: "criticalPiercingHit",
+      canBeReduced: false,
+      label: translation.criticalPiercingHit,
+      backgroundColor: "rgba(75, 75, 192, 0.2)",
+      borderColor: "rgba(75, 75, 192, 1)",
+    },
+  ];
+  battle.damagesChart = {
+    chart: chart,
+    datasetsStyle: datasetsStyle,
+    maxPoints: 500,
+    reduceChartPointsContainer: reduceChartPointsContainer,
+  };
+}
 
-  loadScript(chartSource, createChart);
+function initBonusVariationChart(battle) {
+  var translation = battle.translation;
+  var percentFormat = battle.numberFormats.percent;
+
+  var ctx = battle.plotBonusVariation.getContext("2d");
+  var maxLabelsInTooltip = 10;
+  var nullLabelText = " ...";
+
+  var chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      datasets: [
+        {
+          name: "normalHit",
+          label: translation.normalHit,
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderColor: "rgba(75, 192, 192, 1)",
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+        },
+        title: {
+          display: true,
+          text: "title",
+          font: {
+            size: 20,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              if (context.label === null) {
+                return nullLabelText;
+              }
+
+              var xValue = battle.numberFormats.default.format(
+                context.parsed.x
+              );
+              var yValue = battle.numberFormats.percent.format(
+                context.parsed.y
+              );
+
+              label =
+                " " +
+                context.dataset.label +
+                " : (" +
+                xValue +
+                ", " +
+                yValue +
+                ")";
+
+              return label;
+            },
+            beforeBody: function (tooltipItems) {
+              if (tooltipItems.length > maxLabelsInTooltip + 1) {
+                tooltipItems.splice(maxLabelsInTooltip + 1);
+                tooltipItems[maxLabelsInTooltip].label = null;
+              }
+            },
+          },
+          caretPadding: 10,
+        },
+      },
+      scales: {
+        x: {
+          type: "linear",
+          position: "bottom",
+          title: {
+            display: true,
+            text: translation.damages,
+            font: {
+              size: 16,
+            },
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: translation.percentage,
+            font: {
+              size: 16,
+            },
+          },
+          ticks: {
+            format: {
+              style: "percent",
+            },
+          },
+        },
+      },
+      elements: {
+        point: {
+          borderWidth: 1,
+          radius: 3,
+          hitRadius: 3,
+          hoverRadius: 6,
+          hoverBorderWidth: 2,
+        },
+      },
+    },
+  });
+
+  battle.bonusVariationChart = {
+    chart: chart
+  };
 }
 
 function attackSelectonListener(
@@ -4493,6 +4628,7 @@ function createDamageCalculatorInformation(chartSource) {
     ),
     reduceChartPoints: document.getElementById("reduce-chart-points"),
     plotDamages: document.getElementById("plot-damages"),
+    plotBonusVariation: document.getElementById("plot-bonus-variation"),
     uniqueDamagesCounters: document.querySelectorAll(".unique-damages-counter"),
     possibleDamagesCounter: document.getElementById("possible-damages-counter"),
     damagesTime: document.getElementById("damages-time"),
@@ -4524,7 +4660,10 @@ function createDamageCalculatorInformation(chartSource) {
     battle.attackTypeSelection
   );
   initResultTableHistory(battle);
-  initChart(battle, chartSource);
+  loadScript(chartSource, function() {
+    initDamagesChart(battle);
+    initBonusVariationChart(battle);
+  });
   reduceChartPointsListener(battle);
   downloadRawDataListener(battle);
 
