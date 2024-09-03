@@ -37,6 +37,10 @@ function compareNumbers(a, b) {
   return b - a;
 }
 
+function isChecked(attribute) {
+  return attribute === "on";
+}
+
 function floorMultiplication(firstFactor, secondFactor) {
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
@@ -892,7 +896,7 @@ function updateForm(
     }
 
     if (formElement.type === "checkbox") {
-      if (value === "on") {
+      if (isChecked(value)) {
         formElement.checked = true;
       }
     } else {
@@ -1222,7 +1226,7 @@ function handleBonusVariationUpdate(characterCreation, bonusVariation) {
 }
 
 function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
-  var { inputDisplay, minValue, maxValue, container } =
+  var { activation, inputDisplay, minValue, maxValue, container } =
     bonusVariation;
 
   var {
@@ -1264,6 +1268,8 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     input.value = targetName;
     minValue.value = Math.max(targetValue - 10, targetMin);
     maxValue.value = Math.min(targetValue + 10, targetMax);
+
+    activation.checked = true;
 
     tab.click();
     tab.scrollIntoView(true);
@@ -2186,7 +2192,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
       weaponDefense = victim[weaponDefenseName];
     }
 
-    if (attacker.whiteDragonElixir === "on") {
+    if (isChecked(attacker.whiteDragonElixir)) {
       whiteDragonElixir = 10;
     }
 
@@ -2217,8 +2223,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
       criticalHitPercentage = 0;
     } else {
-      if (attacker.isMarried === "on") {
-        if (attacker.loveNecklace === "on") {
+      if (isChecked(attacker.isMarried)) {
+        if (isChecked(attacker.loveNecklace)) {
           attackValueMarriage = getMarriageBonusValue(
             attacker,
             constants.marriageTable,
@@ -2226,7 +2232,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           );
         }
 
-        if (attacker.loveEarrings === "on") {
+        if (isChecked(attacker.loveEarrings)) {
           criticalHitPercentage += getMarriageBonusValue(
             attacker,
             constants.marriageTable,
@@ -2234,7 +2240,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           );
         }
 
-        if (attacker.harmonyEarrings === "on") {
+        if (isChecked(attacker.harmonyEarrings)) {
           piercingHitPercentage += getMarriageBonusValue(
             attacker,
             constants.marriageTable,
@@ -2243,7 +2249,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         }
       }
 
-      if (attacker.tigerStrength === "on") {
+      if (isChecked(attacker.tigerStrength)) {
         tigerStrength = 40;
       }
 
@@ -2279,7 +2285,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         }
       }
 
-      if (attacker.onYohara === "on") {
+      if (isChecked(attacker.onYohara)) {
         var sungmaStrDifference = attacker.sungmaStr - attacker.sungmaStrMalus;
 
         if (sungmaStrDifference >= 0) {
@@ -2299,13 +2305,13 @@ function createBattleValues(attacker, victim, battle, skillType) {
     rankBonus = getRankBonus(attacker);
     damageBonus = attacker.damageBonus;
 
-    if (attacker.empireMalus === "on") {
+    if (isChecked(attacker.empireMalus)) {
       empireMalus = 1;
     }
   } else {
     if (isPC(victim)) {
-      if (victim.isMarried === "on") {
-        if (victim.harmonyBracelet === "on") {
+      if (isChecked(victim.isMarried)) {
+        if (isChecked(victim.harmonyBracelet)) {
           monsterResistanceMarriage = getMarriageBonusValue(
             victim,
             constants.marriageTable,
@@ -2313,7 +2319,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           );
         }
 
-        if (victim.harmonyNecklace === "on" && !skillType) {
+        if (isChecked(victim.harmonyNecklace) && !skillType) {
           defenseMarriage = getMarriageBonusValue(
             victim,
             constants.marriageTable,
@@ -2366,7 +2372,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   }
 
   if (isPC(victim)) {
-    if (!skillType && victim.biologist70 === "on") {
+    if (!skillType && isChecked(victim.biologist70)) {
       defenseBoost = Math.floor((defenseBoost * 110) / 100);
     }
 
@@ -2389,7 +2395,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
       defensePercent = (-2 * defenseBoost * victim.defensePercent) / 100;
     }
 
-    if (victim.steelDragonElixir === "on") {
+    if (isChecked(victim.steelDragonElixir)) {
       steelDragonElixir = 10;
     }
   }
@@ -2584,7 +2590,7 @@ function calcBlessingBonus(skillPowerTable, victim) {
     1
   );
 
-  if (victim.class === "dragon" && victim.blessingOnself === "on") {
+  if (victim.class === "dragon" && isChecked(ictim.blessingOnself)) {
     blessingBonus = floorMultiplication(blessingBonus, 1.1);
   }
 
@@ -3972,9 +3978,9 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    if (attackerVariation && attacker.hasOwnProperty(attackerVariation)) {
+    if (isChecked(attacker.bonusVariationActivation) && attacker.hasOwnProperty(attackerVariation)) {
       damagesWithVariation(attacker, victim, attackType, battle, attacker, attackerVariation);
-    } else if (victimVariation && victim.hasOwnProperty(victimVariation)) {
+    } else if (isChecked(victim.bonusVariationActivation) && victim.hasOwnProperty(victimVariation)) {
       damagesWithVariation(attacker, victim, attackType, battle, victim, victimVariation);
     } else {
       damagesWithoutVariation(attacker, victim, attackType, battle, characters);
@@ -4529,6 +4535,7 @@ function createDamageCalculatorInformation(chartSource) {
     marriageCreation: document.getElementById("marriage-creation"),
     bonusVariation: {
       tab: document.getElementById("Variation"),
+      activation: document.getElementById("bonus-variation-activation"),
       input: document.getElementById("bonus-variation"),
       inputDisplay: document.getElementById("bonus-variation-display"),
       container: document.getElementById("bonus-variation-range"),
