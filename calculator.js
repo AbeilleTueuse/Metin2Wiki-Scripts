@@ -2606,7 +2606,7 @@ function calcBlessingBonus(skillPowerTable, victim) {
   return blessingBonus;
 }
 
-function getSkillFormula(battle, skillId, battleValues) {
+function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
   var { attacker, victim, attackFactor } = battleValues;
   var skillPowerTable = battle.constants.skillPowerTable;
 
@@ -3210,6 +3210,11 @@ function getSkillFormula(battle, skillId, battleValues) {
     if (improvedByBonus) {
       skillInfo.skillBonusByBonus = attacker["skillBonus" + skillId];
     }
+
+    if (removeSkillVariation) {
+      var averageVariation = (skillInfo.range[0] + skillInfo.range[0]) / 2;
+      skillInfo.range = [averageVariation, averageVariation];
+    }
   } else {
     var skillPower = getSkillPower(
       attacker["horseSkill" + skillId],
@@ -3529,7 +3534,7 @@ function calcDamages(attacker, victim, attackType, battle, removeSkillVariation)
   var battleValues = createBattleValues(attacker, victim, battle, skillType, );
 
   if (skillId) {
-    getSkillFormula(battle, skillId, battleValues, );
+    getSkillFormula(battle, skillId, battleValues, removeSkillVariation);
   }
 
   var {
