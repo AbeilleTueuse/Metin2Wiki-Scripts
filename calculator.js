@@ -254,12 +254,13 @@ function addToDamagesChart(
 }
 
 function addToBonusVariationChart(
-  scatterData,
+  damagesByBonus,
+  augmentationByBonus,
   xLabel,
-  bonusVariationChart,
+  chart,
 ) {
-  var chart = bonusVariationChart.chart;
-  chart.data.datasets[0].data = scatterData;
+  chart.data.datasets[0].data = damagesByBonus;
+  chart.data.datasets[1].data = augmentationByBonus;
   chart.options.scales.x.title.text = xLabel;
   chart.update();
 }
@@ -3586,7 +3587,8 @@ function damagesWithoutVariation(
 
 function damagesWithVariation(attacker, victim, attackType, battle, entity, entityVariation) {
   startDamagesTime = performance.now();
-  var scatterData = [];
+  var damagesByBonus = [];
+  var augmentationByBonus = [];
   var { bonusVariationMinValue: minVariation, bonusVariationMaxValue: maxVariation } = entity;
   var step = Math.ceil((maxVariation - minVariation + 1) / 500);
 
@@ -3604,12 +3606,19 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
       battle
     );
 
-    scatterData.push({x: bonusValue, y: calcMeanDamages(damagesWeightedByType, totalCardinal)})
+    var meanDamages = calcMeanDamages(damagesWeightedByType, totalCardinal);
+
+    if (bonusValue === minVariation) {
+      var firstDamages = Math.max(meanDamages, 1e-3);
+    }
+
+    damagesByBonus.push({x: bonusValue, y: meanDamages});
+    augmentationByBonus.push({x: bonusValue, y: meanDamages / firstDamages});
   }
 
   endDamagesTime = performance.now();
 
-  addToBonusVariationChart(scatterData, entity.bonusVariationDisplay, battle.bonusVariationChart)
+  addToBonusVariationChart(damagesByBonus, augmentationByBonus, entity.bonusVariationDisplay, battle.bonusVariationChart)
 
   hideElement(battle.fightResultContainer);
   showElement(battle.bonusVariationResultContainer);
@@ -4258,6 +4267,12 @@ function initDamagesChart(battle) {
       plugins: {
         legend: {
           display: true,
+          onHover: function(e) {
+            e.native.target.style.cursor = "pointer";
+          },
+          onLeave: function(e) {
+            e.native.target.style.cursor = "default";
+          },
           onClick: function (e, legendItem, legend) {
             var currentIndex = legendItem.datasetIndex;
             var ci = legend.chart;
@@ -4419,9 +4434,19 @@ function initBonusVariationChart(battle) {
     data: {
       datasets: [
         {
+          label: "Dégâts moyens",
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
-        }
+          yLabel: "Dégâts moyens"
+        },
+        {
+          label: "Augmentation des dégâts",
+          backgroundColor: "rgba(192, 192, 75, 0.2)",
+          borderColor: "rgba(192, 192, 75, 1)",
+          hidden: true,
+          yTicksFormat: {style: "percent"},
+          yLabel: "Augmentation des dégâts"
+        },
       ]
     },
     options: {
@@ -4429,13 +4454,37 @@ function initBonusVariationChart(battle) {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: false,
+          display: true,
+          onHover: function(e) {
+            e.native.target.style.cursor = "pointer";
+          },
+          onLeave: function(e) {
+            e.native.target.style.cursor = "default";
+          },
+          onClick: function (e, legendItem, legend) {
+            var currentIndex = legendItem.datasetIndex;
+            var ci = legend.chart;
+            var datasets = ci.data.datasets;
+            var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
+            var yAxis = ci.options.scales.y;
+
+            var otherIndex = currentIndex === 0 ? 1 : 0;
+            var visibleDataset = isCurrentDatasetVisible ? datasets[otherIndex] : datasets[currentIndex];
+
+            datasets[currentIndex].hidden = isCurrentDatasetVisible;
+            datasets[otherIndex].hidden = !isCurrentDatasetVisible;
+
+            yAxis.title.text = visibleDataset.yLabel;
+            yAxis.ticks.format = visibleDataset.yTicksFormat;
+        
+            ci.update();
+          },
         },
         title: {
           display: true,
           text: ["Évolution des dégâts moyens", "par rapport à la variation d'un bonus"],
           font: {
-            size: 20,
+            size: 18,
           },
         },
         tooltip: {
@@ -4453,6 +4502,13 @@ function initBonusVariationChart(battle) {
               size: 16,
             },
           },
+          ticks: {
+            callback: function(value) {
+              if (Number.isInteger(value)) {
+                return Number(value);
+              }
+            }
+          }
         },
         y: {
           title: {
@@ -4476,9 +4532,7 @@ function initBonusVariationChart(battle) {
     },
   });
 
-  battle.bonusVariationChart = {
-    chart: chart,
-  };
+  battle.bonusVariationChart = chart;
 }
 
 function attackSelectonListener(
