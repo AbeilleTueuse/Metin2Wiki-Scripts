@@ -3505,7 +3505,7 @@ function calcMagicSkillDamages(battleValues) {
   return damagesWeightedByType;
 }
 
-function calcDamages(attacker, victim, attackType, battle) {
+function calcDamages(attacker, victim, attackType, battle, removeSkillVariation) {
   var damagesCalculator, skillId, skillType;
 
   if (attackType === "physical") {
@@ -3526,10 +3526,10 @@ function calcDamages(attacker, victim, attackType, battle) {
     damagesCalculator = calcPhysicalSkillDamages;
   }
 
-  var battleValues = createBattleValues(attacker, victim, battle, skillType);
+  var battleValues = createBattleValues(attacker, victim, battle, skillType, );
 
   if (skillId) {
-    getSkillFormula(battle, skillId, battleValues);
+    getSkillFormula(battle, skillId, battleValues, );
   }
 
   var {
@@ -3586,11 +3586,13 @@ function damagesWithoutVariation(
 }
 
 function damagesWithVariation(attacker, victim, attackType, battle, entity, entityVariation) {
-  startDamagesTime = performance.now();
+  startTime = performance.now();
   var damagesByBonus = [];
   var augmentationByBonus = [];
   var { bonusVariationMinValue: minVariation, bonusVariationMaxValue: maxVariation } = entity;
   var step = Math.ceil((maxVariation - minVariation + 1) / 500);
+  var simulationCount = 0;
+  var simulationTime;
 
   for (
     var bonusValue = minVariation;
@@ -3603,7 +3605,8 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
       copyObject(attacker),
       copyObject(victim),
       attackType,
-      battle
+      battle,
+      true
     );
 
     var meanDamages = calcMeanDamages(damagesWeightedByType, totalCardinal);
@@ -3614,11 +3617,19 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
 
     damagesByBonus.push({x: bonusValue, y: meanDamages});
     augmentationByBonus.push({x: bonusValue, y: meanDamages / firstDamages - 1});
+    simulationCount++;
   }
 
-  endDamagesTime = performance.now();
+  endTime = performance.now();
 
-  addToBonusVariationChart(damagesByBonus, augmentationByBonus, entity.bonusVariationDisplay, battle.bonusVariationChart)
+  addToBonusVariationChart(damagesByBonus, augmentationByBonus, entity.bonusVariationDisplay, battle.bonusVariationChart);
+
+  simulationCount =
+    battle.numberFormats.default.format(simulationCount);
+  simulationTime = battle.numberFormats.second.format((endTime - startTime) / 1000);
+
+  battle.simulationCounter.textContent = simulationCount;
+  battle.simulationTime.textContent = simulationTime;
 
   hideElement(battle.fightResultContainer);
   showElement(battle.bonusVariationResultContainer);
@@ -3995,9 +4006,9 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    if (isChecked(attacker.bonusVariationActivation) && attacker.hasOwnProperty(attackerVariation)) {
+    if (isChecked(attacker.bonusVariationActivation) && attacker.hasOwnProperty(attackerVariation) && attacker.bonusVariationMinValue < attacker.bonusVariationMaxValue) {
       damagesWithVariation(attacker, victim, attackType, battle, attacker, attackerVariation);
-    } else if (isChecked(victim.bonusVariationActivation) && victim.hasOwnProperty(victimVariation)) {
+    } else if (isChecked(victim.bonusVariationActivation) && victim.hasOwnProperty(victimVariation) && victim.bonusVariationMinValue < victim.bonusVariationMaxValue) {
       damagesWithVariation(attacker, victim, attackType, battle, victim, victimVariation);
     } else {
       damagesWithoutVariation(attacker, victim, attackType, battle, characters);
@@ -4660,6 +4671,8 @@ function createDamageCalculatorInformation(chartSource) {
     possibleDamagesCounter: document.getElementById("possible-damages-counter"),
     damagesTime: document.getElementById("damages-time"),
     displayTime: document.getElementById("display-time"),
+    simulationCounter: document.getElementById("simulation-counter"),
+    simulationTime: document.getElementById("simulation-time"),
     numberFormats: {
       default: new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 0,
