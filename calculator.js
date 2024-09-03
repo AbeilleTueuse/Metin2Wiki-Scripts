@@ -3613,7 +3613,7 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
     }
 
     damagesByBonus.push({x: bonusValue, y: meanDamages});
-    augmentationByBonus.push({x: bonusValue, y: meanDamages / firstDamages});
+    augmentationByBonus.push({x: bonusValue, y: meanDamages / firstDamages - 1});
   }
 
   endDamagesTime = performance.now();
@@ -4109,6 +4109,9 @@ function createConstants() {
         piercingHit: "Coup perçant",
         criticalPiercingHit: "Coup critique perçant",
         damagesRepartition: "Distribution des dégâts",
+        averageDamages: "Dégâts moyens",
+        damagesAugmentation: "Augmentation des dégâts",
+        bonusVariationTitle: ["Évolution des dégâts moyens", "par rapport à la variation d'un bonus"]
       },
       en: {
         damages: "Damages",
@@ -4119,6 +4122,9 @@ function createConstants() {
         piercingHit: "Piercing hit",
         criticalPiercingHit: "Critical piercing hit",
         damagesRepartition: "Damages repartition",
+        averageDamages: "Average damages",
+        damagesAugmentation: "Damages augmentation",
+        bonusVariationTitle: ["Average damage evolution", "compared to the variation of a bonus"]
       },
       tr: {
         damages: "Hasar",
@@ -4129,6 +4135,9 @@ function createConstants() {
         piercingHit: "Delici Vuruş",
         criticalPiercingHit: "Kritikli Delici Vuruş",
         damagesRepartition: "Hasar Dağılımı",
+        averageDamages: "",
+        damagesAugmentation: "",
+        bonusVariationTitle: ["", ""]
       },
       ro: {
         damages: "Daune",
@@ -4139,6 +4148,9 @@ function createConstants() {
         piercingHit: "Lovitura patrunzatoare",
         criticalPiercingHit: "Lovitura critica si patrunzatoare",
         damagesRepartition: "Distribuția daunelor",
+        averageDamages: "",
+        damagesAugmentation: "",
+        bonusVariationTitle: ["", ""]
       },
       de: {
         damages: "Schäden",
@@ -4149,6 +4161,9 @@ function createConstants() {
         piercingHit: "Durchdringender Treffer",
         criticalPiercingHit: "Kritischer durchdringender Treffer",
         damagesRepartition: "",
+        averageDamages: "",
+        damagesAugmentation: "",
+        bonusVariationTitle: ["", ""]
       },
     },
   };
@@ -4434,18 +4449,16 @@ function initBonusVariationChart(battle) {
     data: {
       datasets: [
         {
-          label: "Dégâts moyens",
+          label: translation.averageDamages,
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
-          yLabel: "Dégâts moyens"
         },
         {
-          label: "Augmentation des dégâts",
+          label: translation.damagesAugmentation,
           backgroundColor: "rgba(192, 192, 75, 0.2)",
           borderColor: "rgba(192, 192, 75, 1)",
           hidden: true,
           yTicksFormat: {style: "percent"},
-          yLabel: "Augmentation des dégâts"
         },
       ]
     },
@@ -4474,7 +4487,7 @@ function initBonusVariationChart(battle) {
             datasets[currentIndex].hidden = isCurrentDatasetVisible;
             datasets[otherIndex].hidden = !isCurrentDatasetVisible;
 
-            yAxis.title.text = visibleDataset.yLabel;
+            yAxis.title.text = visibleDataset.label;
             yAxis.ticks.format = visibleDataset.yTicksFormat;
         
             ci.update();
@@ -4482,7 +4495,7 @@ function initBonusVariationChart(battle) {
         },
         title: {
           display: true,
-          text: ["Évolution des dégâts moyens", "par rapport à la variation d'un bonus"],
+          text: translation.bonusVariationTitle,
           font: {
             size: 18,
           },
@@ -4513,7 +4526,7 @@ function initBonusVariationChart(battle) {
         y: {
           title: {
             display: true,
-            text: "Dégâts moyens",
+            text: translation.averageDamages,
             font: {
               size: 16,
             },
