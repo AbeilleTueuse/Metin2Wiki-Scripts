@@ -4127,20 +4127,20 @@ function createConstants() {
         damagesRepartition: "Distribution des dégâts",
         averageDamages: "Dégâts moyens",
         damagesAugmentation: "Augmentation des dégâts",
-        bonusVariationTitle: ["Évolution des dégâts moyens", "par rapport à la variation d'un bonus"]
+        bonusVariationTitle: ["Évolution des dégâts moyens", "par rapport à la valeur d'un bonus"]
       },
       en: {
-        damages: "Damages",
+        damages: "Damage",
         percentage: "Percentage",
         miss: "Miss",
-        normalHit: "Normal hit",
-        criticalHit: "Critical hit",
-        piercingHit: "Piercing hit",
-        criticalPiercingHit: "Critical piercing hit",
-        damagesRepartition: "Damages repartition",
-        averageDamages: "Average damages",
-        damagesAugmentation: "Damages augmentation",
-        bonusVariationTitle: ["Average damage evolution", "compared to the variation of a bonus"]
+        normalHit: "Normal Hit",
+        criticalHit: "Critical Hit",
+        piercingHit: "Piercing Hit",
+        criticalPiercingHit: "Critical Piercing Hit",
+        damagesRepartition: "Damage Repartition",
+        averageDamages: "Average Damage",
+        damagesAugmentation: "Damage Augmentation",
+        bonusVariationTitle: ["Evolution of Average Damage", "Relative to a Bonus Value"]
       },
       tr: {
         damages: "Hasar",
@@ -4151,9 +4151,9 @@ function createConstants() {
         piercingHit: "Delici Vuruş",
         criticalPiercingHit: "Kritikli Delici Vuruş",
         damagesRepartition: "Hasar Dağılımı",
-        averageDamages: "",
-        damagesAugmentation: "",
-        bonusVariationTitle: ["", ""]
+        averageDamages: "Ortalama Hasar",
+        damagesAugmentation: "Ortalama Hasar Artışı",
+        bonusVariationTitle: ["Bir bonusun değerine kıyasla", "Ortalama Hasar Çizelgesi"]
       },
       ro: {
         damages: "Daune",
