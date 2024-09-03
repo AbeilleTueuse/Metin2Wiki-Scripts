@@ -255,10 +255,12 @@ function addToDamagesChart(
 
 function addToBonusVariationChart(
   scatterData,
+  xLabel,
   bonusVariationChart,
 ) {
   var chart = bonusVariationChart.chart;
   chart.data.datasets[0].data = scatterData;
+  chart.options.scales.x.title.text = xLabel;
   chart.update();
 }
 
@@ -1238,18 +1240,24 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   } = target;
 
   if (container.contains(target) || targetName == 0) {
-    hideElement(container);
+    if (!isSelectedByUser) {
+      hideElement(container);
+    }
     return;
   }
 
-  var targetContent;
+  var targetContent = "";
 
   if (targetParent.children.length <= 1) {
     targetContent = targetParent.textContent;
   } else {
-    targetContent = targetParent.querySelector(
-      "span:not(.tabber-noactive)"
-    ).textContent;
+    for (var index = 1; index < targetParent.children.length; index++) {
+      var element = targetParent.children[index];
+
+      if (element.checkVisibility()) {
+        targetContent += element.textContent;
+      }
+    }
   }
 
   inputDisplay.value = targetContent;
@@ -3601,7 +3609,7 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
 
   endDamagesTime = performance.now();
 
-  addToBonusVariationChart(scatterData, battle.bonusVariationChart)
+  addToBonusVariationChart(scatterData, entity.bonusVariationDisplay, battle.bonusVariationChart)
 
   hideElement(battle.fightResultContainer);
   showElement(battle.bonusVariationResultContainer);
@@ -4469,7 +4477,7 @@ function initBonusVariationChart(battle) {
   });
 
   battle.bonusVariationChart = {
-    chart: chart
+    chart: chart,
   };
 }
 
@@ -4544,7 +4552,7 @@ function createDamageCalculatorInformation(chartSource) {
     },
   };
 
-  delete characters.newCharacterTemplate.dataset.click;
+  characters.bonusVariation.inputDisplay.setAttribute("readonly", "");
 
   for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
     characters.savedCharacters[pseudo] = character;
