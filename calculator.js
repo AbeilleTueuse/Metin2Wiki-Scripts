@@ -4433,7 +4433,7 @@ function initBonusVariationChart(battle) {
         },
         title: {
           display: true,
-          text: "title",
+          text: ["Évolution des dégâts moyens", "par rapport à la variation d'un bonus"],
           font: {
             size: 20,
           },
@@ -4457,7 +4457,7 @@ function initBonusVariationChart(battle) {
         y: {
           title: {
             display: true,
-            text: translation.damages,
+            text: "Dégâts moyens",
             font: {
               size: 16,
             },
