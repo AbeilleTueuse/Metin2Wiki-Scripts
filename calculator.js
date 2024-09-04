@@ -4164,9 +4164,9 @@ function createConstants() {
         piercingHit: "Lovitura patrunzatoare",
         criticalPiercingHit: "Lovitura critica si patrunzatoare",
         damagesRepartition: "Distribuția daunelor",
-        averageDamages: "",
-        damagesAugmentation: "",
-        bonusVariationTitle: ["", ""]
+        averageDamages: "Media damageului",
+        damagesAugmentation: "Damage imbunatatit",
+        bonusVariationTitle: ["Evolutia mediei damageului", "relativ la o valoare bonus"]
       },
       de: {
         damages: "Schäden",
@@ -4176,11 +4176,37 @@ function createConstants() {
         criticalHit: "Kritischer Treffer",
         piercingHit: "Durchdringender Treffer",
         criticalPiercingHit: "Kritischer durchdringender Treffer",
-        damagesRepartition: "",
-        averageDamages: "",
-        damagesAugmentation: "",
-        bonusVariationTitle: ["", ""]
+        damagesRepartition: "Schadensverteilung",
+        averageDamages: "Durchschnittlicher Schaden",
+        damagesAugmentation: "Schadenserhöhung",
+        bonusVariationTitle: ["Entwicklung des durchschnittlichen Schadens", "im Verhältnis zu einem Bonus"]
       },
+      pt: {
+        damages: "Dano",
+        percentage: "Percentagem",
+        miss: "Miss",
+        normalHit: "Dano normal",
+        criticalHit: "Dano crítico",
+        piercingHit: "Dano perfurante",
+        criticalPiercingHit: "Dano crítico perfurante",
+        damagesRepartition: "Repartição de dano",
+        averageDamages: "Dano médio",
+        damagesAugmentation: "Aumento de dano",
+        bonusVariationTitle: ["Evolução do dano médio", "relativo a um bónus"]
+      },
+      // es: {
+      //   damages: "Daño",
+      //   percentage: "Porcentaje",
+      //   miss: "Miss",
+      //   normalHit: "Daño normal",
+      //   criticalHit: "Daño crítico",
+      //   piercingHit: "Daño perforante",
+      //   criticalPiercingHit: "Daño crítico perforante",
+      //   damagesRepartition: "Repartición de daños",
+      //   averageDamages: "Daño medio",
+      //   damagesAugmentation: "Aumento de daño",
+      //   bonusVariationTitle: ["Evolución del daño medio", "Relativo a una bonificación"]
+      // }, 
     },
   };
   return constants;
