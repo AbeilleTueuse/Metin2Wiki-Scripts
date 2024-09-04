@@ -257,7 +257,7 @@ function addToBonusVariationChart(
   damagesByBonus,
   augmentationByBonus,
   xLabel,
-  chart,
+  chart
 ) {
   chart.data.datasets[0].data = damagesByBonus;
   chart.data.datasets[1].data = augmentationByBonus;
@@ -1215,12 +1215,11 @@ function handleBonusVariationUpdate(characterCreation, bonusVariation) {
   if (characterCreation.hasOwnProperty(selectedBonus)) {
     handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
   } else {
-    var { minValue, maxValue } =
-      bonusVariation;
-  
+    var { minValue, maxValue } = bonusVariation;
+
     minValue.removeAttribute("min");
     minValue.removeAttribute("max");
-  
+
     maxValue.removeAttribute("min");
     maxValue.removeAttribute("max");
 
@@ -1351,11 +1350,11 @@ function characterManagement(characters, battle) {
     if (target.tagName !== "INPUT") {
       target = target.querySelector("input");
     }
-  
+
     if (!target || target.type !== "number") {
       return;
     }
-  
+
     handleBonusVariation(target, bonusVariation, true);
   }
 
@@ -1368,15 +1367,15 @@ function characterManagement(characters, battle) {
   var longPressTimer;
 
   characterCreation.addEventListener("touchstart", function (event) {
-    longPressTimer = setTimeout(function() {
+    longPressTimer = setTimeout(function () {
       handleLongPress(event.target);
     }, 800);
   });
-  
+
   characterCreation.addEventListener("touchend", function () {
     clearTimeout(longPressTimer);
   });
-  
+
   characterCreation.addEventListener("touchmove", function () {
     clearTimeout(longPressTimer);
   });
@@ -3528,7 +3527,13 @@ function calcMagicSkillDamages(battleValues) {
   return damagesWeightedByType;
 }
 
-function calcDamages(attacker, victim, attackType, battle, removeSkillVariation) {
+function calcDamages(
+  attacker,
+  victim,
+  attackType,
+  battle,
+  removeSkillVariation
+) {
   var damagesCalculator, skillId, skillType;
 
   if (attackType === "physical") {
@@ -3549,7 +3554,7 @@ function calcDamages(attacker, victim, attackType, battle, removeSkillVariation)
     damagesCalculator = calcPhysicalSkillDamages;
   }
 
-  var battleValues = createBattleValues(attacker, victim, battle, skillType, );
+  var battleValues = createBattleValues(attacker, victim, battle, skillType);
 
   if (skillId) {
     getSkillFormula(battle, skillId, battleValues, removeSkillVariation);
@@ -3608,11 +3613,21 @@ function damagesWithoutVariation(
   showElement(battle.fightResultContainer);
 }
 
-function damagesWithVariation(attacker, victim, attackType, battle, entity, entityVariation) {
+function damagesWithVariation(
+  attacker,
+  victim,
+  attackType,
+  battle,
+  entity,
+  entityVariation
+) {
   startTime = performance.now();
   var damagesByBonus = [];
   var augmentationByBonus = [];
-  var { bonusVariationMinValue: minVariation, bonusVariationMaxValue: maxVariation } = entity;
+  var {
+    bonusVariationMinValue: minVariation,
+    bonusVariationMaxValue: maxVariation,
+  } = entity;
   var step = Math.ceil((maxVariation - minVariation + 1) / 500);
   var simulationCount = 0;
   var simulationTime;
@@ -3638,18 +3653,27 @@ function damagesWithVariation(attacker, victim, attackType, battle, entity, enti
       var firstDamages = Math.max(meanDamages, 1e-3);
     }
 
-    damagesByBonus.push({x: bonusValue, y: meanDamages});
-    augmentationByBonus.push({x: bonusValue, y: meanDamages / firstDamages - 1});
+    damagesByBonus.push({ x: bonusValue, y: meanDamages });
+    augmentationByBonus.push({
+      x: bonusValue,
+      y: meanDamages / firstDamages - 1,
+    });
     simulationCount++;
   }
 
   endTime = performance.now();
 
-  addToBonusVariationChart(damagesByBonus, augmentationByBonus, entity.bonusVariationDisplay, battle.bonusVariationChart);
+  addToBonusVariationChart(
+    damagesByBonus,
+    augmentationByBonus,
+    entity.bonusVariationDisplay,
+    battle.bonusVariationChart
+  );
 
-  simulationCount =
-    battle.numberFormats.default.format(simulationCount);
-  simulationTime = battle.numberFormats.second.format((endTime - startTime) / 1000);
+  simulationCount = battle.numberFormats.default.format(simulationCount);
+  simulationTime = battle.numberFormats.second.format(
+    (endTime - startTime) / 1000
+  );
 
   battle.simulationCounter.textContent = simulationCount;
   battle.simulationTime.textContent = simulationTime;
@@ -3817,6 +3841,7 @@ function addPotentialErrorInformation(
 
 function reduceChartPointsListener(battle) {
   var {
+    reduceChartPointsContainer,
     reduceChartPoints,
     numberFormats: { second: numberFormat },
     displayTime,
@@ -3845,6 +3870,7 @@ function reduceChartPointsListener(battle) {
         dataset.data = scatterData;
       }
     }
+
     handleChartAnimations(chart, addAnimations);
     chart.update();
 
@@ -3852,6 +3878,13 @@ function reduceChartPointsListener(battle) {
       (performance.now() - startDisplayTime) / 1000
     );
   });
+
+  reduceChartPointsContainer.addEventListener("pointerup", function (event) {
+    if (event.pointerType === "mouse") {
+      reduceChartPoints.click();
+    }
+  });
+
 }
 
 function downloadRawDataListener(battle) {
@@ -4029,10 +4062,32 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    if (isChecked(attacker.bonusVariationActivation) && attacker.hasOwnProperty(attackerVariation) && attacker.bonusVariationMinValue < attacker.bonusVariationMaxValue) {
-      damagesWithVariation(attacker, victim, attackType, battle, attacker, attackerVariation);
-    } else if (isChecked(victim.bonusVariationActivation) && victim.hasOwnProperty(victimVariation) && victim.bonusVariationMinValue < victim.bonusVariationMaxValue) {
-      damagesWithVariation(attacker, victim, attackType, battle, victim, victimVariation);
+    if (
+      isChecked(attacker.bonusVariationActivation) &&
+      attacker.hasOwnProperty(attackerVariation) &&
+      attacker.bonusVariationMinValue < attacker.bonusVariationMaxValue
+    ) {
+      damagesWithVariation(
+        attacker,
+        victim,
+        attackType,
+        battle,
+        attacker,
+        attackerVariation
+      );
+    } else if (
+      isChecked(victim.bonusVariationActivation) &&
+      victim.hasOwnProperty(victimVariation) &&
+      victim.bonusVariationMinValue < victim.bonusVariationMaxValue
+    ) {
+      damagesWithVariation(
+        attacker,
+        victim,
+        attackType,
+        battle,
+        victim,
+        victimVariation
+      );
     } else {
       damagesWithoutVariation(attacker, victim, attackType, battle, characters);
     }
@@ -4145,7 +4200,10 @@ function createConstants() {
         damagesRepartition: "Distribution des dégâts",
         averageDamages: "Dégâts moyens",
         damagesAugmentation: "Augmentation des dégâts",
-        bonusVariationTitle: ["Évolution des dégâts moyens", "par rapport à la valeur d'un bonus"]
+        bonusVariationTitle: [
+          "Évolution des dégâts moyens",
+          "par rapport à la valeur d'un bonus",
+        ],
       },
       en: {
         damages: "Damage",
@@ -4158,7 +4216,10 @@ function createConstants() {
         damagesRepartition: "Damage Repartition",
         averageDamages: "Average Damage",
         damagesAugmentation: "Damage Augmentation",
-        bonusVariationTitle: ["Evolution of Average Damage", "Relative to a Bonus Value"]
+        bonusVariationTitle: [
+          "Evolution of Average Damage",
+          "Relative to a Bonus Value",
+        ],
       },
       tr: {
         damages: "Hasar",
@@ -4171,7 +4232,10 @@ function createConstants() {
         damagesRepartition: "Hasar Dağılımı",
         averageDamages: "Ortalama Hasar",
         damagesAugmentation: "Ortalama Hasar Artışı",
-        bonusVariationTitle: ["Bir bonusun değerine kıyasla", "Ortalama Hasar Çizelgesi"]
+        bonusVariationTitle: [
+          "Bir bonusun değerine kıyasla",
+          "Ortalama Hasar Çizelgesi",
+        ],
       },
       ro: {
         damages: "Daune",
@@ -4184,7 +4248,10 @@ function createConstants() {
         damagesRepartition: "Distribuția daunelor",
         averageDamages: "Media damageului",
         damagesAugmentation: "Damage imbunatatit",
-        bonusVariationTitle: ["Evolutia mediei damageului", "relativ la o valoare bonus"]
+        bonusVariationTitle: [
+          "Evolutia mediei damageului",
+          "relativ la o valoare bonus",
+        ],
       },
       de: {
         damages: "Schäden",
@@ -4197,7 +4264,10 @@ function createConstants() {
         damagesRepartition: "Schadensverteilung",
         averageDamages: "Durchschnittlicher Schaden",
         damagesAugmentation: "Schadenserhöhung",
-        bonusVariationTitle: ["Entwicklung des durchschnittlichen Schadens", "im Verhältnis zu einem Bonus"]
+        bonusVariationTitle: [
+          "Entwicklung des durchschnittlichen Schadens",
+          "im Verhältnis zu einem Bonus",
+        ],
       },
       pt: {
         damages: "Dano",
@@ -4210,7 +4280,7 @@ function createConstants() {
         damagesRepartition: "Repartição de dano",
         averageDamages: "Dano médio",
         damagesAugmentation: "Aumento de dano",
-        bonusVariationTitle: ["Evolução do dano médio", "relativo a um bónus"]
+        bonusVariationTitle: ["Evolução do dano médio", "relativo a um bónus"],
       },
       // es: {
       //   damages: "Daño",
@@ -4224,7 +4294,7 @@ function createConstants() {
       //   averageDamages: "Daño medio",
       //   damagesAugmentation: "Aumento de daño",
       //   bonusVariationTitle: ["Evolución del daño medio", "Relativo a una bonificación"]
-      // }, 
+      // },
     },
   };
   return constants;
@@ -4342,10 +4412,10 @@ function initDamagesChart(battle) {
       plugins: {
         legend: {
           display: true,
-          onHover: function(e) {
+          onHover: function (e) {
             e.native.target.style.cursor = "pointer";
           },
-          onLeave: function(e) {
+          onLeave: function (e) {
             e.native.target.style.cursor = "default";
           },
           onClick: function (e, legendItem, legend) {
@@ -4360,10 +4430,7 @@ function initDamagesChart(battle) {
             legendItem.hidden = isCurrentDatasetVisible;
 
             for (var index in datasets) {
-              if (
-                ci.isDatasetVisible(index) &&
-                datasets[index].canBeReduced
-              ) {
+              if (ci.isDatasetVisible(index) && datasets[index].canBeReduced) {
                 showElement(reduceChartPointsContainer);
                 hideReducePoints = false;
                 break;
@@ -4518,9 +4585,9 @@ function initBonusVariationChart(battle) {
           backgroundColor: "rgba(192, 192, 75, 0.2)",
           borderColor: "rgba(192, 192, 75, 1)",
           hidden: true,
-          yTicksFormat: {style: "percent"},
+          yTicksFormat: { style: "percent" },
         },
-      ]
+      ],
     },
     options: {
       responsive: true,
@@ -4528,10 +4595,10 @@ function initBonusVariationChart(battle) {
       plugins: {
         legend: {
           display: true,
-          onHover: function(e) {
+          onHover: function (e) {
             e.native.target.style.cursor = "pointer";
           },
-          onLeave: function(e) {
+          onLeave: function (e) {
             e.native.target.style.cursor = "default";
           },
           onClick: function (e, legendItem, legend) {
@@ -4542,14 +4609,16 @@ function initBonusVariationChart(battle) {
             var yAxis = ci.options.scales.y;
 
             var otherIndex = currentIndex === 0 ? 1 : 0;
-            var visibleDataset = isCurrentDatasetVisible ? datasets[otherIndex] : datasets[currentIndex];
+            var visibleDataset = isCurrentDatasetVisible
+              ? datasets[otherIndex]
+              : datasets[currentIndex];
 
             datasets[currentIndex].hidden = isCurrentDatasetVisible;
             datasets[otherIndex].hidden = !isCurrentDatasetVisible;
 
             yAxis.title.text = visibleDataset.label;
             yAxis.ticks.format = visibleDataset.yTicksFormat;
-        
+
             ci.update();
           },
         },
@@ -4576,12 +4645,12 @@ function initBonusVariationChart(battle) {
             },
           },
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               if (Number.isInteger(value)) {
                 return Number(value);
               }
-            }
-          }
+            },
+          },
         },
         y: {
           title: {
@@ -4749,7 +4818,7 @@ function createDamageCalculatorInformation(chartSource) {
     battle.attackTypeSelection
   );
   initResultTableHistory(battle);
-  loadScript(chartSource, function() {
+  loadScript(chartSource, function () {
     initDamagesChart(battle);
     initBonusVariationChart(battle);
   });
