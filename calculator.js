@@ -1347,20 +1347,38 @@ function characterManagement(characters, battle) {
     characters.unsavedChanges = true;
   });
 
+  function handleLongPress(target) {
+    if (target.tagName !== "INPUT") {
+      target = target.querySelector("input");
+    }
+  
+    if (!target || target.type !== "number") {
+      return;
+    }
+  
+    handleBonusVariation(target, bonusVariation, true);
+  }
+
   characterCreation.addEventListener("click", function (event) {
     if (event.shiftKey || event.ctrlKey) {
-      var target = event.target;
-
-      if (target.tagName !== "INPUT") {
-        target = target.querySelector("input");
-      }
-
-      if (!target || target.type !== "number") {
-        return;
-      }
-
-      handleBonusVariation(target, bonusVariation, true);
+      handleLongPress(event.target);
     }
+  });
+
+  var longPressTimer;
+
+  characterCreation.addEventListener("touchstart", function (event) {
+    longPressTimer = setTimeout(function() {
+      handleLongPress(event.target);
+    }, 800);
+  });
+  
+  characterCreation.addEventListener("touchend", function () {
+    clearTimeout(longPressTimer);
+  });
+  
+  characterCreation.addEventListener("touchmove", function () {
+    clearTimeout(longPressTimer);
   });
 
   filterForm(characters, battle);
