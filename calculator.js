@@ -1246,23 +1246,6 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     return;
   }
 
-  var targetContent = "";
-
-  if (targetParent.children.length <= 1) {
-    targetContent = targetParent.textContent;
-  } else {
-    for (var index = 1; index < targetParent.children.length; index++) {
-      var element = targetParent.children[index];
-
-      if (element.checkVisibility()) {
-        targetContent += element.textContent;
-      }
-    }
-  }
-
-  inputDisplay.value = targetContent;
-  inputDisplay.style.width = targetContent.length * 0.55 + "em";
-
   minValue.min = targetMin;
   minValue.max = targetMax;
 
@@ -1271,6 +1254,21 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
 
   if (isSelectedByUser) {
     var { input, tab } = bonusVariation;
+    var targetContent = "";
+
+    if (targetParent.children.length <= 1) {
+      targetContent = targetParent.textContent;
+    } else {
+      for (var index = 1; index < targetParent.children.length; index++) {
+        var element = targetParent.children[index];
+  
+        if (element.checkVisibility()) {
+          targetContent += element.textContent;
+        }
+      }
+    }
+  
+    inputDisplay.value = targetContent;
 
     targetValue = Number(targetValue);
     input.value = targetName;
@@ -1285,6 +1283,7 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
+  inputDisplay.style.width = inputDisplay.value.length * 0.55 + "em";
   showElement(container);
 }
 
@@ -3884,7 +3883,6 @@ function reduceChartPointsListener(battle) {
       reduceChartPoints.click();
     }
   });
-
 }
 
 function downloadRawDataListener(battle) {
