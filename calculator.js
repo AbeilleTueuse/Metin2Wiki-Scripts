@@ -1261,13 +1261,13 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     } else {
       for (var index = 1; index < targetParent.children.length; index++) {
         var element = targetParent.children[index];
-  
+
         if (element.checkVisibility()) {
           targetContent += element.textContent;
         }
       }
     }
-  
+
     inputDisplay.value = targetContent;
 
     targetValue = Number(targetValue);
@@ -3662,6 +3662,8 @@ function damagesWithVariation(
 
   endTime = performance.now();
 
+  battle.damagesByBonus = damagesByBonus.concat(entityVariation);
+
   addToBonusVariationChart(
     damagesByBonus,
     augmentationByBonus,
@@ -3886,18 +3888,13 @@ function reduceChartPointsListener(battle) {
 }
 
 function downloadRawDataListener(battle) {
-  var button = document.getElementById("download-raw-data");
+  var { downLoadRawData, downLoadRawDataVariation } = battle;
   var fileType = "text/csv;charset=utf-8;";
-  var filename = "raw_damages.csv";
 
-  button.addEventListener("click", function (e) {
+  downLoadRawData.addEventListener("click", function () {
     var damagesWeightedByType = battle.damagesWeightedByType;
-
-    if (!damagesWeightedByType) {
-      return;
-    }
-
-    var csvContent = "damages,probabilities,damagesType\n";
+    var filename = "raw_damages.csv";
+    var csvContent = "damage,probabilities,damageType\n";
 
     for (var damagesType in damagesWeightedByType) {
       var damagesWeighted = damagesWeightedByType[damagesType];
@@ -3906,6 +3903,26 @@ function downloadRawDataListener(battle) {
         csvContent +=
           damages + "," + damagesWeighted[damages] + "," + damagesType + "\n";
       }
+    }
+
+    downloadData(csvContent, fileType, filename);
+  });
+
+  downLoadRawDataVariation.addEventListener("click", function () {
+    var damagesByBonus = battle.damagesByBonus;
+    var damagesByBonusLength = damagesByBonus.length;
+    var filename = "damages_variation.csv";
+
+    if (!damagesByBonusLength) {
+      return;
+    }
+
+    var csvContent = damagesByBonus[damagesByBonusLength - 1] + ",averageDamage\n";
+
+    for (var index = 0; index < damagesByBonusLength - 1; index++) {
+      var row = damagesByBonus[index];
+
+      csvContent += row.x + "," + row.y + "\n";
     }
 
     downloadData(csvContent, fileType, filename);
@@ -4768,12 +4785,17 @@ function createDamageCalculatorInformation(chartSource) {
     victimSelection: document.getElementById("victim-selection"),
     damagesWeightedByType: {},
     scatterDataByType: {},
+    damagesByBonus: [],
     tableResultFight: document.getElementById("result-table-fight"),
     tableResultHistory: document.getElementById("result-table-history"),
     deleteFightTemplate: document.getElementById("delete-fight-template")
       .children[0],
     errorInformation: {},
     fightResultContainer: document.getElementById("fight-result-container"),
+    downLoadRawData: document.getElementById("download-raw-data"),
+    downLoadRawDataVariation: document.getElementById(
+      "download-raw-data-variation"
+    ),
     bonusVariationResultContainer: document.getElementById(
       "bonus-variation-result-container"
     ),
