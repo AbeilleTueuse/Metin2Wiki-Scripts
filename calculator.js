@@ -1,978 +1,963 @@
-function showElement(element) {
-  element.classList.remove("tabber-noactive");
-}
-
-function hideElement(element) {
-  element.classList.add("tabber-noactive");
-}
-
-function removeAccent(str) {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-function toNormalForm(str) {
-  return removeAccent(str)
-    .replace("-", " ")
-    .replace(/[^a-zA-Z0-9 ]/g, "")
-    .toLowerCase();
-}
-
-function pseudoFormat(str) {
-  return removeAccent(str).replace(/[^A-Za-z0-9 \(\)\+_-]+/g, "");
-}
-
-function isValueInArray(value, array) {
-  return array.indexOf(value) !== -1;
-}
-
-function copyObject(object) {
-  var copy = {};
-  for (var key in object) {
-    copy[key] = object[key];
+  function showElement(element) {
+    element.classList.remove("tabber-noactive");
   }
-  return copy;
-}
 
-function compareNumbers(a, b) {
-  return b - a;
-}
-
-function isChecked(attribute) {
-  return attribute === "on";
-}
-
-function floorMultiplication(firstFactor, secondFactor) {
-  return Math.floor((firstFactor * secondFactor).toFixed(8));
-}
-
-function truncateNumber(number, precision) {
-  return Math.floor(number * 10 ** precision) / 10 ** precision;
-}
-
-function addKeyValue(object, key, value) {
-  if (object.hasOwnProperty(key)) {
-    object[key] += value;
-  } else {
-    object[key] = value;
+  function hideElement(element) {
+    element.classList.add("tabber-noactive");
   }
-}
 
-function editTableResultRow(row, valuesToDisplay, numberFormat) {
-  row.innerHTML = "";
-  for (var index = 0; index < valuesToDisplay.length; index++) {
-    var cell = row.insertCell();
-    var textContent;
+  function removeAccent(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
 
-    if (index >= 3) {
-      textContent = numberFormat.format(valuesToDisplay[index]);
+  function toNormalForm(str) {
+    return removeAccent(str)
+      .replace("-", " ")
+      .replace(/[^a-zA-Z0-9 ]/g, "")
+      .toLowerCase();
+  }
+
+  function pseudoFormat(str) {
+    return removeAccent(str).replace(/[^A-Za-z0-9 \(\)\+_-]+/g, "");
+  }
+
+  function isValueInArray(value, array) {
+    return array.indexOf(value) !== -1;
+  }
+
+  function copyObject(object) {
+    var copy = {};
+    for (var key in object) {
+      copy[key] = object[key];
+    }
+    return copy;
+  }
+
+  function compareNumbers(a, b) {
+    return b - a;
+  }
+
+  function isChecked(attribute) {
+    return attribute === "on";
+  }
+
+  function floorMultiplication(firstFactor, secondFactor) {
+    return Math.floor((firstFactor * secondFactor).toFixed(8));
+  }
+
+  function truncateNumber(number, precision) {
+    return Math.floor(number * 10 ** precision) / 10 ** precision;
+  }
+
+  function addKeyValue(object, key, value) {
+    if (object.hasOwnProperty(key)) {
+      object[key] += value;
     } else {
-      textContent = valuesToDisplay[index];
-    }
-
-    cell.textContent = textContent;
-  }
-
-  return row;
-}
-
-function addRowToTableResultHistory(
-  tableResultHistory,
-  valuesToDisplay,
-  deleteFightTemplate,
-  numberFormat
-) {
-  var row = tableResultHistory.insertRow();
-  editTableResultRow(row, valuesToDisplay, numberFormat);
-  var cell = row.insertCell();
-  cell.appendChild(deleteFightTemplate.cloneNode(true));
-}
-
-function calcMeanDamages(damagesWeightedByType, totalCardinal) {
-  var sumDamages = 0;
-
-  for (var damagesTypeName in damagesWeightedByType) {
-    if (damagesTypeName === "miss") {
-      continue;
-    }
-
-    var damagesWeighted = damagesWeightedByType[damagesTypeName];
-
-    for (var damages in damagesWeighted) {
-      sumDamages += damages * damagesWeighted[damages];
+      object[key] = value;
     }
   }
 
-  return sumDamages / totalCardinal;
-}
+  function editTableResultRow(row, valuesToDisplay, numberFormat) {
+    row.innerHTML = "";
+    for (var index = 0; index < valuesToDisplay.length; index++) {
+      var cell = row.insertCell();
+      var textContent;
 
-function prepareDamagesData(
-  damagesWeightedByType,
-  possibleDamagesCountTemp,
-  totalCardinal
-) {
-  var minDamages = Infinity;
-  var maxDamages = 0;
-  var scatterDataByType = {};
-  var sumDamages = 0;
-  var possibleDamagesCount = 0;
-  var uniqueDamagesCount = 0;
-
-  for (var damagesTypeName in damagesWeightedByType) {
-    if (damagesTypeName === "miss") {
-      scatterDataByType.miss = damagesWeightedByType.miss;
-      possibleDamagesCount++;
-      uniqueDamagesCount++;
-      continue;
-    }
-
-    var firstIteration = true;
-    var damagesWeighted = damagesWeightedByType[damagesTypeName];
-    var scatterData = [];
-    scatterDataByType[damagesTypeName] = scatterData;
-
-    for (var damages in damagesWeighted) {
-      damages = +damages;
-
-      if (firstIteration) {
-        if (damages < minDamages) {
-          minDamages = damages;
-        }
-        firstIteration = false;
-      }
-
-      var weight = damagesWeighted[damages];
-      var probability = weight / totalCardinal;
-
-      sumDamages += damages * weight;
-      damagesWeighted[damages] = probability;
-      scatterData.push({ x: damages, y: probability });
-    }
-
-    var scatterDataLength = scatterData.length;
-
-    possibleDamagesCount += possibleDamagesCountTemp;
-    uniqueDamagesCount += scatterDataLength;
-
-    if (damages > maxDamages) {
-      maxDamages = damages;
-    }
-  }
-
-  if (minDamages === Infinity) {
-    minDamages = 0;
-  }
-
-  return [
-    sumDamages / totalCardinal,
-    minDamages,
-    maxDamages,
-    scatterDataByType,
-    possibleDamagesCount,
-    uniqueDamagesCount,
-  ];
-}
-
-function aggregateDamages(scatterData, maxPoints) {
-  var dataLength = scatterData.length;
-  var remainingData = dataLength;
-  var aggregateScatterData = [];
-
-  for (var groupIndex = 0; groupIndex < maxPoints; groupIndex++) {
-    var groupLength = Math.floor(remainingData / (maxPoints - groupIndex));
-    var startIndex = dataLength - remainingData;
-    var aggregateDamages = 0;
-    var aggregateProbability = 0;
-
-    for (var index = startIndex; index < startIndex + groupLength; index++) {
-      var { x: damages, y: probability } = scatterData[index];
-      aggregateDamages += damages * probability;
-      aggregateProbability += probability;
-    }
-
-    aggregateScatterData.push({
-      x: aggregateDamages / aggregateProbability,
-      y: aggregateProbability,
-    });
-
-    remainingData -= groupLength;
-  }
-
-  return aggregateScatterData;
-}
-
-function addToDamagesChart(
-  scatterDataByType,
-  damagesChart,
-  isReducePointsChecked
-) {
-  var { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
-    damagesChart;
-  var isFirstDataset = true;
-  var datasets = chart.data.datasets;
-
-  datasets.length = 0;
-
-  for (var index = 0; index < datasetsStyle.length; index++) {
-    var dataset = copyObject(datasetsStyle[index]);
-
-    if (!scatterDataByType.hasOwnProperty(dataset.name)) {
-      continue;
-    }
-
-    var scatterData = scatterDataByType[dataset.name];
-    var canBeReduced = scatterData.length > 2 * maxPoints;
-
-    dataset.hidden = !isFirstDataset;
-    dataset.canBeReduced = canBeReduced;
-
-    if (canBeReduced && isReducePointsChecked) {
-      dataset.data = aggregateDamages(scatterData, maxPoints);
-    } else {
-      dataset.data = scatterData;
-    }
-
-    if (isFirstDataset) {
-      isFirstDataset = false;
-
-      if (canBeReduced) {
-        showElement(reduceChartPointsContainer);
-
-        if (!isReducePointsChecked) {
-          handleChartAnimations(chart, false);
-        }
+      if (index >= 3) {
+        textContent = numberFormat.format(valuesToDisplay[index]);
       } else {
-        hideElement(reduceChartPointsContainer);
-        handleChartAnimations(chart, true);
+        textContent = valuesToDisplay[index];
+      }
+
+      cell.textContent = textContent;
+    }
+
+    return row;
+  }
+
+  function addRowToTableResultHistory(
+    tableResultHistory,
+    valuesToDisplay,
+    deleteFightTemplate,
+    numberFormat
+  ) {
+    var row = tableResultHistory.insertRow();
+    editTableResultRow(row, valuesToDisplay, numberFormat);
+    var cell = row.insertCell();
+    cell.appendChild(deleteFightTemplate.cloneNode(true));
+  }
+
+  function calcMeanDamages(damagesWeightedByType, totalCardinal) {
+    var sumDamages = 0;
+
+    for (var damagesTypeName in damagesWeightedByType) {
+      if (damagesTypeName === "miss") {
+        continue;
+      }
+
+      var damagesWeighted = damagesWeightedByType[damagesTypeName];
+
+      for (var damages in damagesWeighted) {
+        sumDamages += damages * damagesWeighted[damages];
       }
     }
 
-    datasets.push(dataset);
+    return sumDamages / totalCardinal;
   }
 
-  chart.data.missPercentage = scatterDataByType.miss;
-  chart.update();
-}
+  function prepareDamagesData(
+    damagesWeightedByType,
+    possibleDamagesCountTemp,
+    totalCardinal
+  ) {
+    var minDamages = Infinity;
+    var maxDamages = 0;
+    var scatterDataByType = {};
+    var sumDamages = 0;
+    var possibleDamagesCount = 0;
+    var uniqueDamagesCount = 0;
 
-function addToBonusVariationChart(
-  damagesByBonus,
-  augmentationByBonus,
-  xLabel,
-  chart
-) {
-  chart.data.datasets[0].data = damagesByBonus;
-  chart.data.datasets[1].data = augmentationByBonus;
-  chart.options.scales.x.title.text = xLabel;
-  chart.update();
-}
-
-function handleChartAnimations(chart, addAnimations) {
-  chart.options.animation = addAnimations;
-  chart.options.animations.colors = addAnimations;
-  chart.options.animations.x = addAnimations;
-  chart.options.transitions.active.animation.duration = addAnimations * 1000;
-}
-
-function updateDamagesChartDescription(
-  uniqueDamagesCounters,
-  uniqueDamagesCount,
-  formatNumber
-) {
-  uniqueDamagesCounters.forEach(function (element) {
-    if (uniqueDamagesCount <= 1) {
-      hideElement(element.parentElement);
-    } else {
-      showElement(element.parentElement);
-      element.textContent = formatNumber.format(uniqueDamagesCount);
-    }
-  });
-}
-
-function getMonsterName(monsterVnum) {
-  var monsterAttributes = monsterData[monsterVnum];
-  return monsterAttributes[monsterAttributes.length - 1];
-}
-
-function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
-  showElement(classChoice.parentElement);
-
-  for (var option of classChoice.options) {
-    if (option.getAttribute("data-race") === selectedRace) {
-      if (!selectValueIsChanged) {
-        classChoice.value = option.value;
-        selectValueIsChanged = true;
+    for (var damagesTypeName in damagesWeightedByType) {
+      if (damagesTypeName === "miss") {
+        scatterDataByType.miss = damagesWeightedByType.miss;
+        possibleDamagesCount++;
+        uniqueDamagesCount++;
+        continue;
       }
-      showElement(option);
+
+      var firstIteration = true;
+      var damagesWeighted = damagesWeightedByType[damagesTypeName];
+      var scatterData = [];
+      scatterDataByType[damagesTypeName] = scatterData;
+
+      for (var damages in damagesWeighted) {
+        damages = +damages;
+
+        if (firstIteration) {
+          if (damages < minDamages) {
+            minDamages = damages;
+          }
+          firstIteration = false;
+        }
+
+        var weight = damagesWeighted[damages];
+        var probability = weight / totalCardinal;
+
+        sumDamages += damages * weight;
+        damagesWeighted[damages] = probability;
+        scatterData.push({ x: damages, y: probability });
+      }
+
+      var scatterDataLength = scatterData.length;
+
+      possibleDamagesCount += possibleDamagesCountTemp;
+      uniqueDamagesCount += scatterDataLength;
+
+      if (damages > maxDamages) {
+        maxDamages = damages;
+      }
+    }
+
+    if (minDamages === Infinity) {
+      minDamages = 0;
+    }
+
+    return [
+      sumDamages / totalCardinal,
+      minDamages,
+      maxDamages,
+      scatterDataByType,
+      possibleDamagesCount,
+      uniqueDamagesCount,
+    ];
+  }
+
+  function aggregateDamages(scatterData, maxPoints) {
+    var dataLength = scatterData.length;
+    var remainingData = dataLength;
+    var aggregateScatterData = [];
+
+    for (var groupIndex = 0; groupIndex < maxPoints; groupIndex++) {
+      var groupLength = Math.floor(remainingData / (maxPoints - groupIndex));
+      var startIndex = dataLength - remainingData;
+      var aggregateDamages = 0;
+      var aggregateProbability = 0;
+
+      for (var index = startIndex; index < startIndex + groupLength; index++) {
+        var { x: damages, y: probability } = scatterData[index];
+        aggregateDamages += damages * probability;
+        aggregateProbability += probability;
+      }
+
+      aggregateScatterData.push({
+        x: aggregateDamages / aggregateProbability,
+        y: aggregateProbability,
+      });
+
+      remainingData -= groupLength;
+    }
+
+    return aggregateScatterData;
+  }
+
+  function addToDamagesChart(
+    scatterDataByType,
+    damagesChart,
+    isReducePointsChecked
+  ) {
+    var { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
+      damagesChart;
+    var isFirstDataset = true;
+    var datasets = chart.data.datasets;
+
+    datasets.length = 0;
+
+    for (var index = 0; index < datasetsStyle.length; index++) {
+      var dataset = copyObject(datasetsStyle[index]);
+
+      if (!scatterDataByType.hasOwnProperty(dataset.name)) {
+        continue;
+      }
+
+      var scatterData = scatterDataByType[dataset.name];
+      var canBeReduced = scatterData.length > 2 * maxPoints;
+
+      dataset.hidden = !isFirstDataset;
+      dataset.canBeReduced = canBeReduced;
+
+      if (canBeReduced && isReducePointsChecked) {
+        dataset.data = aggregateDamages(scatterData, maxPoints);
+      } else {
+        dataset.data = scatterData;
+      }
+
+      if (isFirstDataset) {
+        isFirstDataset = false;
+
+        if (canBeReduced) {
+          showElement(reduceChartPointsContainer);
+
+          if (!isReducePointsChecked) {
+            handleChartAnimations(chart, false);
+          }
+        } else {
+          hideElement(reduceChartPointsContainer);
+          handleChartAnimations(chart, true);
+        }
+      }
+
+      datasets.push(dataset);
+    }
+
+    chart.data.missPercentage = scatterDataByType.miss;
+    chart.update();
+  }
+
+  function addToBonusVariationChart(
+    damagesByBonus,
+    augmentationByBonus,
+    xLabel,
+    chart
+  ) {
+    chart.data.datasets[0].data = damagesByBonus;
+    chart.data.datasets[1].data = augmentationByBonus;
+    chart.options.scales.x.title.text = xLabel;
+    chart.update();
+  }
+
+  function handleChartAnimations(chart, addAnimations) {
+    chart.options.animation = addAnimations;
+    chart.options.animations.colors = addAnimations;
+    chart.options.animations.x = addAnimations;
+    chart.options.transitions.active.animation.duration = addAnimations * 1000;
+  }
+
+  function updateDamagesChartDescription(
+    uniqueDamagesCounters,
+    uniqueDamagesCount,
+    formatNumber
+  ) {
+    uniqueDamagesCounters.forEach(function (element) {
+      if (uniqueDamagesCount <= 1) {
+        hideElement(element.parentElement);
+      } else {
+        showElement(element.parentElement);
+        element.textContent = formatNumber.format(uniqueDamagesCount);
+      }
+    });
+  }
+
+  function getMonsterName(monsterVnum) {
+    var monsterAttributes = monsterData[monsterVnum];
+    return monsterAttributes[monsterAttributes.length - 1];
+  }
+
+  function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
+    showElement(classChoice.parentElement);
+
+    for (var option of classChoice.options) {
+      if (option.getAttribute("data-race") === selectedRace) {
+        if (!selectValueIsChanged) {
+          classChoice.value = option.value;
+          selectValueIsChanged = true;
+        }
+        showElement(option);
+      } else {
+        hideElement(option);
+      }
+    }
+    if (selectedRace == "lycan") {
+      hideElement(classChoice.parentElement);
+    }
+  }
+
+  function filterWeapon(
+    selectedRace,
+    weaponElement,
+    weaponCategory,
+    allowedWeaponsPerRace,
+    selectValueIsChanged = false
+  ) {
+    var allowedWeapons = allowedWeaponsPerRace[selectedRace];
+
+    if (!selectValueIsChanged) {
+      var weaponType = weaponData[weaponElement.value][1];
+
+      if (!isValueInArray(weaponType, allowedWeapons)) {
+        weaponElement.value = 0;
+      }
+    }
+
+    var children = weaponCategory.children;
+
+    for (var index = 0; index < children.length; index++) {
+      var child = children[index];
+
+      if (isValueInArray(index, allowedWeapons)) {
+        showElement(child);
+      } else {
+        hideElement(child);
+      }
+    }
+  }
+
+  function getSelectedWeapon(weaponCategory) {
+    return weaponCategory.querySelector("input[type='radio']:checked");
+  }
+
+  function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
+    var newImage = newWeapon.nextElementSibling.cloneNode();
+    var newText = document.createElement("span");
+    var oldImage = weaponDisplay.firstChild;
+    var oldText = oldImage.nextElementSibling;
+    var weaponName = createWeapon(weaponVnum).name;
+
+    if (weaponVnum == 0) {
+      newText.textContent = " " + weaponName + " ";
     } else {
-      hideElement(option);
+      var weaponLink = document.createElement("a");
+      weaponLink.href = mw.util.getUrl(weaponName);
+      weaponLink.title = weaponName;
+      weaponLink.textContent = weaponName;
+
+      newText.appendChild(document.createTextNode(" "));
+      newText.appendChild(weaponLink);
+      newText.appendChild(document.createTextNode(" "));
     }
-  }
-  if (selectedRace == "lycan") {
-    hideElement(classChoice.parentElement);
-  }
-}
 
-function filterWeapon(
-  selectedRace,
-  weaponElement,
-  weaponCategory,
-  allowedWeaponsPerRace,
-  selectValueIsChanged = false
-) {
-  var allowedWeapons = allowedWeaponsPerRace[selectedRace];
-
-  if (!selectValueIsChanged) {
-    var weaponType = weaponData[weaponElement.value][1];
-
-    if (!isValueInArray(weaponType, allowedWeapons)) {
-      weaponElement.value = 0;
-    }
+    weaponDisplay.replaceChild(newImage, oldImage);
+    weaponDisplay.replaceChild(newText, oldText);
   }
 
-  var children = weaponCategory.children;
+  function filterUpgrade(
+    selectedRace,
+    weaponUpgrade,
+    weaponVnum,
+    randomAttackValue,
+    randomMagicAttackValue,
+    currentUpgrade
+  ) {
+    var weapon = createWeapon(weaponVnum);
 
-  for (var index = 0; index < children.length; index++) {
-    var child = children[index];
+    if (weapon.isSerpent) {
+      showElement(randomAttackValue);
 
-    if (isValueInArray(index, allowedWeapons)) {
-      showElement(child);
+      if (selectedRace === "sura" || selectedRace === "shaman") {
+        showElement(randomMagicAttackValue);
+      }
     } else {
-      hideElement(child);
+      hideElement(randomAttackValue);
+      hideElement(randomMagicAttackValue);
+    }
+
+    var upgradeNumber = weapon.upgrades.length;
+
+    if (upgradeNumber <= 1) {
+      hideElement(weaponUpgrade.parentElement);
+    } else {
+      showElement(weaponUpgrade.parentElement);
+    }
+
+    weaponUpgrade.innerHTML = "";
+
+    for (var upgrade = 0; upgrade < upgradeNumber; upgrade++) {
+      var option = document.createElement("option");
+      option.value = upgrade;
+      option.textContent = "+" + upgrade;
+      weaponUpgrade.appendChild(option);
+    }
+    if (currentUpgrade === undefined) {
+      option.selected = true;
+    } else {
+      weaponUpgrade.value = currentUpgrade;
+      currentUpgrade = undefined;
     }
   }
-}
 
-function getSelectedWeapon(weaponCategory) {
-  return weaponCategory.querySelector("input[type='radio']:checked");
-}
-
-function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
-  var newImage = newWeapon.nextElementSibling.cloneNode();
-  var newText = document.createElement("span");
-  var oldImage = weaponDisplay.firstChild;
-  var oldText = oldImage.nextElementSibling;
-  var weaponName = createWeapon(weaponVnum).name;
-
-  if (weaponVnum == 0) {
-    newText.textContent = " " + weaponName + " ";
-  } else {
-    var weaponLink = document.createElement("a");
-    weaponLink.href = mw.util.getUrl(weaponName);
-    weaponLink.title = weaponName;
-    weaponLink.textContent = weaponName;
-
-    newText.appendChild(document.createTextNode(" "));
-    newText.appendChild(weaponLink);
-    newText.appendChild(document.createTextNode(" "));
-  }
-
-  weaponDisplay.replaceChild(newImage, oldImage);
-  weaponDisplay.replaceChild(newText, oldText);
-}
-
-function filterUpgrade(
-  selectedRace,
-  weaponUpgrade,
-  weaponVnum,
-  randomAttackValue,
-  randomMagicAttackValue,
-  currentUpgrade
-) {
-  var weapon = createWeapon(weaponVnum);
-
-  if (weapon.isSerpent) {
-    showElement(randomAttackValue);
-
-    if (selectedRace === "sura" || selectedRace === "shaman") {
-      showElement(randomMagicAttackValue);
+  function filterState(selectedState, polymorphMonster) {
+    if (selectedState === "polymorph") {
+      showElement(polymorphMonster.parentElement);
+    } else {
+      hideElement(polymorphMonster.parentElement);
     }
-  } else {
-    hideElement(randomAttackValue);
-    hideElement(randomMagicAttackValue);
   }
 
-  var upgradeNumber = weapon.upgrades.length;
-
-  if (upgradeNumber <= 1) {
-    hideElement(weaponUpgrade.parentElement);
-  } else {
-    showElement(weaponUpgrade.parentElement);
-  }
-
-  weaponUpgrade.innerHTML = "";
-
-  for (var upgrade = 0; upgrade < upgradeNumber; upgrade++) {
-    var option = document.createElement("option");
-    option.value = upgrade;
-    option.textContent = "+" + upgrade;
-    weaponUpgrade.appendChild(option);
-  }
-  if (currentUpgrade === undefined) {
-    option.selected = true;
-  } else {
-    weaponUpgrade.value = currentUpgrade;
-    currentUpgrade = undefined;
-  }
-}
-
-function filterState(selectedState, polymorphMonster) {
-  if (selectedState === "polymorph") {
-    showElement(polymorphMonster.parentElement);
-  } else {
-    hideElement(polymorphMonster.parentElement);
-  }
-}
-
-function filterCheckbox(checkbox, element) {
-  if (checkbox.checked) {
-    showElement(element);
-  } else {
-    hideElement(element);
-  }
-}
-
-function filterSkills(selectedClass, skillElementsToFilter) {
-  for (var element of skillElementsToFilter) {
-    if (isValueInArray(selectedClass, element.dataset.class)) {
+  function filterCheckbox(checkbox, element) {
+    if (checkbox.checked) {
       showElement(element);
     } else {
       hideElement(element);
     }
   }
-}
 
-function filterAttackTypeSelection(attacker, attackTypeSelection) {
-  var attackerClass = attacker.class;
-  var selectedOption =
-    attackTypeSelection.options[attackTypeSelection.selectedIndex];
-  var attackerIsNotPolymorph = !isPolymorph(attacker);
-
-  for (var index = 2; index < attackTypeSelection.options.length; index++) {
-    var option = attackTypeSelection.options[index];
-    var optionClass = option.dataset.class;
-    var optionValue = option.value;
-
-    if (
-      attackerIsNotPolymorph &&
-      attacker[optionValue] &&
-      (attackerClass === optionClass ||
-        (optionValue.startsWith("horseSkill") &&
-          isRiding(attacker) &&
-          (!optionClass || isValueInArray(attackerClass, optionClass))))
-    ) {
-      showElement(option);
-    } else {
-      hideElement(option);
-
-      if (selectedOption === option) {
-        attackTypeSelection.selectedIndex = 0;
+  function filterSkills(selectedClass, skillElementsToFilter) {
+    for (var element of skillElementsToFilter) {
+      if (isValueInArray(selectedClass, element.dataset.class)) {
+        showElement(element);
+      } else {
+        hideElement(element);
       }
     }
   }
-}
 
-function filterAttackTypeSelectionMonster(attackTypeSelection) {
-  for (var index = 2; index < attackTypeSelection.options.length; index++) {
-    hideElement(attackTypeSelection.options[index]);
+  function filterAttackTypeSelection(attacker, attackTypeSelection) {
+    var attackerClass = attacker.class;
+    var selectedOption =
+      attackTypeSelection.options[attackTypeSelection.selectedIndex];
+    var attackerIsNotPolymorph = !isPolymorph(attacker);
+
+    for (var index = 2; index < attackTypeSelection.options.length; index++) {
+      var option = attackTypeSelection.options[index];
+      var optionClass = option.dataset.class;
+      var optionValue = option.value;
+
+      if (
+        attackerIsNotPolymorph &&
+        attacker[optionValue] &&
+        (attackerClass === optionClass ||
+          (optionValue.startsWith("horseSkill") &&
+            isRiding(attacker) &&
+            (!optionClass || isValueInArray(attackerClass, optionClass))))
+      ) {
+        showElement(option);
+      } else {
+        hideElement(option);
+
+        if (selectedOption === option) {
+          attackTypeSelection.selectedIndex = 0;
+        }
+      }
+    }
   }
 
-  if (attackTypeSelection.selectedIndex !== 1) {
-    attackTypeSelection.selectedIndex = 0;
-  }
-}
-
-function filterForm(characters, battle) {
-  var characterCreation = characters.characterCreation;
-  var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace;
-
-  characterCreation.addEventListener("change", function (event) {
-    var target = event.target;
-    var targetName = target.name;
-
-    switch (targetName) {
-      case "race":
-        var selectedRace = target.value;
-        var classChoice = characterCreation.class;
-        var weaponElement = characterCreation.weapon;
-
-        filterClass(selectedRace, classChoice);
-        filterWeapon(
-          selectedRace,
-          weaponElement,
-          characters.weaponCategory,
-          allowedWeaponsPerRace
-        );
-
-        var newWeapon = getSelectedWeapon(characters.weaponCategory);
-        handleWeaponDisplay(
-          characters.weaponDisplay,
-          newWeapon,
-          weaponElement.value
-        );
-        filterUpgrade(
-          selectedRace,
-          characterCreation.weaponUpgrade,
-          weaponElement.value,
-          characters.randomAttackValue,
-          characters.randomMagicAttackValue
-        );
-        filterSkills(classChoice.value, characters.skillElementsToFilter);
-
-        if (characterCreation.name.value === battle.attackerSelection.value) {
-          battle.resetAttackType = true;
-        }
-        break;
-      case "class":
-        filterSkills(target.value, characters.skillElementsToFilter);
-
-        if (characterCreation.name.value === battle.attackerSelection.value) {
-          battle.resetAttackType = true;
-        }
-        break;
-      case "weapon":
-        handleWeaponDisplay(
-          characters.weaponDisplay,
-          target,
-          characterCreation.weapon.value
-        );
-        filterUpgrade(
-          characterCreation.race.value,
-          characterCreation.weaponUpgrade,
-          target.value,
-          characters.randomAttackValue,
-          characters.randomMagicAttackValue
-        );
-        break;
-      case "state":
-        filterState(target.value, characterCreation.polymorphMonster);
-        if (characterCreation.name.value === battle.attackerSelection.value) {
-          battle.resetAttackType = true;
-        }
-        break;
-      case "lowRank":
-        filterCheckbox(target, characterCreation.playerRank.parentElement);
-        break;
-      case "isBlessed":
-        filterCheckbox(target, characters.blessingCreation);
-        break;
-      case "onYohara":
-        filterCheckbox(target, characters.yoharaCreation);
-        break;
-      case "isMarried":
-        filterCheckbox(target, characters.marriageCreation);
-        break;
+  function filterAttackTypeSelectionMonster(attackTypeSelection) {
+    for (var index = 2; index < attackTypeSelection.options.length; index++) {
+      hideElement(attackTypeSelection.options[index]);
     }
 
-    if (
-      targetName.startsWith("attackSkill") ||
-      targetName.startsWith("horseSkill")
-    ) {
-      battle.resetAttackType = true;
+    if (attackTypeSelection.selectedIndex !== 1) {
+      attackTypeSelection.selectedIndex = 0;
     }
-  });
-}
-
-function addUniquePseudo(characterDataObject, savedCharactersPseudo) {
-  var characterPseudo = String(characterDataObject.name);
-  var originalPseudo = characterPseudo;
-  var count = 0;
-
-  var regex = /(.*)(\d)$/;
-  var match = characterPseudo.match(regex);
-
-  if (match) {
-    originalPseudo = match[1];
-    count = match[2];
   }
 
-  while (isValueInArray(characterPseudo, savedCharactersPseudo)) {
-    characterPseudo = originalPseudo + count;
-    count++;
-  }
+  function filterForm(characters, battle) {
+    var characterCreation = characters.characterCreation;
+    var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace;
 
-  characterDataObject.name = characterPseudo;
-  return [characterDataObject, characterPseudo];
-}
+    characterCreation.addEventListener("change", function (event) {
+      var target = event.target;
+      var targetName = target.name;
 
-function convertToNumber(value) {
-  var valueNumber = Number(value);
-  return isNaN(valueNumber) ? value : valueNumber;
-}
+      switch (targetName) {
+        case "race":
+          var selectedRace = target.value;
+          var classChoice = characterCreation.class;
+          var weaponElement = characterCreation.weapon;
 
-function getLocalStorageValue(key, defaultValue) {
-  var storedValue = localStorage.getItem(key);
+          filterClass(selectedRace, classChoice);
+          filterWeapon(
+            selectedRace,
+            weaponElement,
+            characters.weaponCategory,
+            allowedWeaponsPerRace
+          );
 
-  if (storedValue) {
-    return JSON.parse(storedValue);
-  }
+          var newWeapon = getSelectedWeapon(characters.weaponCategory);
+          handleWeaponDisplay(
+            characters.weaponDisplay,
+            newWeapon,
+            weaponElement.value
+          );
+          filterUpgrade(
+            selectedRace,
+            characterCreation.weaponUpgrade,
+            weaponElement.value,
+            characters.randomAttackValue,
+            characters.randomMagicAttackValue
+          );
+          filterSkills(classChoice.value, characters.skillElementsToFilter);
 
-  return defaultValue;
-}
+          if (characterCreation.name.value === battle.attackerSelection.value) {
+            battle.resetAttackType = true;
+          }
+          break;
+        case "class":
+          filterSkills(target.value, characters.skillElementsToFilter);
 
-function getSavedCharacters() {
-  return getLocalStorageValue("savedCharactersCalculator", {});
-}
+          if (characterCreation.name.value === battle.attackerSelection.value) {
+            battle.resetAttackType = true;
+          }
+          break;
+        case "weapon":
+          handleWeaponDisplay(
+            characters.weaponDisplay,
+            target,
+            characterCreation.weapon.value
+          );
+          filterUpgrade(
+            characterCreation.race.value,
+            characterCreation.weaponUpgrade,
+            target.value,
+            characters.randomAttackValue,
+            characters.randomMagicAttackValue
+          );
+          break;
+        case "state":
+          filterState(target.value, characterCreation.polymorphMonster);
+          if (characterCreation.name.value === battle.attackerSelection.value) {
+            battle.resetAttackType = true;
+          }
+          break;
+        case "lowRank":
+          filterCheckbox(target, characterCreation.playerRank.parentElement);
+          break;
+        case "isBlessed":
+          filterCheckbox(target, characters.blessingCreation);
+          break;
+        case "onYohara":
+          filterCheckbox(target, characters.yoharaCreation);
+          break;
+        case "isMarried":
+          filterCheckbox(target, characters.marriageCreation);
+          break;
+      }
 
-function getSavedMonsters() {
-  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (
-    num
-  ) {
-    return !isNaN(Number(num));
-  });
-}
-
-function getSavedFights() {
-  return getLocalStorageValue("savedFightsCalculator", []);
-}
-
-function saveToLocalStorage(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function updateSavedCharacters(savedCharacters) {
-  saveToLocalStorage("savedCharactersCalculator", savedCharacters);
-}
-
-function updateSavedMonsters(savedMonsters) {
-  saveToLocalStorage("savedMonstersCalculator", savedMonsters);
-}
-
-function updateSavedFights(savedFights) {
-  saveToLocalStorage("savedFightsCalculator", savedFights);
-}
-
-function saveCharacter(
-  savedCharacters,
-  characterCreation,
-  battle,
-  newCharacter,
-  characterDataObject
-) {
-  if (!characterDataObject) {
-    var characterData = new FormData(characterCreation);
-    var characterDataObject = {};
-
-    characterData.forEach(function (value, key) {
-      characterDataObject[key] = convertToNumber(value);
+      if (
+        targetName.startsWith("attackSkill") ||
+        targetName.startsWith("horseSkill")
+      ) {
+        battle.resetAttackType = true;
+      }
     });
   }
 
-  savedCharacters[characterDataObject.name] = characterDataObject;
-  updateSavedCharacters(savedCharacters);
+  function addUniquePseudo(characterDataObject, savedCharactersPseudo) {
+    var characterPseudo = String(characterDataObject.name);
+    var originalPseudo = characterPseudo;
+    var count = 0;
 
-  if (newCharacter) {
-    addBattleChoice(battle, characterDataObject.name);
-  }
+    var regex = /(.*)(\d)$/;
+    var match = characterPseudo.match(regex);
 
-  if (battle.resetAttackType) {
-    filterAttackTypeSelection(characterDataObject, battle.attackTypeSelection);
-    battle.resetAttackType = false;
-  }
-}
-
-function saveButtonGreen(saveButton) {
-  saveButton.classList.remove("unsaved-character");
-}
-
-function saveButtonOrange(saveButton) {
-  saveButton.classList.add("unsaved-character");
-}
-
-function characterCreationListener(characters, battle) {
-  characters.characterCreation.addEventListener("submit", function (event) {
-    event.preventDefault();
-
-    if (characters.unsavedChanges) {
-      saveCharacter(
-        characters.savedCharacters,
-        characters.characterCreation,
-        battle
-      );
-      saveButtonGreen(characters.saveButton);
-      characters.unsavedChanges = false;
+    if (match) {
+      originalPseudo = match[1];
+      count = match[2];
     }
-  });
 
-  document.addEventListener("keydown", function (event) {
-    if (event.ctrlKey && event.key === "s") {
+    while (isValueInArray(characterPseudo, savedCharactersPseudo)) {
+      characterPseudo = originalPseudo + count;
+      count++;
+    }
+
+    characterDataObject.name = characterPseudo;
+    return [characterDataObject, characterPseudo];
+  }
+
+  function convertToNumber(value) {
+    var valueNumber = Number(value);
+    return isNaN(valueNumber) ? value : valueNumber;
+  }
+
+  function getLocalStorageValue(key, defaultValue) {
+    var storedValue = localStorage.getItem(key);
+
+    if (storedValue) {
+      return JSON.parse(storedValue);
+    }
+
+    return defaultValue;
+  }
+
+  function getSavedCharacters() {
+    return getLocalStorageValue("savedCharactersCalculator", {});
+  }
+
+  function getSavedMonsters() {
+    return getLocalStorageValue("savedMonstersCalculator", []).filter(function (
+      num
+    ) {
+      return !isNaN(Number(num));
+    });
+  }
+
+  function getSavedFights() {
+    return getLocalStorageValue("savedFightsCalculator", []);
+  }
+
+  function saveToLocalStorage(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function updateSavedCharacters(savedCharacters) {
+    saveToLocalStorage("savedCharactersCalculator", savedCharacters);
+  }
+
+  function updateSavedMonsters(savedMonsters) {
+    saveToLocalStorage("savedMonstersCalculator", savedMonsters);
+  }
+
+  function updateSavedFights(savedFights) {
+    saveToLocalStorage("savedFightsCalculator", savedFights);
+  }
+
+  function saveCharacter(
+    savedCharacters,
+    characterCreation,
+    battle,
+    newCharacter,
+    characterDataObject
+  ) {
+    if (!characterDataObject) {
+      var characterData = new FormData(characterCreation);
+      var characterDataObject = {};
+
+      characterData.forEach(function (value, key) {
+        characterDataObject[key] = convertToNumber(value);
+      });
+    }
+
+    savedCharacters[characterDataObject.name] = characterDataObject;
+    updateSavedCharacters(savedCharacters);
+
+    if (newCharacter) {
+      addBattleChoice(battle, characterDataObject.name);
+    }
+
+    if (battle.resetAttackType) {
+      filterAttackTypeSelection(characterDataObject, battle.attackTypeSelection);
+      battle.resetAttackType = false;
+    }
+  }
+
+  function saveButtonGreen(saveButton) {
+    saveButton.classList.remove("unsaved-character");
+  }
+
+  function saveButtonOrange(saveButton) {
+    saveButton.classList.add("unsaved-character");
+  }
+
+  function characterCreationListener(characters, battle) {
+    characters.characterCreation.addEventListener("submit", function (event) {
       event.preventDefault();
-      characters.saveButton.click();
-    }
-  });
-}
 
-function downloadData(content, type, filename) {
-  var link = document.createElement("a");
-  var blob = new Blob([content], { type: type });
-  var blobURL = URL.createObjectURL(blob);
+      if (characters.unsavedChanges) {
+        saveCharacter(
+          characters.savedCharacters,
+          characters.characterCreation,
+          battle
+        );
+        saveButtonGreen(characters.saveButton);
+        characters.unsavedChanges = false;
+      }
+    });
 
-  link.href = blobURL;
-  link.download = filename;
-  document.body.appendChild(link);
+    document.addEventListener("keydown", function (event) {
+      if (event.ctrlKey && event.key === "s") {
+        event.preventDefault();
+        characters.saveButton.click();
+      }
+    });
+  }
 
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(blobURL);
-}
+  function downloadData(content, type, filename) {
+    var link = document.createElement("a");
+    var blob = new Blob([content], { type: type });
+    var blobURL = URL.createObjectURL(blob);
 
-function uploadCharacter(
-  selectedFiles,
-  characters,
-  characterTemplate,
-  charactersContainer,
-  battle
-) {
-  var selectFilesLength = selectedFiles.length;
+    link.href = blobURL;
+    link.download = filename;
+    document.body.appendChild(link);
 
-  for (var fileIndex = 0; fileIndex < selectFilesLength; fileIndex++) {
-    var selectedFile = selectedFiles[fileIndex];
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobURL);
+  }
 
-    if (selectedFile.type === "text/plain") {
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        var fileContent = e.target.result;
-        try {
-          var characterDataObject = JSON.parse(fileContent);
+  function uploadCharacter(
+    selectedFiles,
+    characters,
+    characterTemplate,
+    charactersContainer,
+    battle
+  ) {
+    var selectFilesLength = selectedFiles.length;
 
-          if (characterDataObject.hasOwnProperty("name")) {
-            var characterPseudo = String(characterDataObject.name);
+    for (var fileIndex = 0; fileIndex < selectFilesLength; fileIndex++) {
+      var selectedFile = selectedFiles[fileIndex];
 
-            hideElement(characters.characterCreation);
-            characterPseudo = validPseudo(characterPseudo);
+      if (selectedFile.type === "text/plain") {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var fileContent = e.target.result;
+          try {
+            var characterDataObject = JSON.parse(fileContent);
 
-            [characterDataObject, characterPseudo] = addUniquePseudo(
-              characterDataObject,
-              Object.keys(characters.savedCharacters)
-            );
-            var selectedCharacter = handleNewCharacter(
-              characters,
-              characterTemplate,
-              charactersContainer,
-              battle,
-              characterPseudo
-            )[0];
+            if (characterDataObject.hasOwnProperty("name")) {
+              var characterPseudo = String(characterDataObject.name);
 
-            if (selectFilesLength === 1) {
-              updateForm(
+              hideElement(characters.characterCreation);
+              characterPseudo = validPseudo(characterPseudo);
+
+              [characterDataObject, characterPseudo] = addUniquePseudo(
                 characterDataObject,
-                characters.characterCreation,
+                Object.keys(characters.savedCharacters)
+              );
+              var selectedCharacter = handleNewCharacter(
                 characters,
-                selectedCharacter,
-                battle
+                characterTemplate,
+                charactersContainer,
+                battle,
+                characterPseudo
+              )[0];
+
+              if (selectFilesLength === 1) {
+                updateForm(
+                  characterDataObject,
+                  characters.characterCreation,
+                  characters,
+                  selectedCharacter,
+                  battle
+                );
+              }
+
+              saveCharacter(
+                characters.savedCharacters,
+                characters.characterCreation,
+                battle,
+                true,
+                characterDataObject
               );
             }
-
-            saveCharacter(
-              characters.savedCharacters,
-              characters.characterCreation,
-              battle,
-              true,
-              characterDataObject
-            );
+          } catch (error) {
+            console.log(error);
+            if (error.name === "TypeError") {
+              // delete the character
+            }
           }
-        } catch (error) {
-          console.log(error);
-          if (error.name === "TypeError") {
-            // delete the character
-          }
-        }
-      };
-      reader.readAsText(selectedFile);
-    }
-  }
-}
-
-function handleUploadCharacter(
-  characters,
-  characterTemplate,
-  charactersContainer,
-  battle
-) {
-  var characterInput = characters.characterInput;
-  var dropZone = characters.dropZone;
-
-  characterInput.accept = ".txt";
-  characterInput.multiple = true;
-  dropZone.setAttribute("tabindex", "0");
-
-  dropZone.addEventListener("click", function () {
-    characterInput.click();
-  });
-
-  dropZone.addEventListener("dragover", function (event) {
-    event.preventDefault();
-    dropZone.classList.add("drop-zone--dragover");
-  });
-
-  ["dragleave", "dragend"].forEach(function (type) {
-    dropZone.addEventListener(type, function () {
-      dropZone.classList.remove("drop-zone--dragover");
-    });
-  });
-
-  dropZone.addEventListener("drop", function (event) {
-    event.preventDefault();
-    uploadCharacter(
-      event.dataTransfer.files,
-      characters,
-      characterTemplate,
-      charactersContainer,
-      battle
-    );
-    dropZone.classList.remove("drop-zone--dragover");
-  });
-
-  characterInput.addEventListener("change", function (event) {
-    uploadCharacter(
-      event.target.files,
-      characters,
-      characterTemplate,
-      charactersContainer,
-      battle
-    );
-  });
-}
-
-function deleteCharacter(characters, pseudo, element, battle) {
-  battle.battleForm.reset();
-  delete characters.savedCharacters[pseudo];
-  element.remove();
-
-  updateSavedCharacters(characters.savedCharacters);
-  removeBattleChoice(battle, pseudo);
-
-  if (
-    !Object.keys(characters.savedCharacters).length ||
-    characters.characterCreation.name.value === pseudo
-  ) {
-    saveButtonGreen(characters.saveButton);
-    characters.unsavedChanges = false;
-    hideElement(characters.characterCreation);
-    showElement(characters.characterCreation.previousElementSibling);
-  }
-}
-
-function deleteMonster(characters, monsterVnum, element, battle) {
-  battle.battleForm.reset();
-  characters.savedMonsters.splice(
-    characters.savedMonsters.indexOf(monsterVnum),
-    1
-  );
-
-  if (element) {
-    element.remove();
-  }
-
-  updateSavedMonsters(characters.savedMonsters);
-  removeBattleChoice(battle, monsterVnum);
-}
-
-function handleStyle(characters, selectedElement) {
-  var currentCharacter = characters.currentCharacter;
-
-  if (currentCharacter) {
-    currentCharacter.classList.remove("selected-character");
-  }
-
-  selectedElement.classList.add("selected-character");
-  characters.currentCharacter = selectedElement;
-}
-
-function updateForm(
-  formData,
-  characterCreation,
-  characters,
-  selectedElement,
-  battle
-) {
-  saveButtonGreen(characters.saveButton);
-  hideElement(characterCreation.previousElementSibling);
-  showElement(characterCreation);
-  handleStyle(characters, selectedElement);
-
-  characterCreation.reset();
-
-  for (var [name, value] of Object.entries(formData)) {
-    var formElement = characterCreation[name];
-
-    if (!formElement) {
-      continue;
-    }
-
-    if (formElement.type === "checkbox") {
-      if (isChecked(value)) {
-        formElement.checked = true;
+        };
+        reader.readAsText(selectedFile);
       }
-    } else {
-      formElement.value = value;
     }
   }
-  var selectedRace = characterCreation.race.value;
-  var classChoice = characterCreation.class;
-  var weaponElement = characterCreation.weapon;
 
-  filterClass(selectedRace, classChoice, true);
-  filterWeapon(
-    selectedRace,
-    weaponElement,
-    characters.weaponCategory,
-    battle.constants.allowedWeaponsPerRace,
-    true
-  );
+  function handleUploadCharacter(
+    characters,
+    characterTemplate,
+    charactersContainer,
+    battle
+  ) {
+    var characterInput = characters.characterInput;
+    var dropZone = characters.dropZone;
 
-  var newWeapon = getSelectedWeapon(characters.weaponCategory);
+    characterInput.accept = ".txt";
+    characterInput.multiple = true;
+    dropZone.setAttribute("tabindex", "0");
 
-  handleWeaponDisplay(characters.weaponDisplay, newWeapon, weaponElement.value);
-  filterUpgrade(
-    selectedRace,
-    characterCreation.weaponUpgrade,
-    weaponElement.value,
-    characters.randomAttackValue,
-    characters.randomMagicAttackValue,
-    formData.weaponUpgrade
-  );
-  filterState(
-    characterCreation.state.value,
-    characterCreation.polymorphMonster
-  );
-  filterCheckbox(
-    characterCreation.lowRank,
-    characterCreation.playerRank.parentElement
-  );
-  filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
-  filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
-  filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
-  filterSkills(classChoice.value, characters.skillElementsToFilter);
-  handleBonusVariationUpdate(characterCreation, characters.bonusVariation);
-}
+    dropZone.addEventListener("click", function () {
+      characterInput.click();
+    });
 
-function handleClickOnCharacter(
-  spanInput,
-  target,
-  characters,
-  characterElement,
-  battle,
-  edition
-) {
-  var displayedPseudo = characters.characterCreation.name.value;
-  var pseudo = spanInput.dataset.name;
+    dropZone.addEventListener("dragover", function (event) {
+      event.preventDefault();
+      dropZone.classList.add("drop-zone--dragover");
+    });
 
-  if (edition) {
-    if (!characters.unsavedChanges) {
-      updateForm(
-        characters.savedCharacters[pseudo],
-        characters.characterCreation,
+    ["dragleave", "dragend"].forEach(function (type) {
+      dropZone.addEventListener(type, function () {
+        dropZone.classList.remove("drop-zone--dragover");
+      });
+    });
+
+    dropZone.addEventListener("drop", function (event) {
+      event.preventDefault();
+      uploadCharacter(
+        event.dataTransfer.files,
         characters,
-        characterElement,
+        characterTemplate,
+        charactersContainer,
         battle
       );
-    } else if (displayedPseudo === pseudo) {
-      // pass
-    } else {
-      var result = confirm(
-        "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
-      );
+      dropZone.classList.remove("drop-zone--dragover");
+    });
 
-      if (result) {
+    characterInput.addEventListener("change", function (event) {
+      uploadCharacter(
+        event.target.files,
+        characters,
+        characterTemplate,
+        charactersContainer,
+        battle
+      );
+    });
+  }
+
+  function deleteCharacter(characters, pseudo, element, battle) {
+    battle.battleForm.reset();
+    delete characters.savedCharacters[pseudo];
+    element.remove();
+
+    updateSavedCharacters(characters.savedCharacters);
+    removeBattleChoice(battle, pseudo);
+
+    if (
+      !Object.keys(characters.savedCharacters).length ||
+      characters.characterCreation.name.value === pseudo
+    ) {
+      saveButtonGreen(characters.saveButton);
+      characters.unsavedChanges = false;
+      hideElement(characters.characterCreation);
+      showElement(characters.characterCreation.previousElementSibling);
+    }
+  }
+
+  function deleteMonster(characters, monsterVnum, element, battle) {
+    battle.battleForm.reset();
+    characters.savedMonsters.splice(
+      characters.savedMonsters.indexOf(monsterVnum),
+      1
+    );
+
+    if (element) {
+      element.remove();
+    }
+
+    updateSavedMonsters(characters.savedMonsters);
+    removeBattleChoice(battle, monsterVnum);
+  }
+
+  function handleStyle(characters, selectedElement) {
+    var currentCharacter = characters.currentCharacter;
+
+    if (currentCharacter) {
+      currentCharacter.classList.remove("selected-character");
+    }
+
+    selectedElement.classList.add("selected-character");
+    characters.currentCharacter = selectedElement;
+  }
+
+  function updateForm(
+    formData,
+    characterCreation,
+    characters,
+    selectedElement,
+    battle
+  ) {
+    saveButtonGreen(characters.saveButton);
+    hideElement(characterCreation.previousElementSibling);
+    showElement(characterCreation);
+    handleStyle(characters, selectedElement);
+
+    characterCreation.reset();
+
+    for (var [name, value] of Object.entries(formData)) {
+      var formElement = characterCreation[name];
+
+      if (!formElement) {
+        continue;
+      }
+
+      if (formElement.type === "checkbox") {
+        if (isChecked(value)) {
+          formElement.checked = true;
+        }
+      } else {
+        formElement.value = value;
+      }
+    }
+    var selectedRace = characterCreation.race.value;
+    var classChoice = characterCreation.class;
+    var weaponElement = characterCreation.weapon;
+
+    filterClass(selectedRace, classChoice, true);
+    filterWeapon(
+      selectedRace,
+      weaponElement,
+      characters.weaponCategory,
+      battle.constants.allowedWeaponsPerRace,
+      true
+    );
+
+    var newWeapon = getSelectedWeapon(characters.weaponCategory);
+
+    handleWeaponDisplay(characters.weaponDisplay, newWeapon, weaponElement.value);
+    filterUpgrade(
+      selectedRace,
+      characterCreation.weaponUpgrade,
+      weaponElement.value,
+      characters.randomAttackValue,
+      characters.randomMagicAttackValue,
+      formData.weaponUpgrade
+    );
+    filterState(
+      characterCreation.state.value,
+      characterCreation.polymorphMonster
+    );
+    filterCheckbox(
+      characterCreation.lowRank,
+      characterCreation.playerRank.parentElement
+    );
+    filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
+    filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
+    filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
+    filterSkills(classChoice.value, characters.skillElementsToFilter);
+    handleBonusVariationUpdate(characterCreation, characters.bonusVariation);
+  }
+
+  function handleClickOnCharacter(
+    spanInput,
+    target,
+    characters,
+    characterElement,
+    battle,
+    edition
+  ) {
+    var displayedPseudo = characters.characterCreation.name.value;
+    var pseudo = spanInput.dataset.name;
+
+    if (edition) {
+      if (!characters.unsavedChanges) {
         updateForm(
           characters.savedCharacters[pseudo],
           characters.characterCreation,
@@ -980,30 +965,32 @@ function handleClickOnCharacter(
           characterElement,
           battle
         );
-        characters.unsavedChanges = false;
-      }
-    }
-  } else {
-    if (target.tagName === "path") {
-      target = target.parentElement;
-    }
+      } else if (displayedPseudo === pseudo) {
+        // pass
+      } else {
+        var result = confirm(
+          "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
+        );
 
-    switch (target.dataset.icon) {
-      case "duplicate":
-        if (!characters.unsavedChanges) {
-          addNewCharacter(
+        if (result) {
+          updateForm(
+            characters.savedCharacters[pseudo],
+            characters.characterCreation,
             characters,
-            characters.newCharacterTemplate,
-            characters.charactersContainer,
-            battle,
-            pseudo
+            characterElement,
+            battle
           );
-        } else {
-          var result = confirm(
-            "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
-          );
+          characters.unsavedChanges = false;
+        }
+      }
+    } else {
+      if (target.tagName === "path") {
+        target = target.parentElement;
+      }
 
-          if (result) {
+      switch (target.dataset.icon) {
+        case "duplicate":
+          if (!characters.unsavedChanges) {
             addNewCharacter(
               characters,
               characters.newCharacterTemplate,
@@ -1011,3906 +998,3942 @@ function handleClickOnCharacter(
               battle,
               pseudo
             );
-            saveButtonGreen(characters.saveButton);
-            characters.unsavedChanges = false;
+          } else {
+            var result = confirm(
+              "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
+            );
+
+            if (result) {
+              addNewCharacter(
+                characters,
+                characters.newCharacterTemplate,
+                characters.charactersContainer,
+                battle,
+                pseudo
+              );
+              saveButtonGreen(characters.saveButton);
+              characters.unsavedChanges = false;
+            }
           }
-        }
-        break;
+          break;
 
-      case "download":
-        var character = characters.savedCharacters[pseudo];
-        downloadData(
-          JSON.stringify(character),
-          "text/plain",
-          character.name + ".txt"
-        );
-        break;
+        case "download":
+          var character = characters.savedCharacters[pseudo];
+          downloadData(
+            JSON.stringify(character),
+            "text/plain",
+            character.name + ".txt"
+          );
+          break;
 
-      case "delete":
-        var result = confirm(
-          "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
-        );
-        if (result) {
-          deleteCharacter(characters, pseudo, characterElement, battle);
-        }
-        break;
-    }
-  }
-}
-
-function handleNewCharacter(
-  characters,
-  characterTemplate,
-  charactersContainer,
-  battle,
-  pseudo
-) {
-  var newCharacterTemplate = characterTemplate.cloneNode(true);
-  var spanInput = newCharacterTemplate.querySelector("span.input");
-
-  newCharacterTemplate.setAttribute("tabindex", "0");
-  charactersContainer.appendChild(newCharacterTemplate);
-
-  if (pseudo) {
-    spanInput.textContent = pseudo;
-    spanInput.setAttribute("data-name", pseudo);
-  }
-
-  newCharacterTemplate.addEventListener("click", function (event) {
-    var target = event.target;
-
-    if (target.tagName === "path" || target.tagName === "svg") {
-      handleClickOnCharacter(
-        spanInput,
-        target,
-        characters,
-        newCharacterTemplate,
-        battle
-      );
-    } else {
-      handleClickOnCharacter(
-        spanInput,
-        null,
-        characters,
-        newCharacterTemplate,
-        battle,
-        true
-      );
-    }
-  });
-
-  newCharacterTemplate.addEventListener("keydown", function (event) {
-    if (event.keyCode === 13) {
-      event.target.click();
-    }
-  });
-
-  return [newCharacterTemplate, spanInput];
-}
-
-function validPseudo(pseudo) {
-  var newPseudo = pseudoFormat(pseudo);
-
-  if (!newPseudo) {
-    return "Pseudo";
-  }
-
-  return newPseudo;
-}
-
-function addNewCharacter(
-  characters,
-  characterTemplate,
-  charactersContainer,
-  battle,
-  pseudoToDuplicate
-) {
-  function editAndSetCharacterPseudoInput(selectedCharacter, spanInput) {
-    var maxPseudoLength = 20;
-
-    var selection = window.getSelection();
-    var range = document.createRange();
-
-    if (pseudoToDuplicate) {
-      spanInput.textContent = pseudoToDuplicate;
-    }
-
-    spanInput.contentEditable = true;
-    spanInput.focus();
-    range.selectNodeContents(spanInput);
-    selection.removeAllRanges();
-    selection.addRange(range);
-
-    function pseudoValidation() {
-      var characterPseudo = validPseudo(spanInput.textContent);
-      var characterDataObject = { name: characterPseudo };
-
-      if (pseudoToDuplicate) {
-        characterDataObject = copyObject(
-          characters.savedCharacters[pseudoToDuplicate]
-        );
-        characterDataObject.name = characterPseudo;
-      }
-
-      [characterDataObject, characterPseudo] = addUniquePseudo(
-        characterDataObject,
-        Object.keys(characters.savedCharacters)
-      );
-
-      selection.removeAllRanges();
-      spanInput.contentEditable = false;
-      spanInput.textContent = characterPseudo;
-      spanInput.setAttribute("data-name", characterPseudo);
-
-      updateForm(
-        characterDataObject,
-        characters.characterCreation,
-        characters,
-        selectedCharacter,
-        battle
-      );
-      saveCharacter(
-        characters.savedCharacters,
-        characters.characterCreation,
-        battle,
-        true
-      );
-    }
-
-    function handleMaxLength(event) {
-      if (spanInput.textContent.length > maxPseudoLength) {
-        spanInput.textContent = spanInput.textContent.slice(0, maxPseudoLength);
-        range.setStart(spanInput.childNodes[0], maxPseudoLength);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        case "delete":
+          var result = confirm(
+            "Voulez-vous vraiment supprimer définitivement le personnage " +
+              pseudo +
+              " ?"
+          );
+          if (result) {
+            deleteCharacter(characters, pseudo, characterElement, battle);
+          }
+          break;
       }
     }
-
-    function handleBlur() {
-      spanInput.removeEventListener("blur", handleBlur);
-      spanInput.removeEventListener("input", handleMaxLength);
-      pseudoValidation();
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-
-        spanInput.removeEventListener("keydown", handleKeyDown);
-        spanInput.removeEventListener("blur", handleBlur);
-        spanInput.removeEventListener("input", handleMaxLength);
-
-        pseudoValidation();
-      }
-    }
-
-    spanInput.addEventListener("input", handleMaxLength);
-    spanInput.addEventListener("keydown", handleKeyDown);
-    spanInput.addEventListener("blur", handleBlur);
   }
 
-  hideElement(characters.characterCreation);
-  var [selectedCharacter, spanInput] = handleNewCharacter(
+  function handleNewCharacter(
     characters,
     characterTemplate,
     charactersContainer,
-    battle
-  );
+    battle,
+    pseudo
+  ) {
+    var newCharacterTemplate = characterTemplate.cloneNode(true);
+    var spanInput = newCharacterTemplate.querySelector("span.input");
 
-  editAndSetCharacterPseudoInput(selectedCharacter, spanInput);
-}
+    newCharacterTemplate.setAttribute("tabindex", "0");
+    charactersContainer.appendChild(newCharacterTemplate);
 
-function handleFocus() {
-  var tooltipLinks = document.querySelectorAll("div.tooltip a");
-  tooltipLinks.forEach(function (link) {
-    link.setAttribute("tabindex", -1);
-  });
-}
-
-function handleBonusVariationUpdate(characterCreation, bonusVariation) {
-  var selectedBonus = characterCreation.bonusVariation.value;
-
-  if (characterCreation.hasOwnProperty(selectedBonus)) {
-    handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
-  } else {
-    var { minValue, maxValue } = bonusVariation;
-
-    minValue.removeAttribute("min");
-    minValue.removeAttribute("max");
-
-    maxValue.removeAttribute("min");
-    maxValue.removeAttribute("max");
-
-    hideElement(bonusVariation.container);
-  }
-}
-
-function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
-  var { activation, inputDisplay, minValue, maxValue, container } =
-    bonusVariation;
-
-  var {
-    min: targetMin,
-    max: targetMax,
-    name: targetName,
-    value: targetValue,
-    parentElement: targetParent,
-  } = target;
-
-  if (container.contains(target) || targetName == 0) {
-    if (!isSelectedByUser) {
-      hideElement(container);
+    if (pseudo) {
+      spanInput.textContent = pseudo;
+      spanInput.setAttribute("data-name", pseudo);
     }
-    return;
+
+    newCharacterTemplate.addEventListener("click", function (event) {
+      var target = event.target;
+
+      if (target.tagName === "path" || target.tagName === "svg") {
+        handleClickOnCharacter(
+          spanInput,
+          target,
+          characters,
+          newCharacterTemplate,
+          battle
+        );
+      } else {
+        handleClickOnCharacter(
+          spanInput,
+          null,
+          characters,
+          newCharacterTemplate,
+          battle,
+          true
+        );
+      }
+    });
+
+    newCharacterTemplate.addEventListener("keydown", function (event) {
+      if (event.keyCode === 13) {
+        event.target.click();
+      }
+    });
+
+    return [newCharacterTemplate, spanInput];
   }
 
-  minValue.min = targetMin;
-  minValue.max = targetMax;
+  function validPseudo(pseudo) {
+    var newPseudo = pseudoFormat(pseudo);
 
-  maxValue.min = targetMin;
-  maxValue.max = targetMax;
+    if (!newPseudo) {
+      return "Pseudo";
+    }
 
-  if (isSelectedByUser) {
-    var { input, tab } = bonusVariation;
-    var targetContent = "";
+    return newPseudo;
+  }
 
-    if (targetParent.children.length <= 1) {
-      targetContent = targetParent.textContent;
-    } else {
-      for (var index = 1; index < targetParent.children.length; index++) {
-        var element = targetParent.children[index];
+  function addNewCharacter(
+    characters,
+    characterTemplate,
+    charactersContainer,
+    battle,
+    pseudoToDuplicate
+  ) {
+    function editAndSetCharacterPseudoInput(selectedCharacter, spanInput) {
+      var maxPseudoLength = 20;
 
-        if (element.checkVisibility()) {
-          targetContent += element.textContent;
+      var selection = window.getSelection();
+      var range = document.createRange();
+
+      if (pseudoToDuplicate) {
+        spanInput.textContent = pseudoToDuplicate;
+      }
+
+      spanInput.contentEditable = true;
+      spanInput.focus();
+      range.selectNodeContents(spanInput);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      function pseudoValidation() {
+        var characterPseudo = validPseudo(spanInput.textContent);
+        var characterDataObject = { name: characterPseudo };
+
+        if (pseudoToDuplicate) {
+          characterDataObject = copyObject(
+            characters.savedCharacters[pseudoToDuplicate]
+          );
+          characterDataObject.name = characterPseudo;
+        }
+
+        [characterDataObject, characterPseudo] = addUniquePseudo(
+          characterDataObject,
+          Object.keys(characters.savedCharacters)
+        );
+
+        selection.removeAllRanges();
+        spanInput.contentEditable = false;
+        spanInput.textContent = characterPseudo;
+        spanInput.setAttribute("data-name", characterPseudo);
+
+        updateForm(
+          characterDataObject,
+          characters.characterCreation,
+          characters,
+          selectedCharacter,
+          battle
+        );
+        saveCharacter(
+          characters.savedCharacters,
+          characters.characterCreation,
+          battle,
+          true
+        );
+      }
+
+      function handleMaxLength(event) {
+        if (spanInput.textContent.length > maxPseudoLength) {
+          spanInput.textContent = spanInput.textContent.slice(0, maxPseudoLength);
+          range.setStart(spanInput.childNodes[0], maxPseudoLength);
+          selection.removeAllRanges();
+          selection.addRange(range);
         }
       }
+
+      function handleBlur() {
+        spanInput.removeEventListener("blur", handleBlur);
+        spanInput.removeEventListener("input", handleMaxLength);
+        pseudoValidation();
+      }
+
+      function handleKeyDown(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+
+          spanInput.removeEventListener("keydown", handleKeyDown);
+          spanInput.removeEventListener("blur", handleBlur);
+          spanInput.removeEventListener("input", handleMaxLength);
+
+          pseudoValidation();
+        }
+      }
+
+      spanInput.addEventListener("input", handleMaxLength);
+      spanInput.addEventListener("keydown", handleKeyDown);
+      spanInput.addEventListener("blur", handleBlur);
     }
 
-    inputDisplay.value = targetContent;
-
-    targetValue = Number(targetValue);
-    input.value = targetName;
-    minValue.value = Math.max(targetValue - 10, targetMin);
-    maxValue.value = Math.min(targetValue + 10, targetMax);
-
-    activation.checked = true;
-
-    tab.click();
-    tab.scrollIntoView(true);
-
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-
-  inputDisplay.style.width = inputDisplay.value.length * 0.55 + "em";
-  showElement(container);
-}
-
-function characterManagement(characters, battle) {
-  var {
-    newCharacterTemplate: characterTemplate,
-    charactersContainer,
-    addNewCharacterButton,
-    saveButton,
-    characterCreation,
-    bonusVariation,
-  } = characters;
-
-  Object.keys(characters.savedCharacters).forEach(function (pseudo) {
-    handleNewCharacter(
+    hideElement(characters.characterCreation);
+    var [selectedCharacter, spanInput] = handleNewCharacter(
       characters,
       characterTemplate,
       charactersContainer,
-      battle,
-      pseudo
+      battle
     );
-  });
 
-  addNewCharacterButton.addEventListener("click", function (event) {
-    if (!characters.unsavedChanges) {
-      addNewCharacter(
+    editAndSetCharacterPseudoInput(selectedCharacter, spanInput);
+  }
+
+  function handleFocus() {
+    var tooltipLinks = document.querySelectorAll("div.tooltip a");
+    tooltipLinks.forEach(function (link) {
+      link.setAttribute("tabindex", -1);
+    });
+  }
+
+  function handleBonusVariationUpdate(characterCreation, bonusVariation) {
+    var selectedBonus = characterCreation.bonusVariation.value;
+
+    if (characterCreation.hasOwnProperty(selectedBonus)) {
+      handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
+    } else {
+      var { minValue, maxValue } = bonusVariation;
+
+      minValue.removeAttribute("min");
+      minValue.removeAttribute("max");
+
+      maxValue.removeAttribute("min");
+      maxValue.removeAttribute("max");
+
+      hideElement(bonusVariation.container);
+    }
+  }
+
+  function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
+    var { activation, inputDisplay, minValue, maxValue, container } =
+      bonusVariation;
+
+    var {
+      min: targetMin,
+      max: targetMax,
+      name: targetName,
+      value: targetValue,
+      parentElement: targetParent,
+      tagName
+    } = target;
+
+    var isSkill = tagName === "SELECT";
+
+    if (container.contains(target) || targetName == 0) {
+      if (!isSelectedByUser) {
+        hideElement(container);
+      }
+      return;
+    }
+    
+    if (isSkill) {
+      var options = target.options;
+
+      targetMin = options[0].value;
+      targetMax = options[options.length - 1].value;
+    }
+
+    minValue.min = targetMin;
+    minValue.max = targetMax;
+
+    maxValue.min = targetMin;
+    maxValue.max = targetMax;
+
+    if (isSelectedByUser) {
+      var { input, tab } = bonusVariation;
+      var targetContent = "";
+
+      if (targetParent.children.length <= 1) {
+        targetContent = targetParent.textContent;
+      } else {
+        if (isSkill) {
+          var container = targetParent.children[1];
+
+          for (var index = 1; index < container.children.length; index++) {
+            var element = container.children[index];
+    
+            if (element.checkVisibility()) {
+              targetContent += element.textContent;
+            }
+          }
+        } else {
+          for (var index = 1; index < targetParent.children.length; index++) {
+            var element = targetParent.children[index];
+    
+            if (element.checkVisibility()) {
+              targetContent += element.textContent;
+            }
+          }
+        }
+      }
+
+      inputDisplay.value = targetContent;
+
+      targetValue = Number(targetValue);
+
+      input.value = targetName;
+      minValue.value = Math.max(targetValue - 10, targetMin);
+      maxValue.value = Math.min(targetValue + 10, targetMax);
+
+      activation.checked = true;
+
+      tab.click();
+      tab.scrollIntoView(true);
+
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    inputDisplay.style.width = inputDisplay.value.length * 0.55 + "em";
+    showElement(container);
+  }
+
+  function characterManagement(characters, battle) {
+    var {
+      newCharacterTemplate: characterTemplate,
+      charactersContainer,
+      addNewCharacterButton,
+      saveButton,
+      characterCreation,
+      bonusVariation,
+    } = characters;
+
+    Object.keys(characters.savedCharacters).forEach(function (pseudo) {
+      handleNewCharacter(
         characters,
         characterTemplate,
         charactersContainer,
-        battle
+        battle,
+        pseudo
       );
-    } else {
-      var result = confirm(
-        "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
-      );
+    });
 
-      if (result) {
+    addNewCharacterButton.addEventListener("click", function (event) {
+      if (!characters.unsavedChanges) {
         addNewCharacter(
           characters,
           characterTemplate,
           charactersContainer,
           battle
         );
-        saveButtonGreen(saveButton);
-        characters.unsavedChanges = false;
-      }
-    }
-  });
+      } else {
+        var result = confirm(
+          "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
+        );
 
-  handleUploadCharacter(
-    characters,
-    characterTemplate,
-    charactersContainer,
-    battle
-  );
-
-  characterCreation.addEventListener("change", function () {
-    saveButtonOrange(saveButton);
-    characters.unsavedChanges = true;
-  });
-
-  function handleLongPress(target) {
-    if (target.tagName !== "INPUT") {
-      target = target.querySelector("input");
-    }
-
-    if (!target || target.type !== "number") {
-      return;
-    }
-
-    handleBonusVariation(target, bonusVariation, true);
-  }
-
-  characterCreation.addEventListener("click", function (event) {
-    if (event.shiftKey || event.ctrlKey) {
-      handleLongPress(event.target);
-    }
-  });
-
-  var longPressTimer;
-
-  characterCreation.addEventListener("touchstart", function (event) {
-    longPressTimer = setTimeout(function () {
-      handleLongPress(event.target);
-    }, 800);
-  });
-
-  characterCreation.addEventListener("touchend", function () {
-    clearTimeout(longPressTimer);
-  });
-
-  characterCreation.addEventListener("touchmove", function () {
-    clearTimeout(longPressTimer);
-  });
-
-  filterForm(characters, battle);
-  characterCreationListener(characters, battle);
-  handleFocus();
-
-  window.addEventListener("beforeunload", function (event) {
-    if (characters.unsavedChanges) {
-      event.preventDefault();
-      return "";
-    }
-  });
-}
-
-function handleNewMonster(
-  characters,
-  monsterTemplate,
-  monstersContainer,
-  battle,
-  monsterVnum,
-  monsterList
-) {
-  var newMonsterTemplate = monsterTemplate.cloneNode(true);
-  var spanInput = newMonsterTemplate.querySelector("span.input");
-  var deleteSvg = newMonsterTemplate.querySelector("svg");
-  var monsterName = getMonsterName(monsterVnum);
-
-  var link = document.createElement("a");
-  link.href = mw.util.getUrl(monsterName);
-  link.title = monsterName;
-  link.textContent = monsterName;
-
-  spanInput.appendChild(link);
-  monstersContainer.appendChild(newMonsterTemplate);
-
-  newMonsterTemplate.setAttribute("tabindex", "0");
-  newMonsterTemplate.setAttribute("data-name", monsterVnum);
-  monstersContainer.appendChild(newMonsterTemplate);
-
-  deleteSvg.addEventListener("click", function (event) {
-    deleteMonster(characters, monsterVnum, newMonsterTemplate, battle);
-    var inputMonster = monsterList.querySelector(
-      "input[name='" + monsterVnum + "']"
-    );
-    inputMonster.checked = false;
-  });
-}
-
-function monsterManagement(characters, battle) {
-  function handleDropdown(searchMonster, monsterList) {
-    searchMonster.addEventListener("focus", function (event) {
-      showElement(monsterList);
-    });
-
-    document.addEventListener("mousedown", function (event) {
-      var target = event.target;
-      if (!monsterList.contains(target) && !searchMonster.contains(target)) {
-        hideElement(monsterList);
-      }
-    });
-  }
-
-  function addMonsterNames(monsterList) {
-    var lastMonsterAttributeIndex = monsterData[101].length - 1;
-
-    for (var monsterVnum in monsterData) {
-      var li = document.createElement("li");
-      var label = document.createElement("label");
-      var input = document.createElement("input");
-      var textNode = document.createTextNode(
-        monsterData[monsterVnum][lastMonsterAttributeIndex]
-      );
-
-      label.htmlFor = "monster" + monsterVnum;
-      input.id = "monster" + monsterVnum;
-      input.type = "checkbox";
-
-      input.name = monsterVnum;
-
-      label.appendChild(input);
-      label.appendChild(textNode);
-      li.appendChild(label);
-      monsterList.appendChild(li);
-    }
-  }
-
-  function filterNames(searchMonster, monsterList) {
-    var debounceTimer;
-
-    searchMonster.addEventListener("input", function (event) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(function () {
-        var value = toNormalForm(event.target.value);
-        for (var element of monsterList.children) {
-          if (!isValueInArray(value, toNormalForm(element.textContent))) {
-            hideElement(element);
-          } else {
-            showElement(element);
-          }
+        if (result) {
+          addNewCharacter(
+            characters,
+            characterTemplate,
+            charactersContainer,
+            battle
+          );
+          saveButtonGreen(saveButton);
+          characters.unsavedChanges = false;
         }
-      }, 500);
+      }
     });
-  }
 
-  var monsterTemplate = characters.newMonsterTemplate;
-  var monstersContainer = characters.monstersContainer;
-  var monsterList = characters.monsterList;
-  var searchMonster = characters.searchMonster;
-  var monsterListForm = characters.monsterListForm;
-
-  document
-    .getElementById("monster-link")
-    .querySelector("a")
-    .setAttribute("target", "_blank");
-
-  handleDropdown(searchMonster, monsterList);
-  addMonsterNames(monsterList, characters.monsterListTemplate);
-  filterNames(searchMonster, monsterList);
-
-  characters.savedMonsters.slice().forEach(function (monsterVnum) {
-    var inputMonster = monsterList.querySelector(
-      "input[name='" + monsterVnum + "']"
+    handleUploadCharacter(
+      characters,
+      characterTemplate,
+      charactersContainer,
+      battle
     );
 
-    if (inputMonster) {
-      handleNewMonster(
-        characters,
-        monsterTemplate,
-        monstersContainer,
-        battle,
-        monsterVnum,
-        monsterList
-      );
-      inputMonster.checked = true;
-    } else {
-      deleteMonster(characters, monsterVnum, null, battle);
-    }
-  });
+    characterCreation.addEventListener("change", function () {
+      saveButtonOrange(saveButton);
+      characters.unsavedChanges = true;
+    });
 
-  monsterListForm.addEventListener("submit", function (event) {
-    event.preventDefault();
-  });
+    function handleLongPress(target) {
+      if (target.tagName !== "INPUT" && target.tagName !== "SELECT") {
+        target = target.querySelector("input");
+      }
 
-  monsterListForm.addEventListener("change", function (event) {
-    var target = event.target;
-    var monsterVnum = target.name;
-
-    if (monsterVnum === "search-monster") {
-      return;
-    }
-
-    if (target.checked) {
-      handleNewMonster(
-        characters,
-        monsterTemplate,
-        monstersContainer,
-        battle,
-        monsterVnum,
-        monsterList
-      );
-
-      characters.savedMonsters.push(monsterVnum);
-      updateSavedMonsters(characters.savedMonsters);
-      addBattleChoice(battle, monsterVnum, true);
-    } else {
-      var currentMonsterTemplate = monstersContainer.querySelector(
-        "[data-name='" + monsterVnum + "']"
-      );
-      deleteMonster(characters, monsterVnum, currentMonsterTemplate, battle);
-    }
-  });
-
-  addEventListener("storage", function (event) {
-    if (event.key === "newMonsterCalculator") {
-      var monsterVnum = Number(event.newValue);
-
-      if (!monsterVnum) {
+      if (!target || target.type !== "number" && !target.classList.contains("skill-select")) {
         return;
       }
 
+      handleBonusVariation(target, bonusVariation, true);
+    }
+
+    characterCreation.addEventListener("click", function (event) {
+      if (event.shiftKey || event.ctrlKey) {
+        handleLongPress(event.target);
+      }
+    });
+
+    var longPressTimer;
+
+    characterCreation.addEventListener("touchstart", function (event) {
+      longPressTimer = setTimeout(function () {
+        handleLongPress(event.target);
+      }, 800);
+    });
+
+    characterCreation.addEventListener("touchend", function () {
+      clearTimeout(longPressTimer);
+    });
+
+    characterCreation.addEventListener("touchmove", function () {
+      clearTimeout(longPressTimer);
+    });
+
+    filterForm(characters, battle);
+    characterCreationListener(characters, battle);
+    handleFocus();
+
+    window.addEventListener("beforeunload", function (event) {
+      if (characters.unsavedChanges) {
+        event.preventDefault();
+        return "";
+      }
+    });
+  }
+
+  function handleNewMonster(
+    characters,
+    monsterTemplate,
+    monstersContainer,
+    battle,
+    monsterVnum,
+    monsterList
+  ) {
+    var newMonsterTemplate = monsterTemplate.cloneNode(true);
+    var spanInput = newMonsterTemplate.querySelector("span.input");
+    var deleteSvg = newMonsterTemplate.querySelector("svg");
+    var monsterName = getMonsterName(monsterVnum);
+
+    var link = document.createElement("a");
+    link.href = mw.util.getUrl(monsterName);
+    link.title = monsterName;
+    link.textContent = monsterName;
+
+    spanInput.appendChild(link);
+    monstersContainer.appendChild(newMonsterTemplate);
+
+    newMonsterTemplate.setAttribute("tabindex", "0");
+    newMonsterTemplate.setAttribute("data-name", monsterVnum);
+    monstersContainer.appendChild(newMonsterTemplate);
+
+    deleteSvg.addEventListener("click", function (event) {
+      deleteMonster(characters, monsterVnum, newMonsterTemplate, battle);
       var inputMonster = monsterList.querySelector(
-        "input[name='" + Math.abs(monsterVnum) + "']"
+        "input[name='" + monsterVnum + "']"
+      );
+      inputMonster.checked = false;
+    });
+  }
+
+  function monsterManagement(characters, battle) {
+    function handleDropdown(searchMonster, monsterList) {
+      searchMonster.addEventListener("focus", function (event) {
+        showElement(monsterList);
+      });
+
+      document.addEventListener("mousedown", function (event) {
+        var target = event.target;
+        if (!monsterList.contains(target) && !searchMonster.contains(target)) {
+          hideElement(monsterList);
+        }
+      });
+    }
+
+    function addMonsterNames(monsterList) {
+      var lastMonsterAttributeIndex = monsterData[101].length - 1;
+
+      for (var monsterVnum in monsterData) {
+        var li = document.createElement("li");
+        var label = document.createElement("label");
+        var input = document.createElement("input");
+        var textNode = document.createTextNode(
+          monsterData[monsterVnum][lastMonsterAttributeIndex]
+        );
+
+        label.htmlFor = "monster" + monsterVnum;
+        input.id = "monster" + monsterVnum;
+        input.type = "checkbox";
+
+        input.name = monsterVnum;
+
+        label.appendChild(input);
+        label.appendChild(textNode);
+        li.appendChild(label);
+        monsterList.appendChild(li);
+      }
+    }
+
+    function filterNames(searchMonster, monsterList) {
+      var debounceTimer;
+
+      searchMonster.addEventListener("input", function (event) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () {
+          var value = toNormalForm(event.target.value);
+          for (var element of monsterList.children) {
+            if (!isValueInArray(value, toNormalForm(element.textContent))) {
+              hideElement(element);
+            } else {
+              showElement(element);
+            }
+          }
+        }, 500);
+      });
+    }
+
+    var monsterTemplate = characters.newMonsterTemplate;
+    var monstersContainer = characters.monstersContainer;
+    var monsterList = characters.monsterList;
+    var searchMonster = characters.searchMonster;
+    var monsterListForm = characters.monsterListForm;
+
+    document
+      .getElementById("monster-link")
+      .querySelector("a")
+      .setAttribute("target", "_blank");
+
+    handleDropdown(searchMonster, monsterList);
+    addMonsterNames(monsterList, characters.monsterListTemplate);
+    filterNames(searchMonster, monsterList);
+
+    characters.savedMonsters.slice().forEach(function (monsterVnum) {
+      var inputMonster = monsterList.querySelector(
+        "input[name='" + monsterVnum + "']"
       );
 
       if (inputMonster) {
-        if (
-          (monsterVnum > 0 && !inputMonster.checked) ||
-          (monsterVnum < 0 && inputMonster.checked)
-        ) {
-          inputMonster.click();
+        handleNewMonster(
+          characters,
+          monsterTemplate,
+          monstersContainer,
+          battle,
+          monsterVnum,
+          monsterList
+        );
+        inputMonster.checked = true;
+      } else {
+        deleteMonster(characters, monsterVnum, null, battle);
+      }
+    });
+
+    monsterListForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+    });
+
+    monsterListForm.addEventListener("change", function (event) {
+      var target = event.target;
+      var monsterVnum = target.name;
+
+      if (monsterVnum === "search-monster") {
+        return;
+      }
+
+      if (target.checked) {
+        handleNewMonster(
+          characters,
+          monsterTemplate,
+          monstersContainer,
+          battle,
+          monsterVnum,
+          monsterList
+        );
+
+        characters.savedMonsters.push(monsterVnum);
+        updateSavedMonsters(characters.savedMonsters);
+        addBattleChoice(battle, monsterVnum, true);
+      } else {
+        var currentMonsterTemplate = monstersContainer.querySelector(
+          "[data-name='" + monsterVnum + "']"
+        );
+        deleteMonster(characters, monsterVnum, currentMonsterTemplate, battle);
+      }
+    });
+
+    addEventListener("storage", function (event) {
+      if (event.key === "newMonsterCalculator") {
+        var monsterVnum = Number(event.newValue);
+
+        if (!monsterVnum) {
+          return;
+        }
+
+        var inputMonster = monsterList.querySelector(
+          "input[name='" + Math.abs(monsterVnum) + "']"
+        );
+
+        if (inputMonster) {
+          if (
+            (monsterVnum > 0 && !inputMonster.checked) ||
+            (monsterVnum < 0 && inputMonster.checked)
+          ) {
+            inputMonster.click();
+          }
         }
       }
-    }
-  });
-}
+    });
+  }
 
-function removeBattleChoice(battle, name) {
-  var battleSelects = [battle.attackerSelection, battle.victimSelection];
+  function removeBattleChoice(battle, name) {
+    var battleSelects = [battle.attackerSelection, battle.victimSelection];
 
-  battleSelects.forEach(function (battleSelect) {
-    for (
-      var optionIndex = 0;
-      optionIndex < battleSelect.options.length;
-      optionIndex++
-    ) {
-      if (battleSelect.options[optionIndex].value === name) {
-        battleSelect.remove(optionIndex);
-        break;
+    battleSelects.forEach(function (battleSelect) {
+      for (
+        var optionIndex = 0;
+        optionIndex < battleSelect.options.length;
+        optionIndex++
+      ) {
+        if (battleSelect.options[optionIndex].value === name) {
+          battleSelect.remove(optionIndex);
+          break;
+        }
       }
+    });
+  }
+
+  function addBattleChoice(battle, name, isMonster = false) {
+    function createOption(text, vnum) {
+      var option = document.createElement("option");
+      option.textContent = text;
+      option.value = vnum;
+
+      if (!isMonster) {
+        option.classList.add("notranslate");
+      }
+
+      return option;
     }
-  });
-}
 
-function addBattleChoice(battle, name, isMonster = false) {
-  function createOption(text, vnum) {
-    var option = document.createElement("option");
-    option.textContent = text;
-    option.value = vnum;
+    var vnum = name;
 
-    if (!isMonster) {
-      option.classList.add("notranslate");
+    if (isMonster) {
+      name = getMonsterName(name);
     }
 
-    return option;
-  }
-
-  var vnum = name;
-
-  if (isMonster) {
-    name = getMonsterName(name);
-  }
-
-  if (isMonster && monsterData[vnum][1]) {
-    // pass
-  } else {
-    battle.attackerSelection.appendChild(createOption(name, vnum));
-  }
-
-  battle.victimSelection.appendChild(createOption(name, vnum));
-}
-
-function updateBattleChoice(characters, battle) {
-  var keys = Object.keys(characters.savedCharacters);
-
-  for (var index = 0; index < keys.length; index++) {
-    var pseudo = keys[index];
-    addBattleChoice(battle, pseudo);
-  }
-
-  characters.savedMonsters.forEach(function (monsterVnum) {
-    addBattleChoice(battle, monsterVnum, true);
-  });
-}
-
-function isPC(character) {
-  if (character.race === 0 || character.race === 1) {
-    return false;
-  }
-  return true;
-}
-
-function isBoss(character) {
-  return character.race === 0 && character.rank >= 5;
-}
-
-function isStone(character) {
-  return character.race === 1;
-}
-
-function isMagicClass(character) {
-  return character.race === "shaman" || character.class === "black_magic";
-}
-
-function isDispell(character, skillId) {
-  return character.class === "weaponary" && skillId === 6;
-}
-
-function isPolymorph(character) {
-  return character.state === "polymorph";
-}
-
-function isRiding(character) {
-  return character.state === "horse";
-}
-
-function isBow(weapon) {
-  return weapon.type === 2;
-}
-
-function calcAttackFactor(attacker, victim) {
-  function calcCoeffK(dex, level) {
-    return Math.min(90, Math.floor((2 * dex + level) / 3));
-  }
-
-  var K1 = calcCoeffK(attacker.polymorphDex, attacker.level);
-  var K2 = calcCoeffK(victim.polymorphDex, attacker.level);
-
-  var AR = (K1 + 210) / 300;
-  var ER = (((2 * K2 + 5) / (K2 + 95)) * 3) / 10;
-
-  return truncateNumber(AR - ER, 8);
-}
-
-function calcMainAttackValue(attacker) {
-  var leadership = 0;
-  var rawWeaponAttackValue = 0;
-
-  if (isPC(attacker)) {
-    var weaponUpgrades = attacker.weapon.upgrades;
-    var maxUpgrade = weaponUpgrades.length - 1;
-
-    if (attacker.hasOwnProperty("weaponUpgrade")) {
-      rawWeaponAttackValue =
-        weaponUpgrades[Math.min(attacker.weaponUpgrade, maxUpgrade)];
-
-      // rare bug when weaponUpgrade is deleted
+    if (isMonster && monsterData[vnum][1]) {
+      // pass
     } else {
-      console.log("Warming: weaponUpgrade is missing.");
-      rawWeaponAttackValue = weaponUpgrades[maxUpgrade];
+      battle.attackerSelection.appendChild(createOption(name, vnum));
     }
 
-    leadership = attacker.leadership;
+    battle.victimSelection.appendChild(createOption(name, vnum));
   }
 
-  return 2 * (attacker.level + rawWeaponAttackValue) + leadership;
-}
+  function updateBattleChoice(characters, battle) {
+    var keys = Object.keys(characters.savedCharacters);
 
-function calcStatAttackValue(character) {
-  switch (character.race) {
-    case "warrior":
-    case "sura":
-      return 2 * character.str;
-    case "ninja":
-      return Math.floor((1 / 4) * (character.str + 7 * character.dex));
-    case "shaman":
-      return Math.floor((1 / 3) * (5 * character.int + character.dex));
-    case "lycan":
-      return character.vit + 2 * character.dex;
-    default:
-      return 2 * character.str;
-  }
-}
-
-function calcSecondaryAttackValue(attacker) {
-  var attackValueOther = 0;
-
-  var minAttackValue = 0;
-  var maxAttackValue = 0;
-
-  var minAttackValueSlash = 0;
-  var maxAttackValueSlash = 0;
-
-  var attackerWeapon = attacker.weapon;
-
-  if (isPC(attacker)) {
-    if (attackerWeapon.isSerpent) {
-      var rawAttackValue = attackerWeapon.upgrades[attacker.weaponUpgrade];
-
-      minAttackValue = attacker.minAttackValueRandom - rawAttackValue;
-      maxAttackValue = attacker.maxAttackValueRandom - rawAttackValue;
-
-      minAttackValue = Math.max(0, minAttackValue);
-      maxAttackValue = Math.max(minAttackValue, maxAttackValue);
-    } else {
-      minAttackValue = attackerWeapon.minAttackValue;
-      maxAttackValue = attackerWeapon.maxAttackValue;
+    for (var index = 0; index < keys.length; index++) {
+      var pseudo = keys[index];
+      addBattleChoice(battle, pseudo);
     }
 
-    minAttackValueSlash = Math.min(
-      attacker.minAttackValueSlash,
-      attacker.maxAttackValueSlash
-    );
-    maxAttackValueSlash = Math.max(
-      attacker.minAttackValueSlash,
-      attacker.maxAttackValueSlash
-    );
-
-    attackValueOther += attacker.attackValue;
-
-    if (isBow(attackerWeapon) && !isPolymorph(attacker)) {
-      attackValueOther += 25;
-    }
-  } else {
-    minAttackValue = attacker.minAttackValue;
-    maxAttackValue = attacker.maxAttackValue;
+    characters.savedMonsters.forEach(function (monsterVnum) {
+      addBattleChoice(battle, monsterVnum, true);
+    });
   }
 
-  minAttackValue += attacker.minAttackValuePolymorph;
-  maxAttackValue += attacker.maxAttackValuePolymorph;
+  function isPC(character) {
+    if (character.race === 0 || character.race === 1) {
+      return false;
+    }
+    return true;
+  }
 
-  attackValueOther += attacker.statAttackValue;
-  attackValueOther += attacker.horseAttackValue;
+  function isBoss(character) {
+    return character.race === 0 && character.rank >= 5;
+  }
 
-  var weaponInterval = maxAttackValue - minAttackValue + 1;
-  var slashInterval = maxAttackValueSlash - minAttackValueSlash + 1;
+  function isStone(character) {
+    return character.race === 1;
+  }
 
-  var totalCardinal = weaponInterval * slashInterval * 1_000_000;
-  var minInterval = Math.min(weaponInterval, slashInterval);
+  function isMagicClass(character) {
+    return character.race === "shaman" || character.class === "black_magic";
+  }
 
-  minAttackValue += minAttackValueSlash;
-  maxAttackValue += maxAttackValueSlash;
+  function isDispell(character, skillId) {
+    return character.class === "weaponary" && skillId === 6;
+  }
 
-  return {
-    minAttackValue: minAttackValue,
-    maxAttackValue: maxAttackValue,
-    attackValueOther: attackValueOther,
-    totalCardinal: totalCardinal,
-    weights: calcWeights(minAttackValue, maxAttackValue, minInterval),
-    possibleDamagesCount: maxAttackValue - minAttackValue + 1,
-  };
-}
+  function isPolymorph(character) {
+    return character.state === "polymorph";
+  }
 
-function calcMagicAttackValue(attacker) {
-  var minMagicAttackValue = 0;
-  var maxMagicAttackValue = 0;
+  function isRiding(character) {
+    return character.state === "horse";
+  }
 
-  var minMagicAttackValueSlash = 0;
-  var maxMagicAttackValueSlash = 0;
+  function isBow(weapon) {
+    return weapon.type === 2;
+  }
 
-  var attackerWeapon = attacker.weapon;
-
-  if (attackerWeapon.isSerpent) {
-    minMagicAttackValue = attacker.minMagicAttackValueRandom;
-    maxMagicAttackValue = attacker.maxMagicAttackValueRandom;
-
-    maxMagicAttackValue = Math.max(minMagicAttackValue, maxMagicAttackValue);
-  } else {
-    var rawWeaponAttackValue = attackerWeapon.upgrades[attacker.weaponUpgrade];
-
-    if (!rawWeaponAttackValue) {
-      rawWeaponAttackValue = 0;
+  function calcAttackFactor(attacker, victim) {
+    function calcCoeffK(dex, level) {
+      return Math.min(90, Math.floor((2 * dex + level) / 3));
     }
 
-    minMagicAttackValue =
-      attackerWeapon.minMagicAttackValue + rawWeaponAttackValue;
-    maxMagicAttackValue =
-      attackerWeapon.maxMagicAttackValue + rawWeaponAttackValue;
+    var K1 = calcCoeffK(attacker.polymorphDex, attacker.level);
+    var K2 = calcCoeffK(victim.polymorphDex, attacker.level);
+
+    var AR = (K1 + 210) / 300;
+    var ER = (((2 * K2 + 5) / (K2 + 95)) * 3) / 10;
+
+    return truncateNumber(AR - ER, 8);
   }
 
-  minMagicAttackValueSlash = Math.min(
-    attacker.minMagicAttackValueSlash,
-    attacker.maxMagicAttackValueSlash
-  );
-  maxMagicAttackValueSlash = Math.max(
-    attacker.minMagicAttackValueSlash,
-    attacker.maxMagicAttackValueSlash
-  );
-
-  var weaponInterval = maxMagicAttackValue - minMagicAttackValue + 1;
-  var slashInterval = maxMagicAttackValueSlash - minMagicAttackValueSlash + 1;
-
-  var totalCardinal = weaponInterval * slashInterval * 1_000_000;
-  var minInterval = Math.min(weaponInterval, slashInterval);
-
-  minMagicAttackValue += minMagicAttackValueSlash;
-  maxMagicAttackValue += maxMagicAttackValueSlash;
-
-  return {
-    minMagicAttackValue: minMagicAttackValue,
-    maxMagicAttackValue: maxMagicAttackValue,
-    totalCardinal: totalCardinal,
-    weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
-    possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1,
-  };
-}
-
-function getPolymorphPower(polymorphPoint, polymorphPowerTable) {
-  return polymorphPowerTable[polymorphPoint];
-}
-
-function getSkillPower(skillPoint, skillPowerTable) {
-  return skillPowerTable[skillPoint];
-}
-
-function getMarriageBonusValue(character, marriageTable, itemName) {
-  var index;
-  var lovePoint = character.lovePoint;
-
-  if (lovePoint < 65) {
-    index = 0;
-  } else if (lovePoint < 80) {
-    index = 1;
-  } else if (lovePoint < 100) {
-    index = 2;
-  } else {
-    index = 3;
-  }
-
-  return marriageTable[itemName][index];
-}
-
-function calcDamageWithPrimaryBonuses(damages, bonusValues) {
-  damages = Math.floor(
-    (damages * bonusValues.attackValueCoeff) / 100 + bonusValues.adjustCoeff
-  );
-
-  damages += bonusValues.attackValueMarriage;
-
-  damages = Math.floor(
-    (damages * bonusValues.monsterResistanceMarriageCoeff) / 100
-  );
-  damages = Math.floor((damages * bonusValues.monsterResistanceCoeff) / 100);
-
-  damages += Math.floor((damages * bonusValues.typeBonusCoeff) / 100);
-  damages +=
-    Math.floor((damages * bonusValues.raceBonusCoeff) / 100) -
-    Math.floor((damages * bonusValues.raceResistanceCoeff) / 100);
-  damages += Math.floor((damages * bonusValues.stoneBonusCoeff) / 100);
-  damages += Math.floor((damages * bonusValues.monsterBonusCoeff) / 100);
-
-  var elementBonusCoeff = bonusValues.elementBonusCoeff;
-
-  damages +=
-    Math.trunc((damages * elementBonusCoeff[0]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[1]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[2]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[3]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[4]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[5]) / 10000);
-
-  damages = Math.floor(damages * bonusValues.damageMultiplier);
-
-  return damages;
-}
-
-function calcDamageWithSecondaryBonuses(
-  damages,
-  bonusValues,
-  damagesType,
-  minPiercingDamages,
-  damagesWithPrimaryBonuses
-) {
-  damages = Math.floor(damages * bonusValues.magicResistanceCoeff);
-  damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.tigerStrengthCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.blessingBonusCoeff) / 100);
-
-  if (damagesType.criticalHit) {
-    damages *= 2;
-  }
-
-  if (damagesType.piercingHit) {
-    damages += bonusValues.defenseBoost + Math.min(0, minPiercingDamages);
-    damages += Math.floor(
-      (damagesWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
-    );
-  }
-
-  damages = Math.floor((damages * bonusValues.averageDamageCoeff) / 100);
-  damages = Math.floor(
-    (damages * bonusValues.averageDamageResistanceCoeff) / 100
-  );
-  damages = Math.floor(
-    (damages * bonusValues.skillDamageResistanceCoeff) / 100
-  );
-
-  damages = Math.floor((damages * bonusValues.rankBonusCoeff) / 100);
-  damages = Math.max(0, damages + bonusValues.defensePercent);
-  damages += Math.min(
-    300,
-    Math.floor((damages * bonusValues.damageBonusCoeff) / 100)
-  );
-  damages = Math.floor((damages * bonusValues.empireMalusCoeff) / 10);
-  damages = Math.floor((damages * bonusValues.sungMaStrBonusCoeff) / 10000);
-  damages -= Math.floor(damages * bonusValues.sungmaStrMalusCoeff);
-
-  damages = Math.floor((damages * bonusValues.whiteDragonElixirCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.steelDragonElixirCoeff) / 100);
-
-  return damages;
-}
-
-function calcSkillDamageWithSecondaryBonuses(
-  damages,
-  bonusValues,
-  damagesType,
-  minPiercingDamages
-) {
-  damages = Math.floor(damages * bonusValues.magicResistanceCoeff);
-  damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
-
-  damages -= bonusValues.defense;
-
-  damages = floorMultiplication(damages, bonusValues.skillWardCoeff);
-  damages = floorMultiplication(damages, bonusValues.skillBonusCoeff);
-
-  var tempDamages = Math.floor(
-    (damages * bonusValues.skillBonusByBonusCoeff) / 100
-  );
-
-  damages = Math.floor((tempDamages * bonusValues.tigerStrengthCoeff) / 100);
-
-  if (damagesType.criticalHit) {
-    damages *= 2;
-  }
-
-  if (damagesType.piercingHit) {
-    damages += bonusValues.defenseBoost + Math.min(0, minPiercingDamages);
-    damages += Math.floor(
-      (tempDamages * bonusValues.extraPiercingHitCoeff) / 1000
-    );
-  }
-
-  damages = Math.floor((damages * bonusValues.skillDamageCoeff) / 100);
-  damages = Math.floor(
-    (damages * bonusValues.skillDamageResistanceCoeff) / 100
-  );
-  damages = Math.floor((damages * bonusValues.rankBonusCoeff) / 100);
-
-  damages = Math.max(0, damages + bonusValues.defensePercent);
-  damages += Math.min(
-    300,
-    Math.floor((damages * bonusValues.damageBonusCoeff) / 100)
-  );
-  damages = Math.floor((damages * bonusValues.empireMalusCoeff) / 10);
-  damages = Math.floor((damages * bonusValues.sungMaStrBonusCoeff) / 10000);
-  damages -= Math.floor(damages * bonusValues.sungmaStrMalusCoeff);
-
-  damages = Math.floor((damages * bonusValues.whiteDragonElixirCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.steelDragonElixirCoeff) / 100);
-
-  return damages;
-}
-
-function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
-  attacker.statAttackValue = 0;
-
-  attacker.polymorphDex = attacker.dex;
-  victim.polymorphDex = victim.dex;
-
-  attacker.minAttackValuePolymorph = 0;
-  attacker.maxAttackValuePolymorph = 0;
-
-  if (isPC(attacker) && isPolymorph(attacker)) {
-    var polymorphPowerPct =
-      getPolymorphPower(attacker.polymorphPoint, polymorphPowerTable) / 100;
-    var polymorphMonster = createMonster(attacker.polymorphMonster);
-
-    var polymorphStr = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.str
-    );
-
-    attacker.polymorphDex += floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.dex
-    );
-
-    attacker.minAttackValuePolymorph = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.minAttackValue
-    );
-    attacker.maxAttackValuePolymorph = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.maxAttackValue
-    );
-
-    if (!attacker.weapon) {
-      attacker.maxAttackValuePolymorph += 1;
-    }
-
-    attacker.attackValue = 0;
-
-    if (isMagicClass(attacker)) {
-      attacker.statAttackValue = 2 * (polymorphStr + attacker.int);
-    } else {
-      attacker.statAttackValue = 2 * (polymorphStr + attacker.str);
-    }
-  } else {
-    attacker.statAttackValue = calcStatAttackValue(attacker);
-  }
-}
-
-function computeHorse(attacker) {
-  attacker.horseAttackValue = 0;
-
-  if (isPC(attacker) && isRiding(attacker)) {
-    var horseConstant = 30;
-
-    if (attacker.class === "weaponary") {
-      horseConstant = 60;
-    }
-
-    attacker.horseAttackValue = floorMultiplication(
-      2 * attacker.level + attacker.statAttackValue,
-      attacker.horsePoint / horseConstant
-    );
-  }
-}
-
-function getRankBonus(attacker) {
-  if (attacker.lowRank !== "on") {
-    return 0;
-  }
-
-  switch (attacker.playerRank) {
-    case "aggressive":
-      return 1;
-    case "fraudulent":
-      return 2;
-    case "malicious":
-      return 3;
-    case "cruel":
-      return 5;
-  }
-
-  return 0;
-}
-
-function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
-  var minElementMalus = 0;
-  var maxDifference = 0;
-  var savedElementDifferences = [];
-  var elementBonusIndex = 0;
-
-  for (var index = 0; index < elementBonus.length; index++) {
-    if (!attacker[mapping.elementBonus[index]]) {
-      continue;
-    }
-
-    var elementDifference =
-      attacker[mapping.elementBonus[index]] -
-      victim[mapping.elementResistance[index]];
-
-    if (elementDifference >= 0) {
-      elementBonus[elementBonusIndex] = 10 * elementDifference;
-      minElementMalus -= elementDifference;
-      maxDifference = Math.max(maxDifference, elementDifference);
-      elementBonusIndex++;
-    } else {
-      savedElementDifferences.push(elementDifference);
-    }
-  }
-
-  if (!savedElementDifferences.length) {
-    return;
-  }
-
-  minElementMalus += maxDifference;
-  savedElementDifferences.sort(compareNumbers);
-
-  for (var index = 0; index < savedElementDifferences.length; index++) {
-    var elementDifference = savedElementDifferences[index];
-
-    elementBonus[elementBonusIndex + index] =
-      10 * Math.max(minElementMalus, elementDifference);
-
-    minElementMalus = Math.min(
-      0,
-      Math.max(minElementMalus, minElementMalus - elementDifference)
-    );
-  }
-}
-
-function skillChanceReduction(value) {
-  if (value <= 9) {
-    return Math.floor(value / 2);
-  }
-  return 5 + Math.floor((value - 10) / 4);
-}
-
-function magicResistanceToCoeff(magicResistance) {
-  if (magicResistance) {
-    return 2000 / (6 * magicResistance + 1000) - 1;
-  }
-  return 1;
-}
-
-function createBattleValues(attacker, victim, battle, skillType) {
-  var { mapping, constants } = battle;
-  var calcAttackValues;
-
-  var missPercentage = 0;
-  var adjustCoeff = 0;
-  var attackValuePercent = 0;
-  var attackMeleeMagic = 0;
-  var attackValueMarriage = 0;
-  var monsterResistanceMarriage = 0;
-  var monsterResistance = 0;
-  var typeBonus = 0;
-  var raceBonus = 0;
-  var raceResistance = 0;
-  var stoneBonus = 0;
-  var monsterBonus = 0;
-  var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
-  var defenseMarriage = 0;
-  var damageMultiplier = 1;
-  var useDamages = 1;
-  var defense = victim.defense;
-  var defenseBoost = defense;
-  var magicResistance = 0;
-  var weaponDefense = 0;
-  var tigerStrength = 0;
-  var blessingBonus = 0;
-  var criticalHitPercentage = attacker.criticalHit;
-  var piercingHitPercentage = attacker.piercingHit;
-  var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
-  var averageDamage = 0;
-  var averageDamageResistance = 0;
-  var skillDamage = 0;
-  var skillDamageResistance = 0;
-  var rankBonus = 0;
-  var defensePercent = 0;
-  var damageBonus = 0;
-  var empireMalus = 0;
-  var sungMaStrBonus = 0;
-  var sungmaStrMalus = 0;
-  var whiteDragonElixir = 0;
-  var steelDragonElixir = 0;
-
-  computePolymorphPoint(attacker, victim, constants.polymorphPowerTable);
-  computeHorse(attacker);
-
-  if (isPC(attacker)) {
-    if (weaponData.hasOwnProperty(attacker.weapon)) {
-      attacker.weapon = createWeapon(attacker.weapon);
-    } else {
-      attacker.weapon = createWeapon(0);
-    }
-
-    attackValuePercent = attacker.attackValuePercent;
-    attackMeleeMagic = attacker.attackMeleeMagic;
-
-    var weaponType = attacker.weapon.type;
-
-    if (skillType && attacker.class === "archery") {
-      if (weaponType !== 2) {
-        useDamages = 0;
-        weaponType = 2;
-      }
-      defense = 0;
-    }
-
-    var weaponDefenseName = mapping.defenseWeapon[weaponType];
-    var weaponDefenseBreakName = mapping.breakWeapon[weaponType];
-
-    if (victim.hasOwnProperty(weaponDefenseName)) {
-      weaponDefense = victim[weaponDefenseName];
-    }
-
-    if (isChecked(attacker.whiteDragonElixir)) {
-      whiteDragonElixir = 10;
-    }
-
-    if (isPC(victim)) {
-      if (!skillType) {
-        if (weaponType === 2 && !isPolymorph(attacker)) {
-          missPercentage = victim.arrowBlock;
-        } else {
-          missPercentage = victim.meleeBlock;
-        }
-        missPercentage +=
-          victim.meleeArrowBlock -
-          (missPercentage * victim.meleeArrowBlock) / 100;
-
-        blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-        averageDamageResistance = victim.averageDamageResistance;
+  function calcMainAttackValue(attacker) {
+    var leadership = 0;
+    var rawWeaponAttackValue = 0;
+
+    if (isPC(attacker)) {
+      var weaponUpgrades = attacker.weapon.upgrades;
+      var maxUpgrade = weaponUpgrades.length - 1;
+
+      if (attacker.hasOwnProperty("weaponUpgrade")) {
+        rawWeaponAttackValue =
+          weaponUpgrades[Math.min(attacker.weaponUpgrade, maxUpgrade)];
+
+        // rare bug when weaponUpgrade is deleted
+      } else {
+        console.log("Warming: weaponUpgrade is missing.");
+        rawWeaponAttackValue = weaponUpgrades[maxUpgrade];
       }
 
-      typeBonus = Math.max(1, attacker.humanBonus - victim.humanResistance);
-      raceBonus = attacker[mapping.raceBonus[victim.race]];
-      raceResistance = victim[mapping.raceResistance[attacker.race]];
-
-      calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
-
-      if (weaponType !== 2 && attacker.hasOwnProperty(weaponDefenseBreakName)) {
-        weaponDefense -= attacker[weaponDefenseBreakName];
-      }
-
-      criticalHitPercentage = 0;
-    } else {
-      if (isChecked(attacker.isMarried)) {
-        if (isChecked(attacker.loveNecklace)) {
-          attackValueMarriage = getMarriageBonusValue(
-            attacker,
-            constants.marriageTable,
-            "loveNecklace"
-          );
-        }
-
-        if (isChecked(attacker.loveEarrings)) {
-          criticalHitPercentage += getMarriageBonusValue(
-            attacker,
-            constants.marriageTable,
-            "loveEarrings"
-          );
-        }
-
-        if (isChecked(attacker.harmonyEarrings)) {
-          piercingHitPercentage += getMarriageBonusValue(
-            attacker,
-            constants.marriageTable,
-            "harmonyEarrings"
-          );
-        }
-      }
-
-      if (isChecked(attacker.tigerStrength)) {
-        tigerStrength = 40;
-      }
-
-      for (var index = 0; index < elementBonus.length; index++) {
-        var elementBonusName = mapping.elementBonus[index];
-        var elementResistanceName = mapping.elementResistance[index];
-
-        if (attacker[elementBonusName] && victim[elementBonusName]) {
-          elementBonus[index] =
-            50 * (attacker[elementBonusName] - victim[elementResistanceName]);
-        } else {
-          elementBonus[index] = 5 * attacker[elementBonusName];
-        }
-      }
-
-      var victimType = victim.type;
-
-      if (victimType !== -1) {
-        typeBonus = attacker[mapping.typeFlag[victimType]];
-      }
-
-      monsterBonus = attacker.monsterBonus;
-
-      if (isStone(victim)) {
-        stoneBonus = attacker.stoneBonus;
-      }
-
-      if (isBoss(victim)) {
-        if (skillType) {
-          skillDamage += attacker.skillBossDamage;
-        } else {
-          averageDamage += attacker.bossDamage;
-        }
-      }
-
-      if (isChecked(attacker.onYohara)) {
-        var sungmaStrDifference = attacker.sungmaStr - attacker.sungmaStrMalus;
-
-        if (sungmaStrDifference >= 0) {
-          sungMaStrBonus = sungmaStrDifference;
-        } else {
-          sungmaStrMalus = 0.5;
-        }
-      }
+      leadership = attacker.leadership;
     }
 
-    if (skillType) {
-      skillDamage += attacker.skillDamage;
-    } else {
-      averageDamage += attacker.averageDamage;
-    }
-
-    rankBonus = getRankBonus(attacker);
-    damageBonus = attacker.damageBonus;
-
-    if (isChecked(attacker.empireMalus)) {
-      empireMalus = 1;
-    }
-  } else {
-    if (isPC(victim)) {
-      if (isChecked(victim.isMarried)) {
-        if (isChecked(victim.harmonyBracelet)) {
-          monsterResistanceMarriage = getMarriageBonusValue(
-            victim,
-            constants.marriageTable,
-            "harmonyBracelet"
-          );
-        }
-
-        if (isChecked(victim.harmonyNecklace) && !skillType) {
-          defenseMarriage = getMarriageBonusValue(
-            victim,
-            constants.marriageTable,
-            "harmonyNecklace"
-          );
-        }
-      }
-
-      monsterResistance = victim.monsterResistance;
-
-      for (var index = 0; index < elementBonus.length; index++) {
-        var elementBonusName = mapping.elementBonus[index];
-        var elementResistanceName = mapping.elementResistance[index];
-
-        if (attacker[elementBonusName]) {
-          elementBonus[index] =
-            80 * (attacker[elementBonusName] - victim[elementResistanceName]);
-        }
-      }
-
-      if (!skillType) {
-        if (attacker.attack == 0) {
-          missPercentage = victim.meleeBlock;
-          averageDamageResistance = victim.averageDamageResistance;
-          blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-        } else if (attacker.attack == 1) {
-          missPercentage = victim.arrowBlock;
-          weaponDefense = victim.arrowDefense;
-          averageDamageResistance = victim.averageDamageResistance;
-          blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-        } else {
-          missPercentage = victim.arrowBlock;
-          skillDamageResistance = victim.skillDamageResistance;
-          magicResistance = victim.magicResistance;
-        }
-
-        missPercentage +=
-          victim.meleeArrowBlock -
-          (missPercentage * victim.meleeArrowBlock) / 100;
-      }
-    }
-
-    typeBonus = 1;
-    damageMultiplier = attacker.damageMultiplier;
+    return 2 * (attacker.level + rawWeaponAttackValue) + leadership;
   }
 
-  if (skillType) {
-    criticalHitPercentage = skillChanceReduction(criticalHitPercentage);
-    piercingHitPercentage = skillChanceReduction(piercingHitPercentage);
-  }
-
-  if (isPC(victim)) {
-    if (!skillType && isChecked(victim.biologist70)) {
-      defenseBoost = Math.floor((defenseBoost * 110) / 100);
-    }
-
-    criticalHitPercentage = Math.max(
-      0,
-      criticalHitPercentage - victim.criticalHitResistance
-    );
-    piercingHitPercentage = Math.max(
-      0,
-      piercingHitPercentage - victim.piercingHitResistance
-    );
-
-    if (skillType) {
-      skillDamageResistance = victim.skillDamageResistance;
-    }
-
-    if (isMagicClass(victim)) {
-      defensePercent = (-2 * victim.magicDefense * victim.defensePercent) / 100;
-    } else {
-      defensePercent = (-2 * defenseBoost * victim.defensePercent) / 100;
-    }
-
-    if (isChecked(victim.steelDragonElixir)) {
-      steelDragonElixir = 10;
+  function calcStatAttackValue(character) {
+    switch (character.race) {
+      case "warrior":
+      case "sura":
+        return 2 * character.str;
+      case "ninja":
+        return Math.floor((1 / 4) * (character.str + 7 * character.dex));
+      case "shaman":
+        return Math.floor((1 / 3) * (5 * character.int + character.dex));
+      case "lycan":
+        return character.vit + 2 * character.dex;
+      default:
+        return 2 * character.str;
     }
   }
 
-  if (skillType === "magic") {
-    adjustCoeff = 0.5;
-    attackValuePercent = attacker.attackMagic;
-    attackValueMarriage = 0;
-    defense = 0;
-    if (!isDispell(attacker, 6)) {
-      magicResistance = victim.magicResistance;
-    }
-    weaponDefense = 0;
-    calcAttackValues = calcMagicAttackValue;
-  } else {
-    calcAttackValues = calcSecondaryAttackValue;
-  }
+  function calcSecondaryAttackValue(attacker) {
+    var attackValueOther = 0;
 
-  missPercentage = Math.min(100, missPercentage);
+    var minAttackValue = 0;
+    var maxAttackValue = 0;
 
-  var bonusValues = {
-    missPercentage: missPercentage,
-    weaponBonusCoeff: 1,
-    adjustCoeff: adjustCoeff,
-    attackValueCoeff:
-      100 + attackValuePercent + Math.min(100, attackMeleeMagic),
-    attackValueMarriage: attackValueMarriage,
-    monsterResistanceMarriageCoeff: 100 - monsterResistanceMarriage,
-    monsterResistanceCoeff: 100 - monsterResistance,
-    typeBonusCoeff: typeBonus,
-    raceBonusCoeff: raceBonus,
-    raceResistanceCoeff: raceResistance,
-    stoneBonusCoeff: stoneBonus,
-    monsterBonusCoeff: monsterBonus,
-    elementBonusCoeff: elementBonus,
-    damageMultiplier: damageMultiplier,
-    useDamages: useDamages,
-    defense: defense,
-    defenseBoost: defenseBoost,
-    defenseMarriage: defenseMarriage,
-    tigerStrengthCoeff: 100 + tigerStrength,
-    magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
-    weaponDefenseCoeff: 100 - weaponDefense,
-    blessingBonusCoeff: 100 - blessingBonus,
-    extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
-    averageDamageCoeff: 100 + averageDamage,
-    averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
-    skillDamageCoeff: 100 + skillDamage,
-    skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
-    rankBonusCoeff: 100 + rankBonus,
-    defensePercent: Math.floor(defensePercent),
-    damageBonusCoeff: damageBonus,
-    empireMalusCoeff: 10 - empireMalus,
-    sungMaStrBonusCoeff: 10000 + sungMaStrBonus,
-    sungmaStrMalusCoeff: sungmaStrMalus,
-    whiteDragonElixirCoeff: 100 + whiteDragonElixir,
-    steelDragonElixirCoeff: 100 - steelDragonElixir,
-  };
+    var minAttackValueSlash = 0;
+    var maxAttackValueSlash = 0;
 
-  criticalHitPercentage = Math.min(criticalHitPercentage, 100);
-  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
+    var attackerWeapon = attacker.weapon;
 
-  var damagesTypeCombinaison = [
-    {
-      criticalHit: false,
-      piercingHit: false,
-      weight:
-        (100 - criticalHitPercentage) *
-        (100 - piercingHitPercentage) *
-        (100 - missPercentage),
-      name: "normalHit",
-    },
-    {
-      criticalHit: true,
-      piercingHit: false,
-      weight:
-        criticalHitPercentage *
-        (100 - piercingHitPercentage) *
-        (100 - missPercentage),
-      name: "criticalHit",
-    },
-    {
-      criticalHit: false,
-      piercingHit: true,
-      weight:
-        (100 - criticalHitPercentage) *
-        piercingHitPercentage *
-        (100 - missPercentage),
-      name: "piercingHit",
-    },
-    {
-      criticalHit: true,
-      piercingHit: true,
-      weight:
-        criticalHitPercentage * piercingHitPercentage * (100 - missPercentage),
-      name: "criticalPiercingHit",
-    },
-  ];
+    if (isPC(attacker)) {
+      if (attackerWeapon.isSerpent) {
+        var rawAttackValue = attackerWeapon.upgrades[attacker.weaponUpgrade];
 
-  return {
-    attacker: attacker,
-    victim: victim,
-    attackFactor: calcAttackFactor(attacker, victim),
-    mainAttackValue: calcMainAttackValue(attacker),
-    attackValues: calcAttackValues(attacker),
-    bonusValues: bonusValues,
-    damagesTypeCombinaison: damagesTypeCombinaison,
-  };
-}
+        minAttackValue = attacker.minAttackValueRandom - rawAttackValue;
+        maxAttackValue = attacker.maxAttackValueRandom - rawAttackValue;
 
-function updateBattleValues(battleValues, skillFormula, skillInfo) {
-  var weaponBonus = 0;
-  var skillWard = 0;
-  var skillBonus = 0;
-  var skillBonusByBonus = 0;
-  var { attacker: attacker, bonusValues: bonusValues } = battleValues;
-  var {
-    range: [minVariation, maxVariation],
-  } = skillInfo;
-  var variationLength = maxVariation - minVariation + 1;
-
-  if (skillInfo.hasOwnProperty("weaponBonus")) {
-    var [weaponType, weaponBonusValue] = skillInfo.weaponBonus;
-
-    if (weaponType === attacker.weapon.type) {
-      weaponBonus = weaponBonusValue;
-    }
-  }
-
-  if (skillInfo.skillBonus) {
-    skillBonus = skillInfo.skillBonus;
-  }
-
-  if (skillInfo.skillWard) {
-    skillWard = skillInfo.skillWard;
-  }
-
-  if (skillInfo.skillBonusByBonus) {
-    skillBonusByBonus = skillInfo.skillBonusByBonus;
-  }
-
-  if (skillInfo.removeWeaponReduction) {
-    bonusValues.weaponDefenseCoeff = 100;
-  }
-
-  bonusValues.weaponBonusCoeff = 100 + weaponBonus;
-  bonusValues.skillWardCoeff = 1 - skillWard / 100;
-  bonusValues.skillBonusCoeff = 1 + skillBonus / 100;
-  bonusValues.skillBonusByBonusCoeff = 100 + skillBonusByBonus;
-
-  battleValues.skillFormula = skillFormula;
-  battleValues.skillRange = skillInfo.range;
-  battleValues.attackValues.totalCardinal *= variationLength;
-  battleValues.attackValues.possibleDamagesCount *= variationLength;
-}
-
-function calcWeights(minValue, maxValue, minInterval) {
-  var firstWeightLimit = minValue + minInterval - 1;
-  var lastWeightsLimit = maxValue - minInterval + 1;
-  var weights = [];
-
-  for (var value = minValue; value < firstWeightLimit; value++) {
-    weights.push(value - minValue + 1);
-  }
-
-  for (var value = firstWeightLimit; value <= lastWeightsLimit; value++) {
-    weights.push(minInterval);
-  }
-
-  for (var value = lastWeightsLimit + 1; value <= maxValue; value++) {
-    weights.push(maxValue - value + 1);
-  }
-
-  return weights;
-}
-
-function calcBlessingBonus(skillPowerTable, victim) {
-  if (victim.isBlessed !== "on") {
-    return 0;
-  }
-
-  var int = victim.intBlessing;
-  var dex = victim.dexBlessing;
-  var skillPower = getSkillPower(victim["skillBlessing"], skillPowerTable);
-
-  if (!skillPower) {
-    return 0;
-  }
-
-  var blessingBonus = floorMultiplication(
-    ((int * 0.3 + 5) * (2 * skillPower + 0.5) + 0.3 * dex) / (skillPower + 2.3),
-    1
-  );
-
-  if (victim.class === "dragon" && isChecked(ictim.blessingOnself)) {
-    blessingBonus = floorMultiplication(blessingBonus, 1.1);
-  }
-
-  return blessingBonus;
-}
-
-function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
-  var { attacker, victim, attackFactor } = battleValues;
-  var skillPowerTable = battle.constants.skillPowerTable;
-
-  var skillFormula;
-  var skillInfo = { range: [0, 0] };
-
-  var { class: attackerClass, level: lv, vit, str, int, dex } = attacker;
-
-  if (skillId <= 9) {
-    var skillPower = getSkillPower(
-      attacker["attackSkill" + skillId],
-      skillPowerTable
-    );
-
-    var improvedBySkillBonus = false;
-    var improvedByBonus = false;
-
-    if (attackerClass === "body") {
-      switch (skillId) {
-        // Triple lacération
-        case 1:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Moulinet à l'épée
-        case 2:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Accélération
-        case 5:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Volonté de vivre
-        case 6:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
-              1
-            );
-          };
-          break;
-        // Tremblement de terre
-        case 9:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
+        minAttackValue = Math.max(0, minAttackValue);
+        maxAttackValue = Math.max(minAttackValue, maxAttackValue);
+      } else {
+        minAttackValue = attackerWeapon.minAttackValue;
+        maxAttackValue = attackerWeapon.maxAttackValue;
       }
-    } else if (attackerClass === "mental") {
-      switch (skillId) {
-        // Attaque de l'esprit
-        case 1:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Attaque de la paume
-        case 2:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Charge
-        case 3:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
-              1
-            );
-          };
-          break;
-        // Coup d'épée
-        case 5:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Orbe de l'épée
-        case 6:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-                1.1,
-              1
-            );
-          };
-          break;
-        // Tremblement de terre
-        case 9:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
-      }
-    } else if (attackerClass === "blade_fight") {
-      switch (skillId) {
-        // Embuscade
-        case 1:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              atk + (1.2 * atk + variation + 4 * dex + 4 * str) * skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [1, 50];
-          skillInfo.range = [500, 700];
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Attaque rapide
-        case 2:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              atk + (1.6 * atk + variation + 7 * dex + 7 * str) * skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [1, 35];
-          skillInfo.range = [200, 300];
-          improvedByBonus = true;
-          break;
-        // Dague filante
-        case 3:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Brume empoisonnée
-        case 5:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Poison insidieux
-        case 6:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
-              1
-            );
-          };
-          break;
-        // Étoiles brillantes
-        case 9:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              atk + (1.7 * atk + variation + 6 * dex + 5 * lv) * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
-      }
-    } else if (attackerClass === "archery") {
-      switch (skillId) {
-        // Tir à répétition
-        // case 1:
-        //   skillFormula = function (atk) {
-        //     return floorMultiplication(
-        //       atk + 0.2 * atk * Math.floor(2 + 6 * skillPower) + (0.8 * atk + 8 * dex * attackFactor + 2 * int) * skillPower,
-        //       1
-        //     );
-        //   };
-        //   improvedByBonus = true;
-        //   break;
-        // Pluie de flèches
-        case 2:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              atk + (1.7 * atk + 5 * dex + str) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Flèche de feu
-        case 3:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              1.5 * atk + (2.6 * atk + 0.9 * int + variation) * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [100, 300];
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Foulée de plume
-        case 4:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              (3 * dex + 200 + 2 * str + 2 * int) * skillPower,
-              1
-            );
-          };
-          skillInfo.removeWeaponReduction = true;
-          break;
-        // Flèche empoisonnée
-        case 5:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              atk +
-                (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.range = [100, 200];
-          improvedByBonus = true;
-          break;
-        // Coup étincelant
-        case 6:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              (atk +
-                (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
-                  skillPower) *
-                1.2,
-              1
-            );
-          };
-          skillInfo.range = [100, 200];
-          improvedByBonus = true;
-          break;
-        // Tir tempête
-        case 9:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              1.9 * atk + (2.6 * atk + variation) * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
-      }
-    } else if (attackerClass === "weaponary") {
-      switch (skillId) {
-        // Toucher brûlant
-        case 1:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              atk +
-                2 * lv +
-                2 * int +
-                (2 * atk + 4 * str + 14 * int) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Tourbillon du dragon
-        case 2:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              1.1 * atk +
-                2 * lv +
-                2 * int +
-                (1.5 * atk + str + 12 * int) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Contre-sort
-        case 6:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              40 +
-                5 * lv +
-                2 * int +
-                (10 * int + 7 * mav + variation) * attackFactor * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [50, 100];
-          break;
-        // Coup démoniaque
-        case 9:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              1.9 * atk + (2.6 * atk + variation) * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
-      }
-    } else if (attackerClass === "black_magic") {
-      switch (skillId) {
-        // Attaque des ténèbres
-        case 1:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              40 +
-                5 * lv +
-                2 * int +
-                (13 * int + 6 * mav + variation) * attackFactor * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [50, 100];
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Attaque de flammes
-        // case 2:
-        //   skillFormula = function (mav, variation) {
-        //     return floorMultiplication(
-        //       5 * lv + 2 * int + (7 * int + 8 * mav + 4 * str + 2 * vit + variation) * skillPower,
-        //       1
-        //     );
-        //   };
-        //   skillInfo.range = [180, 100];
-        //   improvedByBonus = true;
-        //   break;
-        // Esprit de flammes
-        case 3:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              30 +
-                2 * lv +
-                2 * int +
-                (7 * int + 6 * mav + variation) * attackFactor * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [200, 500];
-          break;
-        // Frappe de l'esprit
-        // case 5:
-        //   skillFormula = function (mav, variation) {
-        //     return floorMultiplication(
-        //       40 + 2 * lv + 2 * int + (2 * vit + 2 * dex + 13 * int + 6 * mav + variation) * attackFactor * skillPower,
-        //       1
-        //     );
-        //   };
-        //   skillInfo.range = [180, 200];
-        //   break;
-        // Orbe des ténèbres
-        case 6:
-          skillFormula = function (mav) {
-            return floorMultiplication(
-              120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Vague mortelle
-        case 9:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
-      }
-    } else if (attackerClass === "dragon") {
-      switch (skillId) {
-        // Talisman volant
-        case 1:
-          skillFormula = function (mav) {
-            return floorMultiplication(
-              70 +
-                5 * lv +
-                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [4, 10];
-          improvedByBonus = true;
-          break;
-        // Dragon chassant
-        case 2:
-          skillFormula = function (mav) {
-            return floorMultiplication(
-              60 +
-                5 * lv +
-                (16 * int + 6 * dex + 6 * mav + 120) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [4, 10];
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Rugissement du dragon
-        case 3:
-          skillFormula = function (mav) {
-            return floorMultiplication(
-              70 +
-                3 * lv +
-                (20 * int + 3 * str + 10 * mav + 100) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [4, 10];
-          improvedByBonus = true;
-          break;
-        // Météore
-        case 9:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
-      }
-    } else if (attackerClass === "heal") {
-      switch (skillId) {
-        // Jet de foudre
-        case 1:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              60 +
-                5 * lv +
-                (8 * int + 2 * dex + 8 * mav + variation) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [6, 10];
-          skillInfo.range = [5 * int, 15 * int];
-          improvedByBonus = true;
-          break;
-        // Invocation de foudre
-        case 2:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              40 +
-                4 * lv +
-                (13 * int + 2 * str + 10 * mav + variation) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [6, 10];
-          skillInfo.range = [5 * int, 16 * int];
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Griffe de foudre
-        case 3:
-          skillFormula = function (mav, variation) {
-            return floorMultiplication(
-              50 +
-                5 * lv +
-                (8 * int + 2 * str + 8 * mav + variation) *
-                  attackFactor *
-                  skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 800];
-          improvedByBonus = true;
-          break;
-      }
-    } else if (attackerClass === "lycan") {
-      switch (skillId) {
-        // Déchiqueter
-        // case 1:
-        //   skillFormula = function (atk) {
-        //     return floorMultiplication(
-        //       1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
-        //       1
-        //     );
-        //   };
-        //   skillInfo.weaponBonus = [5, 54];
-        //   improvedByBonus = true;
-        //   break;
-        // Souffle de loup
-        case 2:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [5, 35];
-          improvedByBonus = true;
-          improvedBySkillBonus = true;
-          break;
-        // Bond de loup
-        case 3:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
-              1
-            );
-          };
-          skillInfo.weaponBonus = [5, 35];
-          improvedByBonus = true;
-          break;
-        // Griffe de loup
-        case 4:
-          skillFormula = function (atk) {
-            return floorMultiplication(
-              3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
-              1
-            );
-          };
-          improvedByBonus = true;
-          break;
-        // Tempête cinglante
-        case 9:
-          skillFormula = function (atk, variation) {
-            return floorMultiplication(
-              1.8 * atk +
-                (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
-              1
-            );
-          };
-          skillInfo.range = [1, 1000];
-          break;
-      }
-    }
-    if (improvedBySkillBonus) {
-      skillInfo.skillBonus =
-        16 * getSkillPower(attacker.skillBonus, skillPowerTable);
 
-      var skillWardChoice = victim.skillWardChoice;
-
-      if (skillWardChoice && skillWardChoice === attackerClass) {
-        skillInfo.skillWard =
-          24 * getSkillPower(victim.skillWard, skillPowerTable);
-      }
-    }
-
-    if (improvedByBonus) {
-      skillInfo.skillBonusByBonus = attacker["skillBonus" + skillId];
-    }
-
-    if (removeSkillVariation) {
-      var averageVariation = (skillInfo.range[0] + skillInfo.range[0]) / 2;
-      skillInfo.range = [averageVariation, averageVariation];
-    }
-  } else {
-    var skillPower = getSkillPower(
-      attacker["horseSkill" + skillId],
-      skillPowerTable
-    );
-
-    switch (skillId) {
-      // Combat équestre
-      case 137:
-        skillFormula = function (atk) {
-          return floorMultiplication(atk + 2 * atk * skillPower, 1);
-        };
-        break;
-      // Charge à cheval
-      case 138:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2.4 * (200 + 1.5 * lv) + 600 * skillPower,
-            1
-          );
-        };
-        break;
-      // Vague de Pouvoir
-      case 139:
-        skillFormula = function (atk) {
-          return floorMultiplication(
-            2 * (200 + 1.5 * lv) + 600 * skillPower,
-            1
-          );
-        };
-        break;
-      // Grêle de flèches
-      case 140:
-        skillFormula = function (atk) {
-          return floorMultiplication(atk + 2 * atk * skillPower, 1);
-        };
-        break;
-    }
-  }
-
-  updateBattleValues(battleValues, skillFormula, skillInfo);
-}
-
-function calcPhysicalDamages(battleValues) {
-  var {
-    attackFactor,
-    mainAttackValue,
-    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
-    bonusValues,
-    damagesTypeCombinaison,
-  } = battleValues;
-
-  var damagesWeightedByType = {};
-
-  if (bonusValues.missPercentage) {
-    damagesWeightedByType.miss = bonusValues.missPercentage / 100;
-  }
-
-  for (var damagesType of damagesTypeCombinaison) {
-    if (!damagesType.weight) {
-      continue;
-    }
-
-    var damagesWeighted = {};
-    damagesWeightedByType[damagesType.name] = damagesWeighted;
-
-    for (
-      var attackValue = minAttackValue;
-      attackValue <= maxAttackValue;
-      attackValue++
-    ) {
-      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
-
-      var secondaryAttackValue = 2 * attackValue + attackValueOther;
-      var rawDamages =
-        mainAttackValue +
-        floorMultiplication(attackFactor, secondaryAttackValue);
-
-      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-        rawDamages,
-        bonusValues
+      minAttackValueSlash = Math.min(
+        attacker.minAttackValueSlash,
+        attacker.maxAttackValueSlash
+      );
+      maxAttackValueSlash = Math.max(
+        attacker.minAttackValueSlash,
+        attacker.maxAttackValueSlash
       );
 
-      var minPiercingDamages =
-        damagesWithPrimaryBonuses -
-        bonusValues.defenseBoost +
-        bonusValues.defenseMarriage;
+      attackValueOther += attacker.attackValue;
 
-      if (minPiercingDamages <= 2) {
-        for (var damages = 1; damages <= 5; damages++) {
+      if (isBow(attackerWeapon) && !isPolymorph(attacker)) {
+        attackValueOther += 25;
+      }
+    } else {
+      minAttackValue = attacker.minAttackValue;
+      maxAttackValue = attacker.maxAttackValue;
+    }
+
+    minAttackValue += attacker.minAttackValuePolymorph;
+    maxAttackValue += attacker.maxAttackValuePolymorph;
+
+    attackValueOther += attacker.statAttackValue;
+    attackValueOther += attacker.horseAttackValue;
+
+    var weaponInterval = maxAttackValue - minAttackValue + 1;
+    var slashInterval = maxAttackValueSlash - minAttackValueSlash + 1;
+
+    var totalCardinal = weaponInterval * slashInterval * 1_000_000;
+    var minInterval = Math.min(weaponInterval, slashInterval);
+
+    minAttackValue += minAttackValueSlash;
+    maxAttackValue += maxAttackValueSlash;
+
+    return {
+      minAttackValue: minAttackValue,
+      maxAttackValue: maxAttackValue,
+      attackValueOther: attackValueOther,
+      totalCardinal: totalCardinal,
+      weights: calcWeights(minAttackValue, maxAttackValue, minInterval),
+      possibleDamagesCount: maxAttackValue - minAttackValue + 1,
+    };
+  }
+
+  function calcMagicAttackValue(attacker) {
+    var minMagicAttackValue = 0;
+    var maxMagicAttackValue = 0;
+
+    var minMagicAttackValueSlash = 0;
+    var maxMagicAttackValueSlash = 0;
+
+    var attackerWeapon = attacker.weapon;
+
+    if (attackerWeapon.isSerpent) {
+      minMagicAttackValue = attacker.minMagicAttackValueRandom;
+      maxMagicAttackValue = attacker.maxMagicAttackValueRandom;
+
+      maxMagicAttackValue = Math.max(minMagicAttackValue, maxMagicAttackValue);
+    } else {
+      var rawWeaponAttackValue = attackerWeapon.upgrades[attacker.weaponUpgrade];
+
+      if (!rawWeaponAttackValue) {
+        rawWeaponAttackValue = 0;
+      }
+
+      minMagicAttackValue =
+        attackerWeapon.minMagicAttackValue + rawWeaponAttackValue;
+      maxMagicAttackValue =
+        attackerWeapon.maxMagicAttackValue + rawWeaponAttackValue;
+    }
+
+    minMagicAttackValueSlash = Math.min(
+      attacker.minMagicAttackValueSlash,
+      attacker.maxMagicAttackValueSlash
+    );
+    maxMagicAttackValueSlash = Math.max(
+      attacker.minMagicAttackValueSlash,
+      attacker.maxMagicAttackValueSlash
+    );
+
+    var weaponInterval = maxMagicAttackValue - minMagicAttackValue + 1;
+    var slashInterval = maxMagicAttackValueSlash - minMagicAttackValueSlash + 1;
+
+    var totalCardinal = weaponInterval * slashInterval * 1_000_000;
+    var minInterval = Math.min(weaponInterval, slashInterval);
+
+    minMagicAttackValue += minMagicAttackValueSlash;
+    maxMagicAttackValue += maxMagicAttackValueSlash;
+
+    return {
+      minMagicAttackValue: minMagicAttackValue,
+      maxMagicAttackValue: maxMagicAttackValue,
+      totalCardinal: totalCardinal,
+      weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
+      possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1,
+    };
+  }
+
+  function getPolymorphPower(polymorphPoint, polymorphPowerTable) {
+    return polymorphPowerTable[polymorphPoint];
+  }
+
+  function getSkillPower(skillPoint, skillPowerTable) {
+    return skillPowerTable[skillPoint];
+  }
+
+  function getMarriageBonusValue(character, marriageTable, itemName) {
+    var index;
+    var lovePoint = character.lovePoint;
+
+    if (lovePoint < 65) {
+      index = 0;
+    } else if (lovePoint < 80) {
+      index = 1;
+    } else if (lovePoint < 100) {
+      index = 2;
+    } else {
+      index = 3;
+    }
+
+    return marriageTable[itemName][index];
+  }
+
+  function calcDamageWithPrimaryBonuses(damages, bonusValues) {
+    damages = Math.floor(
+      (damages * bonusValues.attackValueCoeff) / 100 + bonusValues.adjustCoeff
+    );
+
+    damages += bonusValues.attackValueMarriage;
+
+    damages = Math.floor(
+      (damages * bonusValues.monsterResistanceMarriageCoeff) / 100
+    );
+    damages = Math.floor((damages * bonusValues.monsterResistanceCoeff) / 100);
+
+    damages += Math.floor((damages * bonusValues.typeBonusCoeff) / 100);
+    damages +=
+      Math.floor((damages * bonusValues.raceBonusCoeff) / 100) -
+      Math.floor((damages * bonusValues.raceResistanceCoeff) / 100);
+    damages += Math.floor((damages * bonusValues.stoneBonusCoeff) / 100);
+    damages += Math.floor((damages * bonusValues.monsterBonusCoeff) / 100);
+
+    var elementBonusCoeff = bonusValues.elementBonusCoeff;
+
+    damages +=
+      Math.trunc((damages * elementBonusCoeff[0]) / 10000) +
+      Math.trunc((damages * elementBonusCoeff[1]) / 10000) +
+      Math.trunc((damages * elementBonusCoeff[2]) / 10000) +
+      Math.trunc((damages * elementBonusCoeff[3]) / 10000) +
+      Math.trunc((damages * elementBonusCoeff[4]) / 10000) +
+      Math.trunc((damages * elementBonusCoeff[5]) / 10000);
+
+    damages = Math.floor(damages * bonusValues.damageMultiplier);
+
+    return damages;
+  }
+
+  function calcDamageWithSecondaryBonuses(
+    damages,
+    bonusValues,
+    damagesType,
+    minPiercingDamages,
+    damagesWithPrimaryBonuses
+  ) {
+    damages = Math.floor(damages * bonusValues.magicResistanceCoeff);
+    damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
+    damages = Math.floor((damages * bonusValues.tigerStrengthCoeff) / 100);
+    damages = Math.floor((damages * bonusValues.blessingBonusCoeff) / 100);
+
+    if (damagesType.criticalHit) {
+      damages *= 2;
+    }
+
+    if (damagesType.piercingHit) {
+      damages += bonusValues.defenseBoost + Math.min(0, minPiercingDamages);
+      damages += Math.floor(
+        (damagesWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
+      );
+    }
+
+    damages = Math.floor((damages * bonusValues.averageDamageCoeff) / 100);
+    damages = Math.floor(
+      (damages * bonusValues.averageDamageResistanceCoeff) / 100
+    );
+    damages = Math.floor(
+      (damages * bonusValues.skillDamageResistanceCoeff) / 100
+    );
+
+    damages = Math.floor((damages * bonusValues.rankBonusCoeff) / 100);
+    damages = Math.max(0, damages + bonusValues.defensePercent);
+    damages += Math.min(
+      300,
+      Math.floor((damages * bonusValues.damageBonusCoeff) / 100)
+    );
+    damages = Math.floor((damages * bonusValues.empireMalusCoeff) / 10);
+    damages = Math.floor((damages * bonusValues.sungMaStrBonusCoeff) / 10000);
+    damages -= Math.floor(damages * bonusValues.sungmaStrMalusCoeff);
+
+    damages = Math.floor((damages * bonusValues.whiteDragonElixirCoeff) / 100);
+    damages = Math.floor((damages * bonusValues.steelDragonElixirCoeff) / 100);
+
+    return damages;
+  }
+
+  function calcSkillDamageWithSecondaryBonuses(
+    damages,
+    bonusValues,
+    damagesType,
+    minPiercingDamages
+  ) {
+    damages = Math.floor(damages * bonusValues.magicResistanceCoeff);
+    damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
+
+    damages -= bonusValues.defense;
+
+    damages = floorMultiplication(damages, bonusValues.skillWardCoeff);
+    damages = floorMultiplication(damages, bonusValues.skillBonusCoeff);
+
+    var tempDamages = Math.floor(
+      (damages * bonusValues.skillBonusByBonusCoeff) / 100
+    );
+
+    damages = Math.floor((tempDamages * bonusValues.tigerStrengthCoeff) / 100);
+
+    if (damagesType.criticalHit) {
+      damages *= 2;
+    }
+
+    if (damagesType.piercingHit) {
+      damages += bonusValues.defenseBoost + Math.min(0, minPiercingDamages);
+      damages += Math.floor(
+        (tempDamages * bonusValues.extraPiercingHitCoeff) / 1000
+      );
+    }
+
+    damages = Math.floor((damages * bonusValues.skillDamageCoeff) / 100);
+    damages = Math.floor(
+      (damages * bonusValues.skillDamageResistanceCoeff) / 100
+    );
+    damages = Math.floor((damages * bonusValues.rankBonusCoeff) / 100);
+
+    damages = Math.max(0, damages + bonusValues.defensePercent);
+    damages += Math.min(
+      300,
+      Math.floor((damages * bonusValues.damageBonusCoeff) / 100)
+    );
+    damages = Math.floor((damages * bonusValues.empireMalusCoeff) / 10);
+    damages = Math.floor((damages * bonusValues.sungMaStrBonusCoeff) / 10000);
+    damages -= Math.floor(damages * bonusValues.sungmaStrMalusCoeff);
+
+    damages = Math.floor((damages * bonusValues.whiteDragonElixirCoeff) / 100);
+    damages = Math.floor((damages * bonusValues.steelDragonElixirCoeff) / 100);
+
+    return damages;
+  }
+
+  function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
+    attacker.statAttackValue = 0;
+
+    attacker.polymorphDex = attacker.dex;
+    victim.polymorphDex = victim.dex;
+
+    attacker.minAttackValuePolymorph = 0;
+    attacker.maxAttackValuePolymorph = 0;
+
+    if (isPC(attacker) && isPolymorph(attacker)) {
+      var polymorphPowerPct =
+        getPolymorphPower(attacker.polymorphPoint, polymorphPowerTable) / 100;
+      var polymorphMonster = createMonster(attacker.polymorphMonster);
+
+      var polymorphStr = floorMultiplication(
+        polymorphPowerPct,
+        polymorphMonster.str
+      );
+
+      attacker.polymorphDex += floorMultiplication(
+        polymorphPowerPct,
+        polymorphMonster.dex
+      );
+
+      attacker.minAttackValuePolymorph = floorMultiplication(
+        polymorphPowerPct,
+        polymorphMonster.minAttackValue
+      );
+      attacker.maxAttackValuePolymorph = floorMultiplication(
+        polymorphPowerPct,
+        polymorphMonster.maxAttackValue
+      );
+
+      if (!attacker.weapon) {
+        attacker.maxAttackValuePolymorph += 1;
+      }
+
+      attacker.attackValue = 0;
+
+      if (isMagicClass(attacker)) {
+        attacker.statAttackValue = 2 * (polymorphStr + attacker.int);
+      } else {
+        attacker.statAttackValue = 2 * (polymorphStr + attacker.str);
+      }
+    } else {
+      attacker.statAttackValue = calcStatAttackValue(attacker);
+    }
+  }
+
+  function computeHorse(attacker) {
+    attacker.horseAttackValue = 0;
+
+    if (isPC(attacker) && isRiding(attacker)) {
+      var horseConstant = 30;
+
+      if (attacker.class === "weaponary") {
+        horseConstant = 60;
+      }
+
+      attacker.horseAttackValue = floorMultiplication(
+        2 * attacker.level + attacker.statAttackValue,
+        attacker.horsePoint / horseConstant
+      );
+    }
+  }
+
+  function getRankBonus(attacker) {
+    if (attacker.lowRank !== "on") {
+      return 0;
+    }
+
+    switch (attacker.playerRank) {
+      case "aggressive":
+        return 1;
+      case "fraudulent":
+        return 2;
+      case "malicious":
+        return 3;
+      case "cruel":
+        return 5;
+    }
+
+    return 0;
+  }
+
+  function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
+    var minElementMalus = 0;
+    var maxDifference = 0;
+    var savedElementDifferences = [];
+    var elementBonusIndex = 0;
+
+    for (var index = 0; index < elementBonus.length; index++) {
+      if (!attacker[mapping.elementBonus[index]]) {
+        continue;
+      }
+
+      var elementDifference =
+        attacker[mapping.elementBonus[index]] -
+        victim[mapping.elementResistance[index]];
+
+      if (elementDifference >= 0) {
+        elementBonus[elementBonusIndex] = 10 * elementDifference;
+        minElementMalus -= elementDifference;
+        maxDifference = Math.max(maxDifference, elementDifference);
+        elementBonusIndex++;
+      } else {
+        savedElementDifferences.push(elementDifference);
+      }
+    }
+
+    if (!savedElementDifferences.length) {
+      return;
+    }
+
+    minElementMalus += maxDifference;
+    savedElementDifferences.sort(compareNumbers);
+
+    for (var index = 0; index < savedElementDifferences.length; index++) {
+      var elementDifference = savedElementDifferences[index];
+
+      elementBonus[elementBonusIndex + index] =
+        10 * Math.max(minElementMalus, elementDifference);
+
+      minElementMalus = Math.min(
+        0,
+        Math.max(minElementMalus, minElementMalus - elementDifference)
+      );
+    }
+  }
+
+  function skillChanceReduction(value) {
+    if (value <= 9) {
+      return Math.floor(value / 2);
+    }
+    return 5 + Math.floor((value - 10) / 4);
+  }
+
+  function magicResistanceToCoeff(magicResistance) {
+    if (magicResistance) {
+      return 2000 / (6 * magicResistance + 1000) - 1;
+    }
+    return 1;
+  }
+
+  function createBattleValues(attacker, victim, battle, skillType) {
+    var { mapping, constants } = battle;
+    var calcAttackValues;
+
+    var missPercentage = 0;
+    var adjustCoeff = 0;
+    var attackValuePercent = 0;
+    var attackMeleeMagic = 0;
+    var attackValueMarriage = 0;
+    var monsterResistanceMarriage = 0;
+    var monsterResistance = 0;
+    var typeBonus = 0;
+    var raceBonus = 0;
+    var raceResistance = 0;
+    var stoneBonus = 0;
+    var monsterBonus = 0;
+    var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
+    var defenseMarriage = 0;
+    var damageMultiplier = 1;
+    var useDamages = 1;
+    var defense = victim.defense;
+    var defenseBoost = defense;
+    var magicResistance = 0;
+    var weaponDefense = 0;
+    var tigerStrength = 0;
+    var blessingBonus = 0;
+    var criticalHitPercentage = attacker.criticalHit;
+    var piercingHitPercentage = attacker.piercingHit;
+    var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
+    var averageDamage = 0;
+    var averageDamageResistance = 0;
+    var skillDamage = 0;
+    var skillDamageResistance = 0;
+    var rankBonus = 0;
+    var defensePercent = 0;
+    var damageBonus = 0;
+    var empireMalus = 0;
+    var sungMaStrBonus = 0;
+    var sungmaStrMalus = 0;
+    var whiteDragonElixir = 0;
+    var steelDragonElixir = 0;
+
+    computePolymorphPoint(attacker, victim, constants.polymorphPowerTable);
+    computeHorse(attacker);
+
+    if (isPC(attacker)) {
+      if (weaponData.hasOwnProperty(attacker.weapon)) {
+        attacker.weapon = createWeapon(attacker.weapon);
+      } else {
+        attacker.weapon = createWeapon(0);
+      }
+
+      attackValuePercent = attacker.attackValuePercent;
+      attackMeleeMagic = attacker.attackMeleeMagic;
+
+      var weaponType = attacker.weapon.type;
+
+      if (skillType && attacker.class === "archery") {
+        if (weaponType !== 2) {
+          useDamages = 0;
+          weaponType = 2;
+        }
+        defense = 0;
+      }
+
+      var weaponDefenseName = mapping.defenseWeapon[weaponType];
+      var weaponDefenseBreakName = mapping.breakWeapon[weaponType];
+
+      if (victim.hasOwnProperty(weaponDefenseName)) {
+        weaponDefense = victim[weaponDefenseName];
+      }
+
+      if (isChecked(attacker.whiteDragonElixir)) {
+        whiteDragonElixir = 10;
+      }
+
+      if (isPC(victim)) {
+        if (!skillType) {
+          if (weaponType === 2 && !isPolymorph(attacker)) {
+            missPercentage = victim.arrowBlock;
+          } else {
+            missPercentage = victim.meleeBlock;
+          }
+          missPercentage +=
+            victim.meleeArrowBlock -
+            (missPercentage * victim.meleeArrowBlock) / 100;
+
+          blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
+          averageDamageResistance = victim.averageDamageResistance;
+        }
+
+        typeBonus = Math.max(1, attacker.humanBonus - victim.humanResistance);
+        raceBonus = attacker[mapping.raceBonus[victim.race]];
+        raceResistance = victim[mapping.raceResistance[attacker.race]];
+
+        calcElementCoeffPvP(elementBonus, mapping, attacker, victim);
+
+        if (weaponType !== 2 && attacker.hasOwnProperty(weaponDefenseBreakName)) {
+          weaponDefense -= attacker[weaponDefenseBreakName];
+        }
+
+        criticalHitPercentage = 0;
+      } else {
+        if (isChecked(attacker.isMarried)) {
+          if (isChecked(attacker.loveNecklace)) {
+            attackValueMarriage = getMarriageBonusValue(
+              attacker,
+              constants.marriageTable,
+              "loveNecklace"
+            );
+          }
+
+          if (isChecked(attacker.loveEarrings)) {
+            criticalHitPercentage += getMarriageBonusValue(
+              attacker,
+              constants.marriageTable,
+              "loveEarrings"
+            );
+          }
+
+          if (isChecked(attacker.harmonyEarrings)) {
+            piercingHitPercentage += getMarriageBonusValue(
+              attacker,
+              constants.marriageTable,
+              "harmonyEarrings"
+            );
+          }
+        }
+
+        if (isChecked(attacker.tigerStrength)) {
+          tigerStrength = 40;
+        }
+
+        for (var index = 0; index < elementBonus.length; index++) {
+          var elementBonusName = mapping.elementBonus[index];
+          var elementResistanceName = mapping.elementResistance[index];
+
+          if (attacker[elementBonusName] && victim[elementBonusName]) {
+            elementBonus[index] =
+              50 * (attacker[elementBonusName] - victim[elementResistanceName]);
+          } else {
+            elementBonus[index] = 5 * attacker[elementBonusName];
+          }
+        }
+
+        var victimType = victim.type;
+
+        if (victimType !== -1) {
+          typeBonus = attacker[mapping.typeFlag[victimType]];
+        }
+
+        monsterBonus = attacker.monsterBonus;
+
+        if (isStone(victim)) {
+          stoneBonus = attacker.stoneBonus;
+        }
+
+        if (isBoss(victim)) {
+          if (skillType) {
+            skillDamage += attacker.skillBossDamage;
+          } else {
+            averageDamage += attacker.bossDamage;
+          }
+        }
+
+        if (isChecked(attacker.onYohara)) {
+          var sungmaStrDifference = attacker.sungmaStr - attacker.sungmaStrMalus;
+
+          if (sungmaStrDifference >= 0) {
+            sungMaStrBonus = sungmaStrDifference;
+          } else {
+            sungmaStrMalus = 0.5;
+          }
+        }
+      }
+
+      if (skillType) {
+        skillDamage += attacker.skillDamage;
+      } else {
+        averageDamage += attacker.averageDamage;
+      }
+
+      rankBonus = getRankBonus(attacker);
+      damageBonus = attacker.damageBonus;
+
+      if (isChecked(attacker.empireMalus)) {
+        empireMalus = 1;
+      }
+    } else {
+      if (isPC(victim)) {
+        if (isChecked(victim.isMarried)) {
+          if (isChecked(victim.harmonyBracelet)) {
+            monsterResistanceMarriage = getMarriageBonusValue(
+              victim,
+              constants.marriageTable,
+              "harmonyBracelet"
+            );
+          }
+
+          if (isChecked(victim.harmonyNecklace) && !skillType) {
+            defenseMarriage = getMarriageBonusValue(
+              victim,
+              constants.marriageTable,
+              "harmonyNecklace"
+            );
+          }
+        }
+
+        monsterResistance = victim.monsterResistance;
+
+        for (var index = 0; index < elementBonus.length; index++) {
+          var elementBonusName = mapping.elementBonus[index];
+          var elementResistanceName = mapping.elementResistance[index];
+
+          if (attacker[elementBonusName]) {
+            elementBonus[index] =
+              80 * (attacker[elementBonusName] - victim[elementResistanceName]);
+          }
+        }
+
+        if (!skillType) {
+          if (attacker.attack == 0) {
+            missPercentage = victim.meleeBlock;
+            averageDamageResistance = victim.averageDamageResistance;
+            blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
+          } else if (attacker.attack == 1) {
+            missPercentage = victim.arrowBlock;
+            weaponDefense = victim.arrowDefense;
+            averageDamageResistance = victim.averageDamageResistance;
+            blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
+          } else {
+            missPercentage = victim.arrowBlock;
+            skillDamageResistance = victim.skillDamageResistance;
+            magicResistance = victim.magicResistance;
+          }
+
+          missPercentage +=
+            victim.meleeArrowBlock -
+            (missPercentage * victim.meleeArrowBlock) / 100;
+        }
+      }
+
+      typeBonus = 1;
+      damageMultiplier = attacker.damageMultiplier;
+    }
+
+    if (skillType) {
+      criticalHitPercentage = skillChanceReduction(criticalHitPercentage);
+      piercingHitPercentage = skillChanceReduction(piercingHitPercentage);
+    }
+
+    if (isPC(victim)) {
+      if (!skillType && isChecked(victim.biologist70)) {
+        defenseBoost = Math.floor((defenseBoost * 110) / 100);
+      }
+
+      criticalHitPercentage = Math.max(
+        0,
+        criticalHitPercentage - victim.criticalHitResistance
+      );
+      piercingHitPercentage = Math.max(
+        0,
+        piercingHitPercentage - victim.piercingHitResistance
+      );
+
+      if (skillType) {
+        skillDamageResistance = victim.skillDamageResistance;
+      }
+
+      if (isMagicClass(victim)) {
+        defensePercent = (-2 * victim.magicDefense * victim.defensePercent) / 100;
+      } else {
+        defensePercent = (-2 * defenseBoost * victim.defensePercent) / 100;
+      }
+
+      if (isChecked(victim.steelDragonElixir)) {
+        steelDragonElixir = 10;
+      }
+    }
+
+    if (skillType === "magic") {
+      adjustCoeff = 0.5;
+      attackValuePercent = attacker.attackMagic;
+      attackValueMarriage = 0;
+      defense = 0;
+      if (!isDispell(attacker, 6)) {
+        magicResistance = victim.magicResistance;
+      }
+      weaponDefense = 0;
+      calcAttackValues = calcMagicAttackValue;
+    } else {
+      calcAttackValues = calcSecondaryAttackValue;
+    }
+
+    missPercentage = Math.min(100, missPercentage);
+
+    var bonusValues = {
+      missPercentage: missPercentage,
+      weaponBonusCoeff: 1,
+      adjustCoeff: adjustCoeff,
+      attackValueCoeff:
+        100 + attackValuePercent + Math.min(100, attackMeleeMagic),
+      attackValueMarriage: attackValueMarriage,
+      monsterResistanceMarriageCoeff: 100 - monsterResistanceMarriage,
+      monsterResistanceCoeff: 100 - monsterResistance,
+      typeBonusCoeff: typeBonus,
+      raceBonusCoeff: raceBonus,
+      raceResistanceCoeff: raceResistance,
+      stoneBonusCoeff: stoneBonus,
+      monsterBonusCoeff: monsterBonus,
+      elementBonusCoeff: elementBonus,
+      damageMultiplier: damageMultiplier,
+      useDamages: useDamages,
+      defense: defense,
+      defenseBoost: defenseBoost,
+      defenseMarriage: defenseMarriage,
+      tigerStrengthCoeff: 100 + tigerStrength,
+      magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
+      weaponDefenseCoeff: 100 - weaponDefense,
+      blessingBonusCoeff: 100 - blessingBonus,
+      extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
+      averageDamageCoeff: 100 + averageDamage,
+      averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
+      skillDamageCoeff: 100 + skillDamage,
+      skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
+      rankBonusCoeff: 100 + rankBonus,
+      defensePercent: Math.floor(defensePercent),
+      damageBonusCoeff: damageBonus,
+      empireMalusCoeff: 10 - empireMalus,
+      sungMaStrBonusCoeff: 10000 + sungMaStrBonus,
+      sungmaStrMalusCoeff: sungmaStrMalus,
+      whiteDragonElixirCoeff: 100 + whiteDragonElixir,
+      steelDragonElixirCoeff: 100 - steelDragonElixir,
+    };
+
+    criticalHitPercentage = Math.min(criticalHitPercentage, 100);
+    piercingHitPercentage = Math.min(piercingHitPercentage, 100);
+
+    var damagesTypeCombinaison = [
+      {
+        criticalHit: false,
+        piercingHit: false,
+        weight:
+          (100 - criticalHitPercentage) *
+          (100 - piercingHitPercentage) *
+          (100 - missPercentage),
+        name: "normalHit",
+      },
+      {
+        criticalHit: true,
+        piercingHit: false,
+        weight:
+          criticalHitPercentage *
+          (100 - piercingHitPercentage) *
+          (100 - missPercentage),
+        name: "criticalHit",
+      },
+      {
+        criticalHit: false,
+        piercingHit: true,
+        weight:
+          (100 - criticalHitPercentage) *
+          piercingHitPercentage *
+          (100 - missPercentage),
+        name: "piercingHit",
+      },
+      {
+        criticalHit: true,
+        piercingHit: true,
+        weight:
+          criticalHitPercentage * piercingHitPercentage * (100 - missPercentage),
+        name: "criticalPiercingHit",
+      },
+    ];
+
+    return {
+      attacker: attacker,
+      victim: victim,
+      attackFactor: calcAttackFactor(attacker, victim),
+      mainAttackValue: calcMainAttackValue(attacker),
+      attackValues: calcAttackValues(attacker),
+      bonusValues: bonusValues,
+      damagesTypeCombinaison: damagesTypeCombinaison,
+    };
+  }
+
+  function updateBattleValues(battleValues, skillFormula, skillInfo) {
+    var weaponBonus = 0;
+    var skillWard = 0;
+    var skillBonus = 0;
+    var skillBonusByBonus = 0;
+    var { attacker: attacker, bonusValues: bonusValues } = battleValues;
+    var {
+      range: [minVariation, maxVariation],
+    } = skillInfo;
+    var variationLength = maxVariation - minVariation + 1;
+
+    if (skillInfo.hasOwnProperty("weaponBonus")) {
+      var [weaponType, weaponBonusValue] = skillInfo.weaponBonus;
+
+      if (weaponType === attacker.weapon.type) {
+        weaponBonus = weaponBonusValue;
+      }
+    }
+
+    if (skillInfo.skillBonus) {
+      skillBonus = skillInfo.skillBonus;
+    }
+
+    if (skillInfo.skillWard) {
+      skillWard = skillInfo.skillWard;
+    }
+
+    if (skillInfo.skillBonusByBonus) {
+      skillBonusByBonus = skillInfo.skillBonusByBonus;
+    }
+
+    if (skillInfo.removeWeaponReduction) {
+      bonusValues.weaponDefenseCoeff = 100;
+    }
+
+    bonusValues.weaponBonusCoeff = 100 + weaponBonus;
+    bonusValues.skillWardCoeff = 1 - skillWard / 100;
+    bonusValues.skillBonusCoeff = 1 + skillBonus / 100;
+    bonusValues.skillBonusByBonusCoeff = 100 + skillBonusByBonus;
+
+    battleValues.skillFormula = skillFormula;
+    battleValues.skillRange = skillInfo.range;
+    battleValues.attackValues.totalCardinal *= variationLength;
+    battleValues.attackValues.possibleDamagesCount *= variationLength;
+  }
+
+  function calcWeights(minValue, maxValue, minInterval) {
+    var firstWeightLimit = minValue + minInterval - 1;
+    var lastWeightsLimit = maxValue - minInterval + 1;
+    var weights = [];
+
+    for (var value = minValue; value < firstWeightLimit; value++) {
+      weights.push(value - minValue + 1);
+    }
+
+    for (var value = firstWeightLimit; value <= lastWeightsLimit; value++) {
+      weights.push(minInterval);
+    }
+
+    for (var value = lastWeightsLimit + 1; value <= maxValue; value++) {
+      weights.push(maxValue - value + 1);
+    }
+
+    return weights;
+  }
+
+  function calcBlessingBonus(skillPowerTable, victim) {
+    if (victim.isBlessed !== "on") {
+      return 0;
+    }
+
+    var int = victim.intBlessing;
+    var dex = victim.dexBlessing;
+    var skillPower = getSkillPower(victim["skillBlessing"], skillPowerTable);
+
+    if (!skillPower) {
+      return 0;
+    }
+
+    var blessingBonus = floorMultiplication(
+      ((int * 0.3 + 5) * (2 * skillPower + 0.5) + 0.3 * dex) / (skillPower + 2.3),
+      1
+    );
+
+    if (victim.class === "dragon" && isChecked(ictim.blessingOnself)) {
+      blessingBonus = floorMultiplication(blessingBonus, 1.1);
+    }
+
+    return blessingBonus;
+  }
+
+  function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
+    var { attacker, victim, attackFactor } = battleValues;
+    var skillPowerTable = battle.constants.skillPowerTable;
+
+    var skillFormula;
+    var skillInfo = { range: [0, 0] };
+
+    var { class: attackerClass, level: lv, vit, str, int, dex } = attacker;
+
+    if (skillId <= 9) {
+      var skillPower = getSkillPower(
+        attacker["attackSkill" + skillId],
+        skillPowerTable
+      );
+
+      var improvedBySkillBonus = false;
+      var improvedByBonus = false;
+
+      if (attackerClass === "body") {
+        switch (skillId) {
+          // Triple lacération
+          case 1:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Moulinet à l'épée
+          case 2:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Accélération
+          case 5:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Volonté de vivre
+          case 6:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
+                1
+              );
+            };
+            break;
+          // Tremblement de terre
+          case 9:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                3 * atk +
+                  (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      } else if (attackerClass === "mental") {
+        switch (skillId) {
+          // Attaque de l'esprit
+          case 1:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Attaque de la paume
+          case 2:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Charge
+          case 3:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
+                1
+              );
+            };
+            break;
+          // Coup d'épée
+          case 5:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Orbe de l'épée
+          case 6:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
+                  1.1,
+                1
+              );
+            };
+            break;
+          // Tremblement de terre
+          case 9:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                3 * atk +
+                  (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      } else if (attackerClass === "blade_fight") {
+        switch (skillId) {
+          // Embuscade
+          case 1:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                atk + (1.2 * atk + variation + 4 * dex + 4 * str) * skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [1, 50];
+            skillInfo.range = [500, 700];
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Attaque rapide
+          case 2:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                atk + (1.6 * atk + variation + 7 * dex + 7 * str) * skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [1, 35];
+            skillInfo.range = [200, 300];
+            improvedByBonus = true;
+            break;
+          // Dague filante
+          case 3:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Brume empoisonnée
+          case 5:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Poison insidieux
+          case 6:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
+                1
+              );
+            };
+            break;
+          // Étoiles brillantes
+          case 9:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                atk + (1.7 * atk + variation + 6 * dex + 5 * lv) * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      } else if (attackerClass === "archery") {
+        switch (skillId) {
+          // Tir à répétition
+          // case 1:
+          //   skillFormula = function (atk) {
+          //     return floorMultiplication(
+          //       atk + 0.2 * atk * Math.floor(2 + 6 * skillPower) + (0.8 * atk + 8 * dex * attackFactor + 2 * int) * skillPower,
+          //       1
+          //     );
+          //   };
+          //   improvedByBonus = true;
+          //   break;
+          // Pluie de flèches
+          case 2:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                atk + (1.7 * atk + 5 * dex + str) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Flèche de feu
+          case 3:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                1.5 * atk + (2.6 * atk + 0.9 * int + variation) * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [100, 300];
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Foulée de plume
+          case 4:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                (3 * dex + 200 + 2 * str + 2 * int) * skillPower,
+                1
+              );
+            };
+            skillInfo.removeWeaponReduction = true;
+            break;
+          // Flèche empoisonnée
+          case 5:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                atk +
+                  (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.range = [100, 200];
+            improvedByBonus = true;
+            break;
+          // Coup étincelant
+          case 6:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                (atk +
+                  (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
+                    skillPower) *
+                  1.2,
+                1
+              );
+            };
+            skillInfo.range = [100, 200];
+            improvedByBonus = true;
+            break;
+          // Tir tempête
+          case 9:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                1.9 * atk + (2.6 * atk + variation) * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      } else if (attackerClass === "weaponary") {
+        switch (skillId) {
+          // Toucher brûlant
+          case 1:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                atk +
+                  2 * lv +
+                  2 * int +
+                  (2 * atk + 4 * str + 14 * int) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Tourbillon du dragon
+          case 2:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                1.1 * atk +
+                  2 * lv +
+                  2 * int +
+                  (1.5 * atk + str + 12 * int) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Contre-sort
+          case 6:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                40 +
+                  5 * lv +
+                  2 * int +
+                  (10 * int + 7 * mav + variation) * attackFactor * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [50, 100];
+            break;
+          // Coup démoniaque
+          case 9:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                1.9 * atk + (2.6 * atk + variation) * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      } else if (attackerClass === "black_magic") {
+        switch (skillId) {
+          // Attaque des ténèbres
+          case 1:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                40 +
+                  5 * lv +
+                  2 * int +
+                  (13 * int + 6 * mav + variation) * attackFactor * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [50, 100];
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Attaque de flammes
+          // case 2:
+          //   skillFormula = function (mav, variation) {
+          //     return floorMultiplication(
+          //       5 * lv + 2 * int + (7 * int + 8 * mav + 4 * str + 2 * vit + variation) * skillPower,
+          //       1
+          //     );
+          //   };
+          //   skillInfo.range = [180, 100];
+          //   improvedByBonus = true;
+          //   break;
+          // Esprit de flammes
+          case 3:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                30 +
+                  2 * lv +
+                  2 * int +
+                  (7 * int + 6 * mav + variation) * attackFactor * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [200, 500];
+            break;
+          // Frappe de l'esprit
+          // case 5:
+          //   skillFormula = function (mav, variation) {
+          //     return floorMultiplication(
+          //       40 + 2 * lv + 2 * int + (2 * vit + 2 * dex + 13 * int + 6 * mav + variation) * attackFactor * skillPower,
+          //       1
+          //     );
+          //   };
+          //   skillInfo.range = [180, 200];
+          //   break;
+          // Orbe des ténèbres
+          case 6:
+            skillFormula = function (mav) {
+              return floorMultiplication(
+                120 +
+                  6 * lv +
+                  (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Vague mortelle
+          case 9:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                120 +
+                  6 * lv +
+                  (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      } else if (attackerClass === "dragon") {
+        switch (skillId) {
+          // Talisman volant
+          case 1:
+            skillFormula = function (mav) {
+              return floorMultiplication(
+                70 +
+                  5 * lv +
+                  (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [4, 10];
+            improvedByBonus = true;
+            break;
+          // Dragon chassant
+          case 2:
+            skillFormula = function (mav) {
+              return floorMultiplication(
+                60 +
+                  5 * lv +
+                  (16 * int + 6 * dex + 6 * mav + 120) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [4, 10];
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Rugissement du dragon
+          case 3:
+            skillFormula = function (mav) {
+              return floorMultiplication(
+                70 +
+                  3 * lv +
+                  (20 * int + 3 * str + 10 * mav + 100) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [4, 10];
+            improvedByBonus = true;
+            break;
+          // Météore
+          case 9:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                120 +
+                  6 * lv +
+                  (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      } else if (attackerClass === "heal") {
+        switch (skillId) {
+          // Jet de foudre
+          case 1:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                60 +
+                  5 * lv +
+                  (8 * int + 2 * dex + 8 * mav + variation) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [6, 10];
+            skillInfo.range = [5 * int, 15 * int];
+            improvedByBonus = true;
+            break;
+          // Invocation de foudre
+          case 2:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                40 +
+                  4 * lv +
+                  (13 * int + 2 * str + 10 * mav + variation) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [6, 10];
+            skillInfo.range = [5 * int, 16 * int];
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Griffe de foudre
+          case 3:
+            skillFormula = function (mav, variation) {
+              return floorMultiplication(
+                50 +
+                  5 * lv +
+                  (8 * int + 2 * str + 8 * mav + variation) *
+                    attackFactor *
+                    skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 800];
+            improvedByBonus = true;
+            break;
+        }
+      } else if (attackerClass === "lycan") {
+        switch (skillId) {
+          // Déchiqueter
+          // case 1:
+          //   skillFormula = function (atk) {
+          //     return floorMultiplication(
+          //       1.1 * atk + (0.3 * atk + 1.5 * str) * skillPower,
+          //       1
+          //     );
+          //   };
+          //   skillInfo.weaponBonus = [5, 54];
+          //   improvedByBonus = true;
+          //   break;
+          // Souffle de loup
+          case 2:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [5, 35];
+            improvedByBonus = true;
+            improvedBySkillBonus = true;
+            break;
+          // Bond de loup
+          case 3:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
+                1
+              );
+            };
+            skillInfo.weaponBonus = [5, 35];
+            improvedByBonus = true;
+            break;
+          // Griffe de loup
+          case 4:
+            skillFormula = function (atk) {
+              return floorMultiplication(
+                3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
+                1
+              );
+            };
+            improvedByBonus = true;
+            break;
+          // Tempête cinglante
+          case 9:
+            skillFormula = function (atk, variation) {
+              return floorMultiplication(
+                1.8 * atk +
+                  (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
+                1
+              );
+            };
+            skillInfo.range = [1, 1000];
+            break;
+        }
+      }
+      if (improvedBySkillBonus) {
+        skillInfo.skillBonus =
+          16 * getSkillPower(attacker.skillBonus, skillPowerTable);
+
+        var skillWardChoice = victim.skillWardChoice;
+
+        if (skillWardChoice && skillWardChoice === attackerClass) {
+          skillInfo.skillWard =
+            24 * getSkillPower(victim.skillWard, skillPowerTable);
+        }
+      }
+
+      if (improvedByBonus) {
+        skillInfo.skillBonusByBonus = attacker["skillBonus" + skillId];
+      }
+
+      if (removeSkillVariation) {
+        var averageVariation = (skillInfo.range[0] + skillInfo.range[0]) / 2;
+        skillInfo.range = [averageVariation, averageVariation];
+      }
+    } else {
+      var skillPower = getSkillPower(
+        attacker["horseSkill" + skillId],
+        skillPowerTable
+      );
+
+      switch (skillId) {
+        // Combat équestre
+        case 137:
+          skillFormula = function (atk) {
+            return floorMultiplication(atk + 2 * atk * skillPower, 1);
+          };
+          break;
+        // Charge à cheval
+        case 138:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2.4 * (200 + 1.5 * lv) + 600 * skillPower,
+              1
+            );
+          };
+          break;
+        // Vague de Pouvoir
+        case 139:
+          skillFormula = function (atk) {
+            return floorMultiplication(
+              2 * (200 + 1.5 * lv) + 600 * skillPower,
+              1
+            );
+          };
+          break;
+        // Grêle de flèches
+        case 140:
+          skillFormula = function (atk) {
+            return floorMultiplication(atk + 2 * atk * skillPower, 1);
+          };
+          break;
+      }
+    }
+
+    updateBattleValues(battleValues, skillFormula, skillInfo);
+  }
+
+  function calcPhysicalDamages(battleValues) {
+    var {
+      attackFactor,
+      mainAttackValue,
+      attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
+      bonusValues,
+      damagesTypeCombinaison,
+    } = battleValues;
+
+    var damagesWeightedByType = {};
+
+    if (bonusValues.missPercentage) {
+      damagesWeightedByType.miss = bonusValues.missPercentage / 100;
+    }
+
+    for (var damagesType of damagesTypeCombinaison) {
+      if (!damagesType.weight) {
+        continue;
+      }
+
+      var damagesWeighted = {};
+      damagesWeightedByType[damagesType.name] = damagesWeighted;
+
+      for (
+        var attackValue = minAttackValue;
+        attackValue <= maxAttackValue;
+        attackValue++
+      ) {
+        var weight = weights[attackValue - minAttackValue] * damagesType.weight;
+
+        var secondaryAttackValue = 2 * attackValue + attackValueOther;
+        var rawDamages =
+          mainAttackValue +
+          floorMultiplication(attackFactor, secondaryAttackValue);
+
+        var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+          rawDamages,
+          bonusValues
+        );
+
+        var minPiercingDamages =
+          damagesWithPrimaryBonuses -
+          bonusValues.defenseBoost +
+          bonusValues.defenseMarriage;
+
+        if (minPiercingDamages <= 2) {
+          for (var damages = 1; damages <= 5; damages++) {
+            var finalDamages = calcDamageWithSecondaryBonuses(
+              damages,
+              bonusValues,
+              damagesType,
+              minPiercingDamages,
+              damagesWithPrimaryBonuses
+            );
+
+            addKeyValue(damagesWeighted, finalDamages, weight / 5);
+          }
+        } else {
           var finalDamages = calcDamageWithSecondaryBonuses(
-            damages,
+            minPiercingDamages,
             bonusValues,
             damagesType,
             minPiercingDamages,
             damagesWithPrimaryBonuses
           );
 
-          addKeyValue(damagesWeighted, finalDamages, weight / 5);
+          addKeyValue(damagesWeighted, finalDamages, weight);
         }
-      } else {
-        var finalDamages = calcDamageWithSecondaryBonuses(
-          minPiercingDamages,
-          bonusValues,
-          damagesType,
-          minPiercingDamages,
-          damagesWithPrimaryBonuses
-        );
-
-        addKeyValue(damagesWeighted, finalDamages, weight);
       }
     }
+
+    return damagesWeightedByType;
   }
 
-  return damagesWeightedByType;
-}
+  function calcPhysicalSkillDamages(battleValues) {
+    var {
+      attackFactor,
+      mainAttackValue,
+      attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
+      bonusValues,
+      damagesTypeCombinaison,
+      skillFormula,
+      skillRange: [minVariation, maxVariation],
+    } = battleValues;
 
-function calcPhysicalSkillDamages(battleValues) {
-  var {
-    attackFactor,
-    mainAttackValue,
-    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
-    bonusValues,
-    damagesTypeCombinaison,
-    skillFormula,
-    skillRange: [minVariation, maxVariation],
-  } = battleValues;
+    var damagesWeightedByType = {};
 
-  var damagesWeightedByType = {};
+    for (var damagesType of damagesTypeCombinaison) {
+      if (!damagesType.weight) {
+        continue;
+      }
 
-  for (var damagesType of damagesTypeCombinaison) {
-    if (!damagesType.weight) {
-      continue;
-    }
+      var damagesWeighted = {};
+      var savedDamages = {};
 
-    var damagesWeighted = {};
-    var savedDamages = {};
-
-    damagesWeightedByType[damagesType.name] = damagesWeighted;
-
-    for (
-      var attackValue = minAttackValue;
-      attackValue <= maxAttackValue;
-      attackValue++
-    ) {
-      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
-
-      var secondaryAttackValue = 2 * attackValue + attackValueOther;
-      var rawDamages =
-        mainAttackValue +
-        floorMultiplication(attackFactor, secondaryAttackValue);
-
-      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-        rawDamages,
-        bonusValues
-      );
+      damagesWeightedByType[damagesType.name] = damagesWeighted;
 
       for (
-        var variation = minVariation;
-        variation <= maxVariation;
-        variation++
+        var attackValue = minAttackValue;
+        attackValue <= maxAttackValue;
+        attackValue++
       ) {
-        if (damagesWithPrimaryBonuses <= 2) {
-          for (var damages = 1; damages <= 5; damages++) {
-            damages *= bonusValues.useDamages;
+        var weight = weights[attackValue - minAttackValue] * damagesType.weight;
 
-            var damagesWithFormula = skillFormula(damages, variation);
+        var secondaryAttackValue = 2 * attackValue + attackValueOther;
+        var rawDamages =
+          mainAttackValue +
+          floorMultiplication(attackFactor, secondaryAttackValue);
 
-            damagesWithFormula = Math.floor(
+        var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+          rawDamages,
+          bonusValues
+        );
+
+        for (
+          var variation = minVariation;
+          variation <= maxVariation;
+          variation++
+        ) {
+          if (damagesWithPrimaryBonuses <= 2) {
+            for (var damages = 1; damages <= 5; damages++) {
+              damages *= bonusValues.useDamages;
+
+              var damagesWithFormula = skillFormula(damages, variation);
+
+              damagesWithFormula = Math.floor(
+                (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
+              );
+
+              var finalDamages = calcSkillDamageWithSecondaryBonuses(
+                damagesWithFormula,
+                bonusValues,
+                damagesType,
+                damagesWithPrimaryBonuses
+              );
+
+              addKeyValue(damagesWeighted, finalDamages, weight / 5);
+            }
+          } else {
+            damagesWithPrimaryBonuses *= bonusValues.useDamages;
+
+            var damagesWithFormula = skillFormula(
+              damagesWithPrimaryBonuses,
+              variation
+            );
+
+            if (savedDamages.hasOwnProperty(damagesWithFormula)) {
+              var finalDamages = savedDamages[damagesWithFormula];
+              damagesWeighted[finalDamages] += weight;
+              continue;
+            }
+
+            var finalDamages = Math.floor(
               (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
             );
 
-            var finalDamages = calcSkillDamageWithSecondaryBonuses(
-              damagesWithFormula,
+            finalDamages = calcSkillDamageWithSecondaryBonuses(
+              finalDamages,
               bonusValues,
               damagesType,
               damagesWithPrimaryBonuses
             );
 
-            addKeyValue(damagesWeighted, finalDamages, weight / 5);
+            savedDamages[damagesWithFormula] = finalDamages;
+            addKeyValue(damagesWeighted, finalDamages, weight);
           }
-        } else {
-          damagesWithPrimaryBonuses *= bonusValues.useDamages;
+        }
+      }
+    }
 
-          var damagesWithFormula = skillFormula(
-            damagesWithPrimaryBonuses,
-            variation
-          );
+    return damagesWeightedByType;
+  }
 
-          if (savedDamages.hasOwnProperty(damagesWithFormula)) {
-            var finalDamages = savedDamages[damagesWithFormula];
+  function calcMagicSkillDamages(battleValues) {
+    var {
+      attackValues: { minMagicAttackValue, maxMagicAttackValue, weights },
+      bonusValues,
+      damagesTypeCombinaison,
+      skillFormula,
+      skillRange: [minVariation, maxVariation],
+    } = battleValues;
+
+    var damagesWeightedByType = {};
+
+    for (var damagesType of damagesTypeCombinaison) {
+      if (!damagesType.weight) {
+        continue;
+      }
+
+      var damagesWeighted = {};
+      var savedDamages = {};
+
+      damagesWeightedByType[damagesType.name] = damagesWeighted;
+
+      for (
+        var magicAttackValue = minMagicAttackValue;
+        magicAttackValue <= maxMagicAttackValue;
+        magicAttackValue++
+      ) {
+        var weight =
+          weights[magicAttackValue - minMagicAttackValue] * damagesType.weight;
+
+        for (
+          var variation = minVariation;
+          variation <= maxVariation;
+          variation++
+        ) {
+          var rawDamages = skillFormula(magicAttackValue, variation);
+
+          if (savedDamages.hasOwnProperty(rawDamages)) {
+            var finalDamages = savedDamages[rawDamages];
             damagesWeighted[finalDamages] += weight;
             continue;
           }
 
-          var finalDamages = Math.floor(
-            (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
+          var damagesWithPrimaryBonuses = Math.floor(
+            (rawDamages * bonusValues.weaponBonusCoeff) / 100
           );
 
-          finalDamages = calcSkillDamageWithSecondaryBonuses(
-            finalDamages,
-            bonusValues,
-            damagesType,
-            damagesWithPrimaryBonuses
+          damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+            damagesWithPrimaryBonuses,
+            bonusValues
           );
 
-          savedDamages[damagesWithFormula] = finalDamages;
-          addKeyValue(damagesWeighted, finalDamages, weight);
-        }
-      }
-    }
-  }
-
-  return damagesWeightedByType;
-}
-
-function calcMagicSkillDamages(battleValues) {
-  var {
-    attackValues: { minMagicAttackValue, maxMagicAttackValue, weights },
-    bonusValues,
-    damagesTypeCombinaison,
-    skillFormula,
-    skillRange: [minVariation, maxVariation],
-  } = battleValues;
-
-  var damagesWeightedByType = {};
-
-  for (var damagesType of damagesTypeCombinaison) {
-    if (!damagesType.weight) {
-      continue;
-    }
-
-    var damagesWeighted = {};
-    var savedDamages = {};
-
-    damagesWeightedByType[damagesType.name] = damagesWeighted;
-
-    for (
-      var magicAttackValue = minMagicAttackValue;
-      magicAttackValue <= maxMagicAttackValue;
-      magicAttackValue++
-    ) {
-      var weight =
-        weights[magicAttackValue - minMagicAttackValue] * damagesType.weight;
-
-      for (
-        var variation = minVariation;
-        variation <= maxVariation;
-        variation++
-      ) {
-        var rawDamages = skillFormula(magicAttackValue, variation);
-
-        if (savedDamages.hasOwnProperty(rawDamages)) {
-          var finalDamages = savedDamages[rawDamages];
-          damagesWeighted[finalDamages] += weight;
-          continue;
-        }
-
-        var damagesWithPrimaryBonuses = Math.floor(
-          (rawDamages * bonusValues.weaponBonusCoeff) / 100
-        );
-
-        damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-          damagesWithPrimaryBonuses,
-          bonusValues
-        );
-
-        if (damagesWithPrimaryBonuses <= 2) {
-          for (var damages = 1; damages <= 5; damages++) {
+          if (damagesWithPrimaryBonuses <= 2) {
+            for (var damages = 1; damages <= 5; damages++) {
+              var finalDamages = calcSkillDamageWithSecondaryBonuses(
+                damages,
+                bonusValues,
+                damagesType,
+                damagesWithPrimaryBonuses
+              );
+              addKeyValue(damagesWeighted, finalDamages, weight / 5);
+            }
+          } else {
             var finalDamages = calcSkillDamageWithSecondaryBonuses(
-              damages,
+              damagesWithPrimaryBonuses,
               bonusValues,
               damagesType,
               damagesWithPrimaryBonuses
             );
-            addKeyValue(damagesWeighted, finalDamages, weight / 5);
-          }
-        } else {
-          var finalDamages = calcSkillDamageWithSecondaryBonuses(
-            damagesWithPrimaryBonuses,
-            bonusValues,
-            damagesType,
-            damagesWithPrimaryBonuses
-          );
 
-          savedDamages[rawDamages] = finalDamages;
-          addKeyValue(damagesWeighted, finalDamages, weight);
+            savedDamages[rawDamages] = finalDamages;
+            addKeyValue(damagesWeighted, finalDamages, weight);
+          }
         }
       }
     }
+
+    return damagesWeightedByType;
   }
 
-  return damagesWeightedByType;
-}
+  function calcDamages(
+    attacker,
+    victim,
+    attackType,
+    battle,
+    removeSkillVariation
+  ) {
+    var damagesCalculator, skillId, skillType;
 
-function calcDamages(
-  attacker,
-  victim,
-  attackType,
-  battle,
-  removeSkillVariation
-) {
-  var damagesCalculator, skillId, skillType;
+    if (attackType === "physical") {
+      damagesCalculator = calcPhysicalDamages;
+    } else if (attackType.startsWith("attackSkill")) {
+      skillId = Number(attackType.split("attackSkill")[1]);
 
-  if (attackType === "physical") {
-    damagesCalculator = calcPhysicalDamages;
-  } else if (attackType.startsWith("attackSkill")) {
-    skillId = Number(attackType.split("attackSkill")[1]);
-
-    if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
-      skillType = "magic";
-      damagesCalculator = calcMagicSkillDamages;
-    } else {
+      if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
+        skillType = "magic";
+        damagesCalculator = calcMagicSkillDamages;
+      } else {
+        skillType = "physical";
+        damagesCalculator = calcPhysicalSkillDamages;
+      }
+    } else if (attackType.startsWith("horseSkill")) {
       skillType = "physical";
+      skillId = Number(attackType.split("horseSkill")[1]);
       damagesCalculator = calcPhysicalSkillDamages;
     }
-  } else if (attackType.startsWith("horseSkill")) {
-    skillType = "physical";
-    skillId = Number(attackType.split("horseSkill")[1]);
-    damagesCalculator = calcPhysicalSkillDamages;
+
+    var battleValues = createBattleValues(attacker, victim, battle, skillType);
+
+    if (skillId) {
+      getSkillFormula(battle, skillId, battleValues, removeSkillVariation);
+    }
+
+    var {
+      attackValues: { totalCardinal, possibleDamagesCount },
+    } = battleValues;
+
+    return {
+      damagesWeightedByType: damagesCalculator(battleValues),
+      totalCardinal: totalCardinal,
+      possibleDamagesCount: possibleDamagesCount,
+    };
   }
 
-  var battleValues = createBattleValues(attacker, victim, battle, skillType);
+  function damagesWithoutVariation(
+    attacker,
+    victim,
+    attackType,
+    battle,
+    characters
+  ) {
+    startDamagesTime = performance.now();
 
-  if (skillId) {
-    getSkillFormula(battle, skillId, battleValues, removeSkillVariation);
+    var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
+      calcDamages(attacker, victim, attackType, battle);
+
+    endDamagesTime = performance.now();
+
+    possibleDamagesCount = displayResults(
+      possibleDamagesCount,
+      totalCardinal,
+      damagesWeightedByType,
+      battle,
+      attacker.name,
+      victim.name
+    );
+
+    endDisplayTime = performance.now();
+
+    displayFightInfo(
+      possibleDamagesCount,
+      endDamagesTime - startDamagesTime,
+      endDisplayTime - endDamagesTime,
+      battle
+    );
+    addPotentialErrorInformation(
+      battle.errorInformation,
+      attacker,
+      victim,
+      characters
+    );
+
+    hideElement(battle.bonusVariationResultContainer);
+    showElement(battle.fightResultContainer);
   }
 
-  var {
-    attackValues: { totalCardinal, possibleDamagesCount },
-  } = battleValues;
+  function damagesWithVariation(
+    attacker,
+    victim,
+    attackType,
+    battle,
+    entity,
+    entityVariation
+  ) {
+    startTime = performance.now();
+    var damagesByBonus = [];
+    var augmentationByBonus = [];
+    var {
+      bonusVariationMinValue: minVariation,
+      bonusVariationMaxValue: maxVariation,
+    } = entity;
+    var step = Math.ceil((maxVariation - minVariation + 1) / 500);
+    var simulationCount = 0;
+    var simulationTime;
 
-  return {
-    damagesWeightedByType: damagesCalculator(battleValues),
-    totalCardinal: totalCardinal,
-    possibleDamagesCount: possibleDamagesCount,
-  };
-}
+    for (
+      var bonusValue = minVariation;
+      bonusValue <= maxVariation;
+      bonusValue += step
+    ) {
+      entity[entityVariation] = bonusValue;
 
-function damagesWithoutVariation(
-  attacker,
-  victim,
-  attackType,
-  battle,
-  characters
-) {
-  startDamagesTime = performance.now();
+      var { damagesWeightedByType, totalCardinal } = calcDamages(
+        copyObject(attacker),
+        copyObject(victim),
+        attackType,
+        battle,
+        true
+      );
 
-  var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
-    calcDamages(attacker, victim, attackType, battle);
+      var meanDamages = calcMeanDamages(damagesWeightedByType, totalCardinal);
 
-  endDamagesTime = performance.now();
+      if (bonusValue === minVariation) {
+        var firstDamages = Math.max(meanDamages, 1e-3);
+      }
 
-  possibleDamagesCount = displayResults(
+      damagesByBonus.push({ x: bonusValue, y: meanDamages });
+      augmentationByBonus.push({
+        x: bonusValue,
+        y: meanDamages / firstDamages - 1,
+      });
+      simulationCount++;
+    }
+
+    endTime = performance.now();
+
+    battle.damagesByBonus = damagesByBonus.concat(entityVariation);
+
+    addToBonusVariationChart(
+      damagesByBonus,
+      augmentationByBonus,
+      entity.bonusVariationDisplay,
+      battle.bonusVariationChart
+    );
+
+    simulationCount = battle.numberFormats.default.format(simulationCount);
+    simulationTime = battle.numberFormats.second.format(
+      (endTime - startTime) / 1000
+    );
+
+    battle.simulationCounter.textContent = simulationCount;
+    battle.simulationTime.textContent = simulationTime;
+
+    hideElement(battle.fightResultContainer);
+    showElement(battle.bonusVariationResultContainer);
+  }
+
+  function changeMonsterValues(monster, instance, attacker) {
+    switch (instance) {
+      case "SungMahiTower":
+        var sungMahiFloor = 1;
+        var sungMahiStep = 1;
+        var rawDefense = 120;
+
+        if (isPC(attacker)) {
+          sungMahiFloor = attacker.sungMahiFloor;
+          sungMahiStep = attacker.sungMahiStep;
+        }
+
+        if (monster.rank === 5) {
+          monster.level = 121;
+          monster.dex = 75;
+          rawDefense += 1;
+        } else if (monster.rank === 6) {
+          monster.level = 123;
+          monster.dex = 75;
+          rawDefense += 1;
+        } else {
+          monster.level = 120;
+          monster.dex = 68;
+        }
+        monster.vit = 100;
+        monster.rawDefense = rawDefense + (sungMahiStep - 1) * 6;
+        monster.fistDefense = 0;
+        monster.swordDefense = 0;
+        monster.twoHandedSwordDefense = 0;
+        monster.daggerDefense = 0;
+        monster.bellDefense = 0;
+        monster.fanDefense = 0;
+        monster.arrowDefense = 0;
+        monster.clawDefense = 0;
+        monster.magicResistance = 0;
+        monster.fireResistance = -20;
+    }
+  }
+
+  function createWeapon(weaponVnum) {
+    var weapon = weaponData[weaponVnum];
+    var weaponName = weapon[0];
+
+    return {
+      name: weaponName,
+      type: weapon[1],
+      minAttackValue: weapon[2][2],
+      maxAttackValue: weapon[2][3],
+      minMagicAttackValue: weapon[2][0],
+      maxMagicAttackValue: weapon[2][1],
+      upgrades: weapon[3],
+      isSerpent: isValueInArray("serpent", weaponName.toLowerCase()),
+    };
+  }
+
+  function createMonster(monsterVnum, attacker) {
+    var monsterAttributes = monsterData[monsterVnum];
+
+    var monster = {
+      name: monsterAttributes[36],
+      rank: monsterAttributes[0],
+      race: monsterAttributes[1],
+      attack: monsterAttributes[2],
+      level: monsterAttributes[3],
+      type: monsterAttributes[4],
+      str: monsterAttributes[5],
+      dex: monsterAttributes[6],
+      vit: monsterAttributes[7],
+      int: monsterAttributes[8],
+      minAttackValue: monsterAttributes[9],
+      maxAttackValue: monsterAttributes[10],
+      rawDefense: monsterAttributes[11],
+      criticalHit: monsterAttributes[12],
+      piercingHit: monsterAttributes[13],
+      fistDefense: monsterAttributes[14],
+      swordDefense: monsterAttributes[15],
+      twoHandedSwordDefense: monsterAttributes[16],
+      daggerDefense: monsterAttributes[17],
+      bellDefense: monsterAttributes[18],
+      fanDefense: monsterAttributes[19],
+      arrowDefense: monsterAttributes[20],
+      clawDefense: monsterAttributes[21],
+      fireResistance: monsterAttributes[22],
+      lightningResistance: monsterAttributes[23],
+      magicResistance: monsterAttributes[24],
+      windResistance: monsterAttributes[25],
+      lightningBonus: monsterAttributes[26],
+      fireBonus: monsterAttributes[27],
+      iceBonus: monsterAttributes[28],
+      windBonus: monsterAttributes[29],
+      earthBonus: monsterAttributes[30],
+      darknessBonus: monsterAttributes[31],
+      darknessResistance: monsterAttributes[32],
+      iceResistance: monsterAttributes[33],
+      earthResistance: monsterAttributes[34],
+      damageMultiplier: monsterAttributes[35],
+    };
+
+    // monster.instance = 0;
+
+    // if (attacker && monster.instance === 0) {
+    //   changeMonsterValues(monster, "SungMahiTower", attacker);
+    // }
+
+    monster.defense = monster.rawDefense + monster.level + monster.vit;
+
+    return monster;
+  }
+
+  function addPotentialErrorInformation(
+    errorInformation,
+    attacker,
+    victim,
+    characters
+  ) {
+    for (var error of Object.values(errorInformation)) {
+      hideElement(error);
+    }
+
+    if (isPC(attacker)) {
+      if (isRiding(attacker)) {
+        if (attacker.horsePoint === 0) {
+          showElement(errorInformation["horse-level"]);
+        }
+        showElement(errorInformation["horse-stat"]);
+      } else if (isPolymorph(attacker)) {
+        if (attacker.polymorphPoint === 0) {
+          showElement(errorInformation["polymorph-level"]);
+        }
+
+        if (
+          (attacker.polymorphPoint <= 39 && attacker.attackValuePercent <= 199) ||
+          (attacker.polymorphPoint === 40 && attacker.attackValuePercent <= 299)
+        ) {
+          showElement(errorInformation["polymorph-bonus"]);
+        }
+      }
+    } else {
+      showElement(errorInformation["monster-attacker"]);
+    }
+
+    if (isPC(victim)) {
+      if (isRiding(victim)) {
+        showElement(errorInformation["horse-stat"]);
+      } else if (isPolymorph(victim)) {
+        if (attacker.polymorphPoint === 0) {
+          showElement(errorInformation["polymorph-level"]);
+        }
+        showElement(errorInformation["polymorph-defense"]);
+      }
+    }
+
+    if (characters.unsavedChanges) {
+      showElement(errorInformation["save"]);
+    }
+  }
+
+  function reduceChartPointsListener(battle) {
+    var {
+      reduceChartPointsContainer,
+      reduceChartPoints,
+      numberFormats: { second: numberFormat },
+      displayTime,
+    } = battle;
+
+    reduceChartPoints.addEventListener("change", function () {
+      var startDisplayTime = performance.now();
+      var scatterDataByType = battle.scatterDataByType;
+      var {
+        chart,
+        maxPoints,
+        chart: {
+          data: { datasets },
+        },
+      } = battle.damagesChart;
+      var addAnimations = false;
+
+      for (var index = 0; index < datasets.length; index++) {
+        var dataset = datasets[index];
+        var scatterData = scatterDataByType[dataset.name];
+
+        if (dataset.canBeReduced && reduceChartPoints.checked) {
+          dataset.data = aggregateDamages(scatterData, maxPoints);
+          addAnimations = true;
+        } else {
+          dataset.data = scatterData;
+        }
+      }
+
+      handleChartAnimations(chart, addAnimations);
+      chart.update();
+
+      displayTime.textContent = numberFormat.format(
+        (performance.now() - startDisplayTime) / 1000
+      );
+    });
+
+    reduceChartPointsContainer.addEventListener("pointerup", function (event) {
+      if (event.pointerType === "mouse") {
+        reduceChartPoints.click();
+      }
+    });
+  }
+
+  function downloadRawDataListener(battle) {
+    var { downLoadRawData, downLoadRawDataVariation } = battle;
+    var fileType = "text/csv;charset=utf-8;";
+
+    downLoadRawData.addEventListener("click", function () {
+      var damagesWeightedByType = battle.damagesWeightedByType;
+      var filename = "raw_damages.csv";
+      var csvContent = "damage,probabilities,damageType\n";
+
+      for (var damagesType in damagesWeightedByType) {
+        var damagesWeighted = damagesWeightedByType[damagesType];
+
+        for (var damages in damagesWeighted) {
+          csvContent +=
+            damages + "," + damagesWeighted[damages] + "," + damagesType + "\n";
+        }
+      }
+
+      downloadData(csvContent, fileType, filename);
+    });
+
+    downLoadRawDataVariation.addEventListener("click", function () {
+      var damagesByBonus = battle.damagesByBonus;
+      var damagesByBonusLength = damagesByBonus.length;
+      var filename = "damages_variation.csv";
+
+      if (!damagesByBonusLength) {
+        return;
+      }
+
+      var csvContent = damagesByBonus[damagesByBonusLength - 1] + ",averageDamage\n";
+
+      for (var index = 0; index < damagesByBonusLength - 1; index++) {
+        var row = damagesByBonus[index];
+
+        csvContent += row.x + "," + row.y + "\n";
+      }
+
+      downloadData(csvContent, fileType, filename);
+    });
+  }
+
+  function displayResults(
     possibleDamagesCount,
     totalCardinal,
     damagesWeightedByType,
     battle,
-    attacker.name,
-    victim.name
-  );
-
-  endDisplayTime = performance.now();
-
-  displayFightInfo(
-    possibleDamagesCount,
-    endDamagesTime - startDamagesTime,
-    endDisplayTime - endDamagesTime,
-    battle
-  );
-  addPotentialErrorInformation(
-    battle.errorInformation,
-    attacker,
-    victim,
-    characters
-  );
-
-  hideElement(battle.bonusVariationResultContainer);
-  showElement(battle.fightResultContainer);
-}
-
-function damagesWithVariation(
-  attacker,
-  victim,
-  attackType,
-  battle,
-  entity,
-  entityVariation
-) {
-  startTime = performance.now();
-  var damagesByBonus = [];
-  var augmentationByBonus = [];
-  var {
-    bonusVariationMinValue: minVariation,
-    bonusVariationMaxValue: maxVariation,
-  } = entity;
-  var step = Math.ceil((maxVariation - minVariation + 1) / 500);
-  var simulationCount = 0;
-  var simulationTime;
-
-  for (
-    var bonusValue = minVariation;
-    bonusValue <= maxVariation;
-    bonusValue += step
+    attackerName,
+    victimName
   ) {
-    entity[entityVariation] = bonusValue;
+    var [
+      meanDamages,
+      minDamages,
+      maxDamages,
+      scatterDataByType,
+      possibleDamagesCount,
+      uniqueDamagesCount,
+    ] = prepareDamagesData(
+      damagesWeightedByType,
+      possibleDamagesCount,
+      totalCardinal
+    );
 
-    var { damagesWeightedByType, totalCardinal } = calcDamages(
-      copyObject(attacker),
-      copyObject(victim),
-      attackType,
+    addToDamagesChart(
+      scatterDataByType,
+      battle.damagesChart,
+      battle.reduceChartPoints.checked
+    );
+    updateDamagesChartDescription(
+      battle.uniqueDamagesCounters,
+      uniqueDamagesCount,
+      battle.numberFormats.default
+    );
+    displayFightResults(
       battle,
-      true
+      attackerName,
+      victimName,
+      meanDamages,
+      minDamages,
+      maxDamages
     );
+    battle.damagesWeightedByType = damagesWeightedByType;
+    battle.scatterDataByType = scatterDataByType;
 
-    var meanDamages = calcMeanDamages(damagesWeightedByType, totalCardinal);
-
-    if (bonusValue === minVariation) {
-      var firstDamages = Math.max(meanDamages, 1e-3);
-    }
-
-    damagesByBonus.push({ x: bonusValue, y: meanDamages });
-    augmentationByBonus.push({
-      x: bonusValue,
-      y: meanDamages / firstDamages - 1,
-    });
-    simulationCount++;
+    return possibleDamagesCount;
   }
 
-  endTime = performance.now();
-
-  battle.damagesByBonus = damagesByBonus.concat(entityVariation);
-
-  addToBonusVariationChart(
-    damagesByBonus,
-    augmentationByBonus,
-    entity.bonusVariationDisplay,
-    battle.bonusVariationChart
-  );
-
-  simulationCount = battle.numberFormats.default.format(simulationCount);
-  simulationTime = battle.numberFormats.second.format(
-    (endTime - startTime) / 1000
-  );
-
-  battle.simulationCounter.textContent = simulationCount;
-  battle.simulationTime.textContent = simulationTime;
-
-  hideElement(battle.fightResultContainer);
-  showElement(battle.bonusVariationResultContainer);
-}
-
-function changeMonsterValues(monster, instance, attacker) {
-  switch (instance) {
-    case "SungMahiTower":
-      var sungMahiFloor = 1;
-      var sungMahiStep = 1;
-      var rawDefense = 120;
-
-      if (isPC(attacker)) {
-        sungMahiFloor = attacker.sungMahiFloor;
-        sungMahiStep = attacker.sungMahiStep;
-      }
-
-      if (monster.rank === 5) {
-        monster.level = 121;
-        monster.dex = 75;
-        rawDefense += 1;
-      } else if (monster.rank === 6) {
-        monster.level = 123;
-        monster.dex = 75;
-        rawDefense += 1;
-      } else {
-        monster.level = 120;
-        monster.dex = 68;
-      }
-      monster.vit = 100;
-      monster.rawDefense = rawDefense + (sungMahiStep - 1) * 6;
-      monster.fistDefense = 0;
-      monster.swordDefense = 0;
-      monster.twoHandedSwordDefense = 0;
-      monster.daggerDefense = 0;
-      monster.bellDefense = 0;
-      monster.fanDefense = 0;
-      monster.arrowDefense = 0;
-      monster.clawDefense = 0;
-      monster.magicResistance = 0;
-      monster.fireResistance = -20;
-  }
-}
-
-function createWeapon(weaponVnum) {
-  var weapon = weaponData[weaponVnum];
-  var weaponName = weapon[0];
-
-  return {
-    name: weaponName,
-    type: weapon[1],
-    minAttackValue: weapon[2][2],
-    maxAttackValue: weapon[2][3],
-    minMagicAttackValue: weapon[2][0],
-    maxMagicAttackValue: weapon[2][1],
-    upgrades: weapon[3],
-    isSerpent: isValueInArray("serpent", weaponName.toLowerCase()),
-  };
-}
-
-function createMonster(monsterVnum, attacker) {
-  var monsterAttributes = monsterData[monsterVnum];
-
-  var monster = {
-    name: monsterAttributes[36],
-    rank: monsterAttributes[0],
-    race: monsterAttributes[1],
-    attack: monsterAttributes[2],
-    level: monsterAttributes[3],
-    type: monsterAttributes[4],
-    str: monsterAttributes[5],
-    dex: monsterAttributes[6],
-    vit: monsterAttributes[7],
-    int: monsterAttributes[8],
-    minAttackValue: monsterAttributes[9],
-    maxAttackValue: monsterAttributes[10],
-    rawDefense: monsterAttributes[11],
-    criticalHit: monsterAttributes[12],
-    piercingHit: monsterAttributes[13],
-    fistDefense: monsterAttributes[14],
-    swordDefense: monsterAttributes[15],
-    twoHandedSwordDefense: monsterAttributes[16],
-    daggerDefense: monsterAttributes[17],
-    bellDefense: monsterAttributes[18],
-    fanDefense: monsterAttributes[19],
-    arrowDefense: monsterAttributes[20],
-    clawDefense: monsterAttributes[21],
-    fireResistance: monsterAttributes[22],
-    lightningResistance: monsterAttributes[23],
-    magicResistance: monsterAttributes[24],
-    windResistance: monsterAttributes[25],
-    lightningBonus: monsterAttributes[26],
-    fireBonus: monsterAttributes[27],
-    iceBonus: monsterAttributes[28],
-    windBonus: monsterAttributes[29],
-    earthBonus: monsterAttributes[30],
-    darknessBonus: monsterAttributes[31],
-    darknessResistance: monsterAttributes[32],
-    iceResistance: monsterAttributes[33],
-    earthResistance: monsterAttributes[34],
-    damageMultiplier: monsterAttributes[35],
-  };
-
-  // monster.instance = 0;
-
-  // if (attacker && monster.instance === 0) {
-  //   changeMonsterValues(monster, "SungMahiTower", attacker);
-  // }
-
-  monster.defense = monster.rawDefense + monster.level + monster.vit;
-
-  return monster;
-}
-
-function addPotentialErrorInformation(
-  errorInformation,
-  attacker,
-  victim,
-  characters
-) {
-  for (var error of Object.values(errorInformation)) {
-    hideElement(error);
-  }
-
-  if (isPC(attacker)) {
-    if (isRiding(attacker)) {
-      if (attacker.horsePoint === 0) {
-        showElement(errorInformation["horse-level"]);
-      }
-      showElement(errorInformation["horse-stat"]);
-    } else if (isPolymorph(attacker)) {
-      if (attacker.polymorphPoint === 0) {
-        showElement(errorInformation["polymorph-level"]);
-      }
-
-      if (
-        (attacker.polymorphPoint <= 39 && attacker.attackValuePercent <= 199) ||
-        (attacker.polymorphPoint === 40 && attacker.attackValuePercent <= 299)
-      ) {
-        showElement(errorInformation["polymorph-bonus"]);
-      }
-    }
-  } else {
-    showElement(errorInformation["monster-attacker"]);
-  }
-
-  if (isPC(victim)) {
-    if (isRiding(victim)) {
-      showElement(errorInformation["horse-stat"]);
-    } else if (isPolymorph(victim)) {
-      if (attacker.polymorphPoint === 0) {
-        showElement(errorInformation["polymorph-level"]);
-      }
-      showElement(errorInformation["polymorph-defense"]);
-    }
-  }
-
-  if (characters.unsavedChanges) {
-    showElement(errorInformation["save"]);
-  }
-}
-
-function reduceChartPointsListener(battle) {
-  var {
-    reduceChartPointsContainer,
-    reduceChartPoints,
-    numberFormats: { second: numberFormat },
-    displayTime,
-  } = battle;
-
-  reduceChartPoints.addEventListener("change", function () {
-    var startDisplayTime = performance.now();
-    var scatterDataByType = battle.scatterDataByType;
-    var {
-      chart,
-      maxPoints,
-      chart: {
-        data: { datasets },
-      },
-    } = battle.damagesChart;
-    var addAnimations = false;
-
-    for (var index = 0; index < datasets.length; index++) {
-      var dataset = datasets[index];
-      var scatterData = scatterDataByType[dataset.name];
-
-      if (dataset.canBeReduced && reduceChartPoints.checked) {
-        dataset.data = aggregateDamages(scatterData, maxPoints);
-        addAnimations = true;
-      } else {
-        dataset.data = scatterData;
-      }
-    }
-
-    handleChartAnimations(chart, addAnimations);
-    chart.update();
-
-    displayTime.textContent = numberFormat.format(
-      (performance.now() - startDisplayTime) / 1000
-    );
-  });
-
-  reduceChartPointsContainer.addEventListener("pointerup", function (event) {
-    if (event.pointerType === "mouse") {
-      reduceChartPoints.click();
-    }
-  });
-}
-
-function downloadRawDataListener(battle) {
-  var { downLoadRawData, downLoadRawDataVariation } = battle;
-  var fileType = "text/csv;charset=utf-8;";
-
-  downLoadRawData.addEventListener("click", function () {
-    var damagesWeightedByType = battle.damagesWeightedByType;
-    var filename = "raw_damages.csv";
-    var csvContent = "damage,probabilities,damageType\n";
-
-    for (var damagesType in damagesWeightedByType) {
-      var damagesWeighted = damagesWeightedByType[damagesType];
-
-      for (var damages in damagesWeighted) {
-        csvContent +=
-          damages + "," + damagesWeighted[damages] + "," + damagesType + "\n";
-      }
-    }
-
-    downloadData(csvContent, fileType, filename);
-  });
-
-  downLoadRawDataVariation.addEventListener("click", function () {
-    var damagesByBonus = battle.damagesByBonus;
-    var damagesByBonusLength = damagesByBonus.length;
-    var filename = "damages_variation.csv";
-
-    if (!damagesByBonusLength) {
-      return;
-    }
-
-    var csvContent = damagesByBonus[damagesByBonusLength - 1] + ",averageDamage\n";
-
-    for (var index = 0; index < damagesByBonusLength - 1; index++) {
-      var row = damagesByBonus[index];
-
-      csvContent += row.x + "," + row.y + "\n";
-    }
-
-    downloadData(csvContent, fileType, filename);
-  });
-}
-
-function displayResults(
-  possibleDamagesCount,
-  totalCardinal,
-  damagesWeightedByType,
-  battle,
-  attackerName,
-  victimName
-) {
-  var [
-    meanDamages,
-    minDamages,
-    maxDamages,
-    scatterDataByType,
-    possibleDamagesCount,
-    uniqueDamagesCount,
-  ] = prepareDamagesData(
-    damagesWeightedByType,
-    possibleDamagesCount,
-    totalCardinal
-  );
-
-  addToDamagesChart(
-    scatterDataByType,
-    battle.damagesChart,
-    battle.reduceChartPoints.checked
-  );
-  updateDamagesChartDescription(
-    battle.uniqueDamagesCounters,
-    uniqueDamagesCount,
-    battle.numberFormats.default
-  );
-  displayFightResults(
+  function displayFightResults(
     battle,
     attackerName,
     victimName,
     meanDamages,
     minDamages,
     maxDamages
-  );
-  battle.damagesWeightedByType = damagesWeightedByType;
-  battle.scatterDataByType = scatterDataByType;
+  ) {
+    var {
+      tableResultFight,
+      tableResultHistory,
+      attackTypeSelection,
+      savedFights,
+      numberFormats: { default: numberFormat },
+      deleteFightTemplate,
+    } = battle;
 
-  return possibleDamagesCount;
-}
-
-function displayFightResults(
-  battle,
-  attackerName,
-  victimName,
-  meanDamages,
-  minDamages,
-  maxDamages
-) {
-  var {
-    tableResultFight,
-    tableResultHistory,
-    attackTypeSelection,
-    savedFights,
-    numberFormats: { default: numberFormat },
-    deleteFightTemplate,
-  } = battle;
-
-  hideElement(tableResultHistory.rows[1]);
-
-  var valuesToDisplay = [
-    attackerName,
-    victimName,
-    attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
-    meanDamages,
-    minDamages,
-    maxDamages,
-  ];
-
-  savedFights.push(valuesToDisplay);
-  updateSavedFights(savedFights);
-
-  editTableResultRow(tableResultFight.rows[1], valuesToDisplay, numberFormat);
-  addRowToTableResultHistory(
-    tableResultHistory,
-    valuesToDisplay,
-    deleteFightTemplate,
-    numberFormat
-  );
-}
-
-function displayFightInfo(
-  possibleDamagesCount,
-  damagesTime,
-  displayTime,
-  battle
-) {
-  var container = battle.possibleDamagesCounter.parentElement;
-
-  if (possibleDamagesCount <= 1) {
-    hideElement(container);
-    return;
-  } else {
-    showElement(container);
-  }
-
-  possibleDamagesCount =
-    battle.numberFormats.default.format(possibleDamagesCount);
-  damagesTime = battle.numberFormats.second.format(damagesTime / 1000);
-  displayTime = battle.numberFormats.second.format(displayTime / 1000);
-
-  battle.possibleDamagesCounter.textContent = possibleDamagesCount;
-  battle.damagesTime.textContent = damagesTime;
-  battle.displayTime.textContent = displayTime;
-}
-
-function isPseudoSaved(characters, pseudo) {
-  return characters.savedCharacters.hasOwnProperty(pseudo);
-}
-
-function createBattle(characters, battle) {
-  battle.battleForm.addEventListener("submit", function (event) {
-    event.preventDefault();
-
-    // auto save
-    if (characters.unsavedChanges) {
-      characters.saveButton.click();
-    }
-
-    var battleInfo = new FormData(event.target);
-    var attackerName = battleInfo.get("attacker");
-    var attackType = battleInfo.get("attackTypeSelection");
-    var victimName = battleInfo.get("victim");
-    var attackerVariation;
-    var victimVariation;
-
-    if (!attackerName && !attackType && !victimName) {
-      return;
-    }
-
-    if (isPseudoSaved(characters, attackerName)) {
-      var attacker = copyObject(characters.savedCharacters[attackerName]);
-      attackerVariation = attacker.bonusVariation;
-    } else {
-      var attacker = createMonster(attackerName);
-    }
-
-    if (isPseudoSaved(characters, victimName)) {
-      var victim = copyObject(characters.savedCharacters[victimName]);
-      victimVariation = victim.bonusVariation;
-    } else {
-      var victim = createMonster(victimName, attacker);
-    }
-
-    if (
-      isChecked(attacker.bonusVariationActivation) &&
-      attacker.hasOwnProperty(attackerVariation) &&
-      attacker.bonusVariationMinValue < attacker.bonusVariationMaxValue
-    ) {
-      damagesWithVariation(
-        attacker,
-        victim,
-        attackType,
-        battle,
-        attacker,
-        attackerVariation
-      );
-    } else if (
-      isChecked(victim.bonusVariationActivation) &&
-      victim.hasOwnProperty(victimVariation) &&
-      victim.bonusVariationMinValue < victim.bonusVariationMaxValue
-    ) {
-      damagesWithVariation(
-        attacker,
-        victim,
-        attackType,
-        battle,
-        victim,
-        victimVariation
-      );
-    } else {
-      damagesWithoutVariation(attacker, victim, attackType, battle, characters);
-    }
-  });
-}
-
-function createMapping() {
-  mapping = {
-    typeFlag: [
-      "animalBonus", // 0
-      "humanBonus", // 1
-      "orcBonus", // 2
-      "mysticBonus", // 3
-      "undeadBonus", // 4
-      "insectBonus", // 5
-      "desertBonus", // 6
-      "devilBonus", // 7
-    ],
-    raceBonus: {
-      warrior: "warriorBonus",
-      sura: "suraBonus",
-      ninja: "ninjaBonus",
-      shaman: "shamanBonus",
-      lycan: "lycanBonus",
-    },
-    raceResistance: {
-      warrior: "warriorResistance",
-      sura: "suraResistance",
-      ninja: "ninjaResistance",
-      shaman: "shamanResistance",
-      lycan: "lycanResistance",
-    },
-    defenseWeapon: [
-      "swordDefense", // 0
-      "daggerDefense", // 1
-      "arrowDefense", // 2
-      "twoHandedSwordDefense", // 3
-      "bellDefense", // 4
-      "clawDefense", // 5
-      "fanDefense", // 6
-      "swordDefense", // 7
-      "fistDefense", // 8
-    ],
-    breakWeapon: [
-      "breakSwordDefense", // 0
-      "breakDaggerDefense", // 1
-      "breakArrowDefense", // 2
-      "breakTwoHandedSwordDefense", // 3
-      "breakBellDefense", // 4
-      "breakClawDefense", // 5
-      "breakFanDefense", // 6
-      "breakSwordDefense", // 7
-    ],
-    elementBonus: [
-      "fireBonus", // 0
-      "iceBonus", // 1
-      "windBonus", // 2
-      "lightningBonus", // 3
-      "earthBonus", // 4
-      "darknessBonus", // 5
-    ],
-    elementResistance: [
-      "fireResistance", // 0
-      "iceResistance", // 1
-      "windResistance", // 2
-      "lightningResistance", // 3
-      "earthResistance", // 4
-      "darknessResistance", // 5
-    ],
-  };
-  return mapping;
-}
-
-function createConstants() {
-  var constants = {
-    polymorphPowerTable: [
-      10, 11, 11, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27,
-      29, 31, 33, 35, 37, 39, 41, 44, 46, 49, 52, 55, 59, 62, 66, 70, 74, 79,
-      84, 89, 94, 100, 0,
-    ],
-    skillPowerTable: [
-      0, 0.05, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26,
-      0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.4, 0.5, 0.52, 0.54, 0.56, 0.58, 0.6,
-      0.63, 0.66, 0.69, 0.72, 0.82, 0.85, 0.88, 0.91, 0.94, 0.98, 1.02, 1.06,
-      1.1, 1.15, 1.25,
-    ],
-    marriageTable: {
-      harmonyEarrings: [4, 5, 6, 8],
-      loveEarrings: [4, 5, 6, 8],
-      harmonyBracelet: [4, 5, 6, 8],
-      loveNecklace: [20, 25, 30, 40],
-      harmonyNecklace: [12, 16, 20, 30],
-    },
-    allowedWeaponsPerRace: {
-      warrior: [0, 3, 8],
-      ninja: [0, 1, 2, 8],
-      sura: [0, 7, 8],
-      shaman: [4, 6, 8],
-      lycan: [5, 8],
-    },
-    translation: {
-      fr: {
-        damages: "Dégâts",
-        percentage: "Pourcentage",
-        miss: "Miss",
-        normalHit: "Coup classique",
-        criticalHit: "Coup critique",
-        piercingHit: "Coup perçant",
-        criticalPiercingHit: "Coup critique perçant",
-        damagesRepartition: "Distribution des dégâts",
-        averageDamages: "Dégâts moyens",
-        damagesAugmentation: "Augmentation des dégâts",
-        bonusVariationTitle: [
-          "Évolution des dégâts moyens",
-          "par rapport à la valeur d'un bonus",
-        ],
-      },
-      en: {
-        damages: "Damage",
-        percentage: "Percentage",
-        miss: "Miss",
-        normalHit: "Normal Hit",
-        criticalHit: "Critical Hit",
-        piercingHit: "Piercing Hit",
-        criticalPiercingHit: "Critical Piercing Hit",
-        damagesRepartition: "Damage Repartition",
-        averageDamages: "Average Damage",
-        damagesAugmentation: "Damage Augmentation",
-        bonusVariationTitle: [
-          "Evolution of Average Damage",
-          "Relative to a Bonus Value",
-        ],
-      },
-      tr: {
-        damages: "Hasar",
-        percentage: "Yüzde",
-        miss: "Miss Vuruş",
-        normalHit: "Düz Vuruş",
-        criticalHit: "Kritik Vuruş",
-        piercingHit: "Delici Vuruş",
-        criticalPiercingHit: "Kritikli Delici Vuruş",
-        damagesRepartition: "Hasar Dağılımı",
-        averageDamages: "Ortalama Hasar",
-        damagesAugmentation: "Ortalama Hasar Artışı",
-        bonusVariationTitle: [
-          "Bir bonusun değerine kıyasla",
-          "Ortalama Hasar Çizelgesi",
-        ],
-      },
-      ro: {
-        damages: "Daune",
-        percentage: "Procent",
-        miss: "Miss",
-        normalHit: "Lovitura normala",
-        criticalHit: "Lovitura critica",
-        piercingHit: "Lovitura patrunzatoare",
-        criticalPiercingHit: "Lovitura critica si patrunzatoare",
-        damagesRepartition: "Distribuția daunelor",
-        averageDamages: "Media damageului",
-        damagesAugmentation: "Damage imbunatatit",
-        bonusVariationTitle: [
-          "Evolutia mediei damageului",
-          "relativ la o valoare bonus",
-        ],
-      },
-      de: {
-        damages: "Schäden",
-        percentage: "Prozentsatz",
-        miss: "Verfehlen",
-        normalHit: "Normaler Treffer",
-        criticalHit: "Kritischer Treffer",
-        piercingHit: "Durchdringender Treffer",
-        criticalPiercingHit: "Kritischer durchdringender Treffer",
-        damagesRepartition: "Schadensverteilung",
-        averageDamages: "Durchschnittlicher Schaden",
-        damagesAugmentation: "Schadenserhöhung",
-        bonusVariationTitle: [
-          "Entwicklung des durchschnittlichen Schadens",
-          "im Verhältnis zu einem Bonus",
-        ],
-      },
-      pt: {
-        damages: "Dano",
-        percentage: "Percentagem",
-        miss: "Miss",
-        normalHit: "Dano normal",
-        criticalHit: "Dano crítico",
-        piercingHit: "Dano perfurante",
-        criticalPiercingHit: "Dano crítico perfurante",
-        damagesRepartition: "Repartição de dano",
-        averageDamages: "Dano médio",
-        damagesAugmentation: "Aumento de dano",
-        bonusVariationTitle: ["Evolução do dano médio", "relativo a um bónus"],
-      },
-      // es: {
-      //   damages: "Daño",
-      //   percentage: "Porcentaje",
-      //   miss: "Miss",
-      //   normalHit: "Daño normal",
-      //   criticalHit: "Daño crítico",
-      //   piercingHit: "Daño perforante",
-      //   criticalPiercingHit: "Daño crítico perforante",
-      //   damagesRepartition: "Repartición de daños",
-      //   averageDamages: "Daño medio",
-      //   damagesAugmentation: "Aumento de daño",
-      //   bonusVariationTitle: ["Evolución del daño medio", "Relativo a una bonificación"]
-      // },
-    },
-  };
-  return constants;
-}
-
-function initResultTableHistory(battle) {
-  var {
-    tableResultHistory,
-    savedFights,
-    deleteFightTemplate,
-    numberFormats: { default: numberFormat },
-  } = battle;
-  var startIndex = 3;
-
-  if (savedFights.length) {
     hideElement(tableResultHistory.rows[1]);
 
-    for (var savedFight of savedFights) {
-      addRowToTableResultHistory(
-        tableResultHistory,
-        savedFight,
-        deleteFightTemplate,
-        numberFormat
-      );
-    }
+    var valuesToDisplay = [
+      attackerName,
+      victimName,
+      attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
+      meanDamages,
+      minDamages,
+      maxDamages,
+    ];
+
+    savedFights.push(valuesToDisplay);
+    updateSavedFights(savedFights);
+
+    editTableResultRow(tableResultFight.rows[1], valuesToDisplay, numberFormat);
+    addRowToTableResultHistory(
+      tableResultHistory,
+      valuesToDisplay,
+      deleteFightTemplate,
+      numberFormat
+    );
   }
 
-  tableResultHistory.addEventListener("click", function (event) {
-    var deleteButton = event.target.closest(".svg-icon-delete");
+  function displayFightInfo(
+    possibleDamagesCount,
+    damagesTime,
+    displayTime,
+    battle
+  ) {
+    var container = battle.possibleDamagesCounter.parentElement;
 
-    if (deleteButton) {
-      var row = deleteButton.closest("tr");
-
-      if (row) {
-        savedFights.splice(row.rowIndex - startIndex, 1);
-        updateSavedFights(savedFights);
-
-        row.remove();
-
-        if (tableResultHistory.rows.length === startIndex) {
-          showElement(tableResultHistory.rows[1]);
-        }
-      }
+    if (possibleDamagesCount <= 1) {
+      hideElement(container);
+      return;
+    } else {
+      showElement(container);
     }
-  });
-}
 
-function initDamagesChart(battle) {
-  var { translation, reduceChartPointsContainer, reduceChartPoints } = battle;
-  var percentFormat = battle.numberFormats.percent;
-  var customPlugins = {
-    id: "customPlugins",
-    afterDraw(chart) {
-      var missPercentage = chart.data.missPercentage;
+    possibleDamagesCount =
+      battle.numberFormats.default.format(possibleDamagesCount);
+    damagesTime = battle.numberFormats.second.format(damagesTime / 1000);
+    displayTime = battle.numberFormats.second.format(displayTime / 1000);
 
-      if (!missPercentage) {
+    battle.possibleDamagesCounter.textContent = possibleDamagesCount;
+    battle.damagesTime.textContent = damagesTime;
+    battle.displayTime.textContent = displayTime;
+  }
+
+  function isPseudoSaved(characters, pseudo) {
+    return characters.savedCharacters.hasOwnProperty(pseudo);
+  }
+
+  function createBattle(characters, battle) {
+    battle.battleForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      // auto save
+      if (characters.unsavedChanges) {
+        characters.saveButton.click();
+      }
+
+      var battleInfo = new FormData(event.target);
+      var attackerName = battleInfo.get("attacker");
+      var attackType = battleInfo.get("attackTypeSelection");
+      var victimName = battleInfo.get("victim");
+      var attackerVariation;
+      var victimVariation;
+
+      if (!attackerName && !attackType && !victimName) {
         return;
       }
 
-      var {
-        ctx,
-        chartArea: { top, right },
-      } = chart;
-      ctx.save();
-      var text =
-        translation.miss + " : " + percentFormat.format(missPercentage);
-      var padding = 4;
-      var fontSize = 14;
+      if (isPseudoSaved(characters, attackerName)) {
+        var attacker = copyObject(characters.savedCharacters[attackerName]);
+        attackerVariation = attacker.bonusVariation;
+      } else {
+        var attacker = createMonster(attackerName);
+      }
 
-      ctx.font = fontSize + "px Helvetica Neue";
+      if (isPseudoSaved(characters, victimName)) {
+        var victim = copyObject(characters.savedCharacters[victimName]);
+        victimVariation = victim.bonusVariation;
+      } else {
+        var victim = createMonster(victimName, attacker);
+      }
 
-      var textWidth = ctx.measureText(text).width;
-      var xPosition = right - textWidth - 5;
-      var yPosition = top + 5;
+      if (
+        isChecked(attacker.bonusVariationActivation) &&
+        attacker.hasOwnProperty(attackerVariation) &&
+        attacker.bonusVariationMinValue < attacker.bonusVariationMaxValue
+      ) {
+        damagesWithVariation(
+          attacker,
+          victim,
+          attackType,
+          battle,
+          attacker,
+          attackerVariation
+        );
+      } else if (
+        isChecked(victim.bonusVariationActivation) &&
+        victim.hasOwnProperty(victimVariation) &&
+        victim.bonusVariationMinValue < victim.bonusVariationMaxValue
+      ) {
+        damagesWithVariation(
+          attacker,
+          victim,
+          attackType,
+          battle,
+          victim,
+          victimVariation
+        );
+      } else {
+        damagesWithoutVariation(attacker, victim, attackType, battle, characters);
+      }
+    });
+  }
 
-      ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
-      ctx.fillRect(
-        xPosition - padding,
-        yPosition - padding,
-        textWidth + 2 * padding,
-        fontSize + 2 * padding
-      );
-
-      ctx.strokeStyle = "red";
-      ctx.strokeRect(
-        xPosition - padding,
-        yPosition - padding,
-        textWidth + 2 * padding,
-        fontSize + 2 * padding
-      );
-
-      ctx.fillStyle = "#666";
-      ctx.textBaseline = "top";
-      ctx.fillText(text, xPosition, yPosition + 1);
-
-      ctx.restore();
-    },
-  };
-
-  Chart.register(customPlugins);
-
-  var ctx = battle.plotDamages.getContext("2d");
-  var maxLabelsInTooltip = 10;
-  var nullLabelText = " ...";
-
-  var chart = new Chart(ctx, {
-    type: "scatter",
-    data: {
-      missPercentage: 0,
-      datasets: [],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          onHover: function (e) {
-            e.native.target.style.cursor = "pointer";
-          },
-          onLeave: function (e) {
-            e.native.target.style.cursor = "default";
-          },
-          onClick: function (e, legendItem, legend) {
-            var currentIndex = legendItem.datasetIndex;
-            var ci = legend.chart;
-            var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
-            var datasets = ci.data.datasets;
-            var hideReducePoints = true;
-            var isReducePointsChecked = reduceChartPoints.checked;
-
-            datasets[currentIndex].hidden = isCurrentDatasetVisible;
-            legendItem.hidden = isCurrentDatasetVisible;
-
-            for (var index in datasets) {
-              if (ci.isDatasetVisible(index) && datasets[index].canBeReduced) {
-                showElement(reduceChartPointsContainer);
-                hideReducePoints = false;
-                break;
-              }
-            }
-
-            if (hideReducePoints) {
-              hideElement(reduceChartPointsContainer);
-              handleChartAnimations(ci, true);
-            } else {
-              handleChartAnimations(ci, isReducePointsChecked);
-            }
-
-            ci.update();
-          },
-        },
-        title: {
-          display: true,
-          text: translation.damagesRepartition,
-          font: {
-            size: 20,
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              if (context.label === null) {
-                return nullLabelText;
-              }
-
-              var xValue = battle.numberFormats.default.format(
-                context.parsed.x
-              );
-              var yValue = battle.numberFormats.percent.format(
-                context.parsed.y
-              );
-
-              label =
-                " " +
-                context.dataset.label +
-                " : (" +
-                xValue +
-                ", " +
-                yValue +
-                ")";
-
-              return label;
-            },
-            beforeBody: function (tooltipItems) {
-              if (tooltipItems.length > maxLabelsInTooltip + 1) {
-                tooltipItems.splice(maxLabelsInTooltip + 1);
-                tooltipItems[maxLabelsInTooltip].label = null;
-              }
-            },
-          },
-          caretPadding: 10,
-        },
-      },
-      scales: {
-        x: {
-          type: "linear",
-          position: "bottom",
-          title: {
-            display: true,
-            text: translation.damages,
-            font: {
-              size: 16,
-            },
-          },
-        },
-        y: {
-          title: {
-            display: true,
-            text: translation.percentage,
-            font: {
-              size: 16,
-            },
-          },
-          ticks: {
-            format: {
-              style: "percent",
-            },
-          },
-        },
-      },
-      elements: {
-        point: {
-          borderWidth: 1,
-          radius: 3,
-          hitRadius: 3,
-          hoverRadius: 6,
-          hoverBorderWidth: 2,
-        },
-      },
-    },
-  });
-
-  var datasetsStyle = [
-    {
-      name: "normalHit",
-      canBeReduced: false,
-      label: translation.normalHit,
-      backgroundColor: "rgba(75, 192, 192, 0.2)",
-      borderColor: "rgba(75, 192, 192, 1)",
-    },
-    {
-      name: "piercingHit",
-      canBeReduced: false,
-      label: translation.piercingHit,
-      backgroundColor: "rgba(192, 192, 75, 0.2)",
-      borderColor: "rgba(192, 192, 75, 1)",
-    },
-    {
-      name: "criticalHit",
-      canBeReduced: false,
-      label: translation.criticalHit,
-      backgroundColor: "rgba(192, 75, 192, 0.2)",
-      borderColor: "rgba(192, 75, 192, 1)",
-    },
-    {
-      name: "criticalPiercingHit",
-      canBeReduced: false,
-      label: translation.criticalPiercingHit,
-      backgroundColor: "rgba(75, 75, 192, 0.2)",
-      borderColor: "rgba(75, 75, 192, 1)",
-    },
-  ];
-  battle.damagesChart = {
-    chart: chart,
-    datasetsStyle: datasetsStyle,
-    maxPoints: 500,
-    reduceChartPointsContainer: reduceChartPointsContainer,
-  };
-}
-
-function initBonusVariationChart(battle) {
-  var translation = battle.translation;
-
-  var ctx = battle.plotBonusVariation.getContext("2d");
-
-  var chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      datasets: [
-        {
-          label: translation.averageDamages,
-          backgroundColor: "rgba(75, 192, 192, 0.2)",
-          borderColor: "rgba(75, 192, 192, 1)",
-        },
-        {
-          label: translation.damagesAugmentation,
-          backgroundColor: "rgba(192, 192, 75, 0.2)",
-          borderColor: "rgba(192, 192, 75, 1)",
-          hidden: true,
-          yTicksFormat: { style: "percent" },
-        },
+  function createMapping() {
+    mapping = {
+      typeFlag: [
+        "animalBonus", // 0
+        "humanBonus", // 1
+        "orcBonus", // 2
+        "mysticBonus", // 3
+        "undeadBonus", // 4
+        "insectBonus", // 5
+        "desertBonus", // 6
+        "devilBonus", // 7
       ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          onHover: function (e) {
-            e.native.target.style.cursor = "pointer";
-          },
-          onLeave: function (e) {
-            e.native.target.style.cursor = "default";
-          },
-          onClick: function (e, legendItem, legend) {
-            var currentIndex = legendItem.datasetIndex;
-            var ci = legend.chart;
-            var datasets = ci.data.datasets;
-            var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
-            var yAxis = ci.options.scales.y;
-
-            var otherIndex = currentIndex === 0 ? 1 : 0;
-            var visibleDataset = isCurrentDatasetVisible
-              ? datasets[otherIndex]
-              : datasets[currentIndex];
-
-            datasets[currentIndex].hidden = isCurrentDatasetVisible;
-            datasets[otherIndex].hidden = !isCurrentDatasetVisible;
-
-            yAxis.title.text = visibleDataset.label;
-            yAxis.ticks.format = visibleDataset.yTicksFormat;
-
-            ci.update();
-          },
-        },
-        title: {
-          display: true,
-          text: translation.bonusVariationTitle,
-          font: {
-            size: 18,
-          },
-        },
-        tooltip: {
-          caretPadding: 10,
-        },
+      raceBonus: {
+        warrior: "warriorBonus",
+        sura: "suraBonus",
+        ninja: "ninjaBonus",
+        shaman: "shamanBonus",
+        lycan: "lycanBonus",
       },
-      scales: {
-        x: {
-          type: "linear",
-          position: "bottom",
-          title: {
+      raceResistance: {
+        warrior: "warriorResistance",
+        sura: "suraResistance",
+        ninja: "ninjaResistance",
+        shaman: "shamanResistance",
+        lycan: "lycanResistance",
+      },
+      defenseWeapon: [
+        "swordDefense", // 0
+        "daggerDefense", // 1
+        "arrowDefense", // 2
+        "twoHandedSwordDefense", // 3
+        "bellDefense", // 4
+        "clawDefense", // 5
+        "fanDefense", // 6
+        "swordDefense", // 7
+        "fistDefense", // 8
+      ],
+      breakWeapon: [
+        "breakSwordDefense", // 0
+        "breakDaggerDefense", // 1
+        "breakArrowDefense", // 2
+        "breakTwoHandedSwordDefense", // 3
+        "breakBellDefense", // 4
+        "breakClawDefense", // 5
+        "breakFanDefense", // 6
+        "breakSwordDefense", // 7
+      ],
+      elementBonus: [
+        "fireBonus", // 0
+        "iceBonus", // 1
+        "windBonus", // 2
+        "lightningBonus", // 3
+        "earthBonus", // 4
+        "darknessBonus", // 5
+      ],
+      elementResistance: [
+        "fireResistance", // 0
+        "iceResistance", // 1
+        "windResistance", // 2
+        "lightningResistance", // 3
+        "earthResistance", // 4
+        "darknessResistance", // 5
+      ],
+    };
+    return mapping;
+  }
+
+  function createConstants() {
+    var constants = {
+      polymorphPowerTable: [
+        10, 11, 11, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27,
+        29, 31, 33, 35, 37, 39, 41, 44, 46, 49, 52, 55, 59, 62, 66, 70, 74, 79,
+        84, 89, 94, 100, 0,
+      ],
+      skillPowerTable: [
+        0, 0.05, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26,
+        0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.4, 0.5, 0.52, 0.54, 0.56, 0.58, 0.6,
+        0.63, 0.66, 0.69, 0.72, 0.82, 0.85, 0.88, 0.91, 0.94, 0.98, 1.02, 1.06,
+        1.1, 1.15, 1.25,
+      ],
+      marriageTable: {
+        harmonyEarrings: [4, 5, 6, 8],
+        loveEarrings: [4, 5, 6, 8],
+        harmonyBracelet: [4, 5, 6, 8],
+        loveNecklace: [20, 25, 30, 40],
+        harmonyNecklace: [12, 16, 20, 30],
+      },
+      allowedWeaponsPerRace: {
+        warrior: [0, 3, 8],
+        ninja: [0, 1, 2, 8],
+        sura: [0, 7, 8],
+        shaman: [4, 6, 8],
+        lycan: [5, 8],
+      },
+      translation: {
+        fr: {
+          damages: "Dégâts",
+          percentage: "Pourcentage",
+          miss: "Miss",
+          normalHit: "Coup classique",
+          criticalHit: "Coup critique",
+          piercingHit: "Coup perçant",
+          criticalPiercingHit: "Coup critique perçant",
+          damagesRepartition: "Distribution des dégâts",
+          averageDamages: "Dégâts moyens",
+          damagesAugmentation: "Augmentation des dégâts",
+          bonusVariationTitle: [
+            "Évolution des dégâts moyens",
+            "par rapport à la valeur d'un bonus",
+          ],
+        },
+        en: {
+          damages: "Damage",
+          percentage: "Percentage",
+          miss: "Miss",
+          normalHit: "Normal Hit",
+          criticalHit: "Critical Hit",
+          piercingHit: "Piercing Hit",
+          criticalPiercingHit: "Critical Piercing Hit",
+          damagesRepartition: "Damage Repartition",
+          averageDamages: "Average Damage",
+          damagesAugmentation: "Damage Augmentation",
+          bonusVariationTitle: [
+            "Evolution of Average Damage",
+            "Relative to a Bonus Value",
+          ],
+        },
+        tr: {
+          damages: "Hasar",
+          percentage: "Yüzde",
+          miss: "Miss Vuruş",
+          normalHit: "Düz Vuruş",
+          criticalHit: "Kritik Vuruş",
+          piercingHit: "Delici Vuruş",
+          criticalPiercingHit: "Kritikli Delici Vuruş",
+          damagesRepartition: "Hasar Dağılımı",
+          averageDamages: "Ortalama Hasar",
+          damagesAugmentation: "Ortalama Hasar Artışı",
+          bonusVariationTitle: [
+            "Bir bonusun değerine kıyasla",
+            "Ortalama Hasar Çizelgesi",
+          ],
+        },
+        ro: {
+          damages: "Daune",
+          percentage: "Procent",
+          miss: "Miss",
+          normalHit: "Lovitura normala",
+          criticalHit: "Lovitura critica",
+          piercingHit: "Lovitura patrunzatoare",
+          criticalPiercingHit: "Lovitura critica si patrunzatoare",
+          damagesRepartition: "Distribuția daunelor",
+          averageDamages: "Media damageului",
+          damagesAugmentation: "Damage imbunatatit",
+          bonusVariationTitle: [
+            "Evolutia mediei damageului",
+            "relativ la o valoare bonus",
+          ],
+        },
+        de: {
+          damages: "Schäden",
+          percentage: "Prozentsatz",
+          miss: "Verfehlen",
+          normalHit: "Normaler Treffer",
+          criticalHit: "Kritischer Treffer",
+          piercingHit: "Durchdringender Treffer",
+          criticalPiercingHit: "Kritischer durchdringender Treffer",
+          damagesRepartition: "Schadensverteilung",
+          averageDamages: "Durchschnittlicher Schaden",
+          damagesAugmentation: "Schadenserhöhung",
+          bonusVariationTitle: [
+            "Entwicklung des durchschnittlichen Schadens",
+            "im Verhältnis zu einem Bonus",
+          ],
+        },
+        pt: {
+          damages: "Dano",
+          percentage: "Percentagem",
+          miss: "Miss",
+          normalHit: "Dano normal",
+          criticalHit: "Dano crítico",
+          piercingHit: "Dano perfurante",
+          criticalPiercingHit: "Dano crítico perfurante",
+          damagesRepartition: "Repartição de dano",
+          averageDamages: "Dano médio",
+          damagesAugmentation: "Aumento de dano",
+          bonusVariationTitle: ["Evolução do dano médio", "relativo a um bónus"],
+        },
+        // es: {
+        //   damages: "Daño",
+        //   percentage: "Porcentaje",
+        //   miss: "Miss",
+        //   normalHit: "Daño normal",
+        //   criticalHit: "Daño crítico",
+        //   piercingHit: "Daño perforante",
+        //   criticalPiercingHit: "Daño crítico perforante",
+        //   damagesRepartition: "Repartición de daños",
+        //   averageDamages: "Daño medio",
+        //   damagesAugmentation: "Aumento de daño",
+        //   bonusVariationTitle: ["Evolución del daño medio", "Relativo a una bonificación"]
+        // },
+      },
+    };
+    return constants;
+  }
+
+  function initResultTableHistory(battle) {
+    var {
+      tableResultHistory,
+      savedFights,
+      deleteFightTemplate,
+      numberFormats: { default: numberFormat },
+    } = battle;
+    var startIndex = 3;
+
+    if (savedFights.length) {
+      hideElement(tableResultHistory.rows[1]);
+
+      for (var savedFight of savedFights) {
+        addRowToTableResultHistory(
+          tableResultHistory,
+          savedFight,
+          deleteFightTemplate,
+          numberFormat
+        );
+      }
+    }
+
+    tableResultHistory.addEventListener("click", function (event) {
+      var deleteButton = event.target.closest(".svg-icon-delete");
+
+      if (deleteButton) {
+        var row = deleteButton.closest("tr");
+
+        if (row) {
+          savedFights.splice(row.rowIndex - startIndex, 1);
+          updateSavedFights(savedFights);
+
+          row.remove();
+
+          if (tableResultHistory.rows.length === startIndex) {
+            showElement(tableResultHistory.rows[1]);
+          }
+        }
+      }
+    });
+  }
+
+  function initDamagesChart(battle) {
+    var { translation, reduceChartPointsContainer, reduceChartPoints } = battle;
+    var percentFormat = battle.numberFormats.percent;
+    var customPlugins = {
+      id: "customPlugins",
+      afterDraw(chart) {
+        var missPercentage = chart.data.missPercentage;
+
+        if (!missPercentage) {
+          return;
+        }
+
+        var {
+          ctx,
+          chartArea: { top, right },
+        } = chart;
+        ctx.save();
+        var text =
+          translation.miss + " : " + percentFormat.format(missPercentage);
+        var padding = 4;
+        var fontSize = 14;
+
+        ctx.font = fontSize + "px Helvetica Neue";
+
+        var textWidth = ctx.measureText(text).width;
+        var xPosition = right - textWidth - 5;
+        var yPosition = top + 5;
+
+        ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
+        ctx.fillRect(
+          xPosition - padding,
+          yPosition - padding,
+          textWidth + 2 * padding,
+          fontSize + 2 * padding
+        );
+
+        ctx.strokeStyle = "red";
+        ctx.strokeRect(
+          xPosition - padding,
+          yPosition - padding,
+          textWidth + 2 * padding,
+          fontSize + 2 * padding
+        );
+
+        ctx.fillStyle = "#666";
+        ctx.textBaseline = "top";
+        ctx.fillText(text, xPosition, yPosition + 1);
+
+        ctx.restore();
+      },
+    };
+
+    Chart.register(customPlugins);
+
+    var ctx = battle.plotDamages.getContext("2d");
+    var maxLabelsInTooltip = 10;
+    var nullLabelText = " ...";
+
+    var chart = new Chart(ctx, {
+      type: "scatter",
+      data: {
+        missPercentage: 0,
+        datasets: [],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
             display: true,
-            text: "Bonus",
-            font: {
-              size: 16,
+            onHover: function (e) {
+              e.native.target.style.cursor = "pointer";
             },
-          },
-          ticks: {
-            callback: function (value) {
-              if (Number.isInteger(value)) {
-                return Number(value);
+            onLeave: function (e) {
+              e.native.target.style.cursor = "default";
+            },
+            onClick: function (e, legendItem, legend) {
+              var currentIndex = legendItem.datasetIndex;
+              var ci = legend.chart;
+              var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
+              var datasets = ci.data.datasets;
+              var hideReducePoints = true;
+              var isReducePointsChecked = reduceChartPoints.checked;
+
+              datasets[currentIndex].hidden = isCurrentDatasetVisible;
+              legendItem.hidden = isCurrentDatasetVisible;
+
+              for (var index in datasets) {
+                if (ci.isDatasetVisible(index) && datasets[index].canBeReduced) {
+                  showElement(reduceChartPointsContainer);
+                  hideReducePoints = false;
+                  break;
+                }
               }
+
+              if (hideReducePoints) {
+                hideElement(reduceChartPointsContainer);
+                handleChartAnimations(ci, true);
+              } else {
+                handleChartAnimations(ci, isReducePointsChecked);
+              }
+
+              ci.update();
             },
           },
-        },
-        y: {
           title: {
             display: true,
-            text: translation.averageDamages,
+            text: translation.damagesRepartition,
             font: {
-              size: 16,
+              size: 20,
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                if (context.label === null) {
+                  return nullLabelText;
+                }
+
+                var xValue = battle.numberFormats.default.format(
+                  context.parsed.x
+                );
+                var yValue = battle.numberFormats.percent.format(
+                  context.parsed.y
+                );
+
+                label =
+                  " " +
+                  context.dataset.label +
+                  " : (" +
+                  xValue +
+                  ", " +
+                  yValue +
+                  ")";
+
+                return label;
+              },
+              beforeBody: function (tooltipItems) {
+                if (tooltipItems.length > maxLabelsInTooltip + 1) {
+                  tooltipItems.splice(maxLabelsInTooltip + 1);
+                  tooltipItems[maxLabelsInTooltip].label = null;
+                }
+              },
+            },
+            caretPadding: 10,
+          },
+        },
+        scales: {
+          x: {
+            type: "linear",
+            position: "bottom",
+            title: {
+              display: true,
+              text: translation.damages,
+              font: {
+                size: 16,
+              },
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: translation.percentage,
+              font: {
+                size: 16,
+              },
+            },
+            ticks: {
+              format: {
+                style: "percent",
+              },
             },
           },
         },
-      },
-      elements: {
-        point: {
-          borderWidth: 1,
-          radius: 3,
-          hitRadius: 3,
-          hoverRadius: 6,
-          hoverBorderWidth: 2,
+        elements: {
+          point: {
+            borderWidth: 1,
+            radius: 3,
+            hitRadius: 3,
+            hoverRadius: 6,
+            hoverBorderWidth: 2,
+          },
         },
       },
-    },
-  });
+    });
 
-  battle.bonusVariationChart = chart;
-}
-
-function attackSelectonListener(
-  characters,
-  attackerSelection,
-  attackTypeSelection
-) {
-  attackerSelection.addEventListener("change", function (event) {
-    var attackerName = event.target.value;
-
-    if (isPseudoSaved(characters, attackerName)) {
-      var attacker = characters.savedCharacters[attackerName];
-      filterAttackTypeSelection(attacker, attackTypeSelection);
-    } else {
-      filterAttackTypeSelectionMonster(attackTypeSelection);
-    }
-  });
-}
-
-function getTranslation(translation) {
-  var userLanguage = navigator.language;
-  var langToUse = "en";
-
-  for (var lang in translation) {
-    if (userLanguage.startsWith(lang)) {
-      langToUse = lang;
-      break;
-    }
+    var datasetsStyle = [
+      {
+        name: "normalHit",
+        canBeReduced: false,
+        label: translation.normalHit,
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+      },
+      {
+        name: "piercingHit",
+        canBeReduced: false,
+        label: translation.piercingHit,
+        backgroundColor: "rgba(192, 192, 75, 0.2)",
+        borderColor: "rgba(192, 192, 75, 1)",
+      },
+      {
+        name: "criticalHit",
+        canBeReduced: false,
+        label: translation.criticalHit,
+        backgroundColor: "rgba(192, 75, 192, 0.2)",
+        borderColor: "rgba(192, 75, 192, 1)",
+      },
+      {
+        name: "criticalPiercingHit",
+        canBeReduced: false,
+        label: translation.criticalPiercingHit,
+        backgroundColor: "rgba(75, 75, 192, 0.2)",
+        borderColor: "rgba(75, 75, 192, 1)",
+      },
+    ];
+    battle.damagesChart = {
+      chart: chart,
+      datasetsStyle: datasetsStyle,
+      maxPoints: 500,
+      reduceChartPointsContainer: reduceChartPointsContainer,
+    };
   }
 
-  return translation[langToUse];
-}
+  function initBonusVariationChart(battle) {
+    var translation = battle.translation;
 
-function createDamageCalculatorInformation(chartSource) {
-  var characters = {
-    unsavedChanges: false,
-    savedCharacters: {},
-    currentCharacter: null,
-    savedMonsters: getSavedMonsters(),
-    characterCreation: document.getElementById("character-creation"),
-    addNewCharacterButton: document.getElementById("add-new-character"),
-    dropZone: document.getElementById("character-drop-zone"),
-    characterInput: document.getElementById("character-input"),
-    newCharacterTemplate: document.getElementById("new-character-template")
-      .children[0],
-    charactersContainer: document.getElementById("characters-container"),
-    newMonsterTemplate: document.getElementById("new-monster-template")
-      .children[0],
-    monstersContainer: document.getElementById("monsters-container"),
-    monsterListForm: document.getElementById("monster-list-form"),
-    searchMonster: document.getElementById("search-monster"),
-    monsterList: document.getElementById("monster-list"),
-    saveButton: document.getElementById("save-character"),
-    weaponCategory: document.getElementById("weapon-category"),
-    weaponDisplay: document.getElementById("weapon-display"),
-    randomAttackValue: document.getElementById("random-attack-value"),
-    randomMagicAttackValue: document.getElementById(
-      "random-magic-attack-value"
-    ),
-    yoharaCreation: document.getElementById("yohara-creation"),
-    blessingCreation: document.getElementById("blessing-creation"),
-    marriageCreation: document.getElementById("marriage-creation"),
-    bonusVariation: {
-      tab: document.getElementById("Variation"),
-      activation: document.getElementById("bonus-variation-activation"),
-      input: document.getElementById("bonus-variation"),
-      inputDisplay: document.getElementById("bonus-variation-display"),
-      container: document.getElementById("bonus-variation-range"),
-      minValue: document.getElementById("bonus-variation-min-value"),
-      maxValue: document.getElementById("bonus-variation-max-value"),
-    },
-  };
+    var ctx = battle.plotBonusVariation.getContext("2d");
 
-  characters.bonusVariation.inputDisplay.setAttribute("readonly", "");
+    var chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        datasets: [
+          {
+            label: translation.averageDamages,
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            borderColor: "rgba(75, 192, 192, 1)",
+          },
+          {
+            label: translation.damagesAugmentation,
+            backgroundColor: "rgba(192, 192, 75, 0.2)",
+            borderColor: "rgba(192, 192, 75, 1)",
+            hidden: true,
+            yTicksFormat: { style: "percent" },
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            onHover: function (e) {
+              e.native.target.style.cursor = "pointer";
+            },
+            onLeave: function (e) {
+              e.native.target.style.cursor = "default";
+            },
+            onClick: function (e, legendItem, legend) {
+              var currentIndex = legendItem.datasetIndex;
+              var ci = legend.chart;
+              var datasets = ci.data.datasets;
+              var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
+              var yAxis = ci.options.scales.y;
 
-  for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
-    characters.savedCharacters[pseudo] = character;
+              var otherIndex = currentIndex === 0 ? 1 : 0;
+              var visibleDataset = isCurrentDatasetVisible
+                ? datasets[otherIndex]
+                : datasets[currentIndex];
+
+              datasets[currentIndex].hidden = isCurrentDatasetVisible;
+              datasets[otherIndex].hidden = !isCurrentDatasetVisible;
+
+              yAxis.title.text = visibleDataset.label;
+              yAxis.ticks.format = visibleDataset.yTicksFormat;
+
+              ci.update();
+            },
+          },
+          title: {
+            display: true,
+            text: translation.bonusVariationTitle,
+            font: {
+              size: 18,
+            },
+          },
+          tooltip: {
+            caretPadding: 10,
+          },
+        },
+        scales: {
+          x: {
+            type: "linear",
+            position: "bottom",
+            title: {
+              display: true,
+              text: "Bonus",
+              font: {
+                size: 16,
+              },
+            },
+            ticks: {
+              callback: function (value) {
+                if (Number.isInteger(value)) {
+                  return Number(value);
+                }
+              },
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: translation.averageDamages,
+              font: {
+                size: 16,
+              },
+            },
+          },
+        },
+        elements: {
+          point: {
+            borderWidth: 1,
+            radius: 3,
+            hitRadius: 3,
+            hoverRadius: 6,
+            hoverBorderWidth: 2,
+          },
+        },
+      },
+    });
+
+    battle.bonusVariationChart = chart;
   }
 
-  var skillContainer = document.getElementById("skill-container");
-  characters.skillElementsToFilter =
-    skillContainer.querySelectorAll("[data-class]");
-
-  var mapping = createMapping();
-  var constants = createConstants();
-
-  var battle = {
-    resetAttackType: false,
-    savedFights: getSavedFights(),
-    battleForm: document.getElementById("create-battle"),
-    attackerSelection: document.getElementById("attacker-selection"),
-    attackTypeSelection: document.getElementById("attack-type-selection"),
-    victimSelection: document.getElementById("victim-selection"),
-    damagesWeightedByType: {},
-    scatterDataByType: {},
-    damagesByBonus: [],
-    tableResultFight: document.getElementById("result-table-fight"),
-    tableResultHistory: document.getElementById("result-table-history"),
-    deleteFightTemplate: document.getElementById("delete-fight-template")
-      .children[0],
-    errorInformation: {},
-    fightResultContainer: document.getElementById("fight-result-container"),
-    downLoadRawData: document.getElementById("download-raw-data"),
-    downLoadRawDataVariation: document.getElementById(
-      "download-raw-data-variation"
-    ),
-    bonusVariationResultContainer: document.getElementById(
-      "bonus-variation-result-container"
-    ),
-    reduceChartPointsContainer: document.getElementById(
-      "reduce-chart-points-container"
-    ),
-    reduceChartPoints: document.getElementById("reduce-chart-points"),
-    plotDamages: document.getElementById("plot-damages"),
-    plotBonusVariation: document.getElementById("plot-bonus-variation"),
-    uniqueDamagesCounters: document.querySelectorAll(".unique-damages-counter"),
-    possibleDamagesCounter: document.getElementById("possible-damages-counter"),
-    damagesTime: document.getElementById("damages-time"),
-    displayTime: document.getElementById("display-time"),
-    simulationCounter: document.getElementById("simulation-counter"),
-    simulationTime: document.getElementById("simulation-time"),
-    numberFormats: {
-      default: new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 1,
-      }),
-      percent: new Intl.NumberFormat(undefined, {
-        style: "percent",
-        maximumFractionDigits: 3,
-      }),
-      second: new Intl.NumberFormat(undefined, {
-        style: "unit",
-        unit: "second",
-        unitDisplay: "long",
-        maximumFractionDigits: 3,
-      }),
-    },
-    mapping: mapping,
-    constants: constants,
-    translation: getTranslation(constants.translation),
-  };
-
-  attackSelectonListener(
+  function attackSelectonListener(
     characters,
-    battle.attackerSelection,
-    battle.attackTypeSelection
-  );
-  initResultTableHistory(battle);
-  loadScript(chartSource, function () {
-    initDamagesChart(battle);
-    initBonusVariationChart(battle);
-  });
-  reduceChartPointsListener(battle);
-  downloadRawDataListener(battle);
+    attackerSelection,
+    attackTypeSelection
+  ) {
+    attackerSelection.addEventListener("change", function (event) {
+      var attackerName = event.target.value;
 
-  var errorElements = document
-    .getElementById("error-information")
-    .querySelectorAll("li[data-error]");
-
-  for (var index = 0; index < errorElements.length; index++) {
-    var errorElement = errorElements[index];
-    battle.errorInformation[errorElement.dataset.error] = errorElement;
+      if (isPseudoSaved(characters, attackerName)) {
+        var attacker = characters.savedCharacters[attackerName];
+        filterAttackTypeSelection(attacker, attackTypeSelection);
+      } else {
+        filterAttackTypeSelectionMonster(attackTypeSelection);
+      }
+    });
   }
 
-  return [characters, battle];
-}
+  function getTranslation(translation) {
+    var userLanguage = navigator.language;
+    var langToUse = "en";
 
-function loadScript(src, callback) {
-  var script = document.createElement("script");
-  script.src = src;
-
-  function onComplete() {
-    if (script.parentNode) {
-      script.parentNode.removeChild(script);
+    for (var lang in translation) {
+      if (userLanguage.startsWith(lang)) {
+        langToUse = lang;
+        break;
+      }
     }
-    if (callback) {
-      callback();
+
+    return translation[langToUse];
+  }
+
+  function createDamageCalculatorInformation(chartSource) {
+    var characters = {
+      unsavedChanges: false,
+      savedCharacters: {},
+      currentCharacter: null,
+      savedMonsters: getSavedMonsters(),
+      characterCreation: document.getElementById("character-creation"),
+      addNewCharacterButton: document.getElementById("add-new-character"),
+      dropZone: document.getElementById("character-drop-zone"),
+      characterInput: document.getElementById("character-input"),
+      newCharacterTemplate: document.getElementById("new-character-template")
+        .children[0],
+      charactersContainer: document.getElementById("characters-container"),
+      newMonsterTemplate: document.getElementById("new-monster-template")
+        .children[0],
+      monstersContainer: document.getElementById("monsters-container"),
+      monsterListForm: document.getElementById("monster-list-form"),
+      searchMonster: document.getElementById("search-monster"),
+      monsterList: document.getElementById("monster-list"),
+      saveButton: document.getElementById("save-character"),
+      weaponCategory: document.getElementById("weapon-category"),
+      weaponDisplay: document.getElementById("weapon-display"),
+      randomAttackValue: document.getElementById("random-attack-value"),
+      randomMagicAttackValue: document.getElementById(
+        "random-magic-attack-value"
+      ),
+      yoharaCreation: document.getElementById("yohara-creation"),
+      blessingCreation: document.getElementById("blessing-creation"),
+      marriageCreation: document.getElementById("marriage-creation"),
+      bonusVariation: {
+        tab: document.getElementById("Variation"),
+        activation: document.getElementById("bonus-variation-activation"),
+        input: document.getElementById("bonus-variation"),
+        inputDisplay: document.getElementById("bonus-variation-display"),
+        container: document.getElementById("bonus-variation-range"),
+        minValue: document.getElementById("bonus-variation-min-value"),
+        maxValue: document.getElementById("bonus-variation-max-value"),
+      },
+    };
+
+    characters.bonusVariation.inputDisplay.setAttribute("readonly", "");
+
+    for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
+      characters.savedCharacters[pseudo] = character;
     }
+
+    var skillContainer = document.getElementById("skill-container");
+    characters.skillElementsToFilter =
+      skillContainer.querySelectorAll("[data-class]");
+
+    var mapping = createMapping();
+    var constants = createConstants();
+
+    var battle = {
+      resetAttackType: false,
+      savedFights: getSavedFights(),
+      battleForm: document.getElementById("create-battle"),
+      attackerSelection: document.getElementById("attacker-selection"),
+      attackTypeSelection: document.getElementById("attack-type-selection"),
+      victimSelection: document.getElementById("victim-selection"),
+      damagesWeightedByType: {},
+      scatterDataByType: {},
+      damagesByBonus: [],
+      tableResultFight: document.getElementById("result-table-fight"),
+      tableResultHistory: document.getElementById("result-table-history"),
+      deleteFightTemplate: document.getElementById("delete-fight-template")
+        .children[0],
+      errorInformation: {},
+      fightResultContainer: document.getElementById("fight-result-container"),
+      downLoadRawData: document.getElementById("download-raw-data"),
+      downLoadRawDataVariation: document.getElementById(
+        "download-raw-data-variation"
+      ),
+      bonusVariationResultContainer: document.getElementById(
+        "bonus-variation-result-container"
+      ),
+      reduceChartPointsContainer: document.getElementById(
+        "reduce-chart-points-container"
+      ),
+      reduceChartPoints: document.getElementById("reduce-chart-points"),
+      plotDamages: document.getElementById("plot-damages"),
+      plotBonusVariation: document.getElementById("plot-bonus-variation"),
+      uniqueDamagesCounters: document.querySelectorAll(".unique-damages-counter"),
+      possibleDamagesCounter: document.getElementById("possible-damages-counter"),
+      damagesTime: document.getElementById("damages-time"),
+      displayTime: document.getElementById("display-time"),
+      simulationCounter: document.getElementById("simulation-counter"),
+      simulationTime: document.getElementById("simulation-time"),
+      numberFormats: {
+        default: new Intl.NumberFormat(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 1,
+        }),
+        percent: new Intl.NumberFormat(undefined, {
+          style: "percent",
+          maximumFractionDigits: 3,
+        }),
+        second: new Intl.NumberFormat(undefined, {
+          style: "unit",
+          unit: "second",
+          unitDisplay: "long",
+          maximumFractionDigits: 3,
+        }),
+      },
+      mapping: mapping,
+      constants: constants,
+      translation: getTranslation(constants.translation),
+    };
+
+    attackSelectonListener(
+      characters,
+      battle.attackerSelection,
+      battle.attackTypeSelection
+    );
+    initResultTableHistory(battle);
+    loadScript(chartSource, function () {
+      initDamagesChart(battle);
+      initBonusVariationChart(battle);
+    });
+    reduceChartPointsListener(battle);
+    downloadRawDataListener(battle);
+
+    var errorElements = document
+      .getElementById("error-information")
+      .querySelectorAll("li[data-error]");
+
+    for (var index = 0; index < errorElements.length; index++) {
+      var errorElement = errorElements[index];
+      battle.errorInformation[errorElement.dataset.error] = errorElement;
+    }
+
+    return [characters, battle];
   }
 
-  document.head.appendChild(script);
+  function loadScript(src, callback) {
+    var script = document.createElement("script");
+    script.src = src;
 
-  script.onload = onComplete;
-  script.onerror = onComplete;
-}
+    function onComplete() {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+      if (callback) {
+        callback();
+      }
+    }
 
-function loadStyle(src) {
-  var link = document.createElement("link");
-  link.href = src;
-  link.rel = "stylesheet";
+    document.head.appendChild(script);
 
-  document.head.appendChild(link);
-}
-
-function loading() {
-  var mainContainer = document.getElementById("hide-all");
-  var loadingAnimation = document.getElementById("loading-animation");
-
-  mainContainer.classList.remove("tabber-noactive");
-  loadingAnimation.classList.add("tabber-noactive");
-}
-
-(function () {
-  var javascriptSource =
-    "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
-  var cssSource =
-    "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
-  var chartSource = "https://cdn.jsdelivr.net/npm/chart.js";
-
-  loadStyle(cssSource);
-
-  function main() {
-    var [characters, battle] = createDamageCalculatorInformation(chartSource);
-
-    characterManagement(characters, battle);
-    monsterManagement(characters, battle);
-
-    updateBattleChoice(characters, battle);
-    createBattle(characters, battle);
-
-    loading();
+    script.onload = onComplete;
+    script.onerror = onComplete;
   }
-  loadScript(javascriptSource, main);
-})();
+
+  function loadStyle(src) {
+    var link = document.createElement("link");
+    link.href = src;
+    link.rel = "stylesheet";
+
+    document.head.appendChild(link);
+  }
+
+  function loading() {
+    var mainContainer = document.getElementById("hide-all");
+    var loadingAnimation = document.getElementById("loading-animation");
+
+    mainContainer.classList.remove("tabber-noactive");
+    loadingAnimation.classList.add("tabber-noactive");
+  }
+
+  (function () {
+    var javascriptSource =
+      "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
+    var cssSource =
+      "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
+    var chartSource = "https://cdn.jsdelivr.net/npm/chart.js";
+
+    loadStyle(cssSource);
+
+    function main() {
+      var [characters, battle] = createDamageCalculatorInformation(chartSource);
+
+      characterManagement(characters, battle);
+      monsterManagement(characters, battle);
+
+      updateBattleChoice(characters, battle);
+      createBattle(characters, battle);
+
+      loading();
+    }
+    loadScript(javascriptSource, main);
+  })();
