@@ -1254,21 +1254,10 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
 
     targetMin = options[0].value;
     targetMax = options[options.length - 1].value;
-    console.log(options)
   }
 
   minValue.min = targetMin;
   minValue.max = targetMax;
-
-  if (minValue.value < targetMin) {
-    minValue.value = targetMin;
-    minValue.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-
-  if (maxValue.value > targetMax) {
-    maxValue.value = targetMax;
-    maxValue.dispatchEvent(new Event("change", { bubbles: true }));
-  }
 
   maxValue.min = targetMin;
   maxValue.max = targetMax;
@@ -1315,6 +1304,16 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     tab.scrollIntoView(true);
 
     input.dispatchEvent(new Event("change", { bubbles: true }));
+  } else {
+    if (minValue.value < targetMin) {
+      minValue.value = targetMin;
+      minValue.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  
+    if (maxValue.value > targetMax) {
+      maxValue.value = targetMax;
+      maxValue.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   }
 
   inputDisplay.style.width = inputDisplay.value.length * 0.55 + "em";
