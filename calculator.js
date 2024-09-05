@@ -1254,10 +1254,21 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
 
     targetMin = options[0].value;
     targetMax = options[options.length - 1].value;
+    console.log(options)
   }
 
   minValue.min = targetMin;
   minValue.max = targetMax;
+
+  if (minValue.value < targetMin) {
+    minValue.value = targetMin;
+    minValue.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  if (maxValue.value > targetMax) {
+    maxValue.value = targetMax;
+    maxValue.dispatchEvent(new Event("change", { bubbles: true }));
+  }
 
   maxValue.min = targetMin;
   maxValue.max = targetMax;
@@ -1268,24 +1279,24 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
 
     if (targetParent.children.length <= 1) {
       targetContent = targetParent.textContent;
-    } else {
-      if (isSkill) {
-        var container = targetParent.children[1];
+    } else if (targetName === "weaponUpgrade") {
+      targetContent = targetParent.children[1].textContent;
+    } else if (isSkill) {
+      var container = targetParent.children[1];
 
-        for (var index = 1; index < container.children.length; index++) {
-          var element = container.children[index];
+      for (var index = 1; index < container.children.length; index++) {
+        var element = container.children[index];
 
-          if (element.checkVisibility()) {
-            targetContent += element.textContent;
-          }
+        if (element.checkVisibility()) {
+          targetContent += element.textContent;
         }
-      } else {
-        for (var index = 1; index < targetParent.children.length; index++) {
-          var element = targetParent.children[index];
+      }
+    } else {
+      for (var index = 1; index < targetParent.children.length; index++) {
+        var element = targetParent.children[index];
 
-          if (element.checkVisibility()) {
-            targetContent += element.textContent;
-          }
+        if (element.checkVisibility()) {
+          targetContent += element.textContent;
         }
       }
     }
@@ -1375,7 +1386,9 @@ function characterManagement(characters, battle) {
 
     if (
       !target ||
-      (target.type !== "number" && !target.classList.contains("skill-select"))
+      (target.type !== "number" &&
+        !target.classList.contains("skill-select") &&
+        target.name !== "weaponUpgrade")
     ) {
       return;
     }
@@ -4621,6 +4634,7 @@ function initBonusVariationChart(battle) {
           label: translation.averageDamages,
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
+          fill: true,
         },
         {
           label: translation.damagesAugmentation,
@@ -4628,6 +4642,7 @@ function initBonusVariationChart(battle) {
           borderColor: "rgba(192, 192, 75, 1)",
           hidden: true,
           yTicksFormat: { style: "percent" },
+          fill: true,
         },
       ],
     },
