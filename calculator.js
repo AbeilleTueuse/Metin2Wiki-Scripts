@@ -678,16 +678,14 @@ function saveButtonOrange(saveButton) {
 }
 
 function characterCreationListener(characters, battle) {
-  characters.characterCreation.addEventListener("submit", function (event) {
+  var { characterCreation, saveButton, weaponCategory } = characters;
+
+  characterCreation.addEventListener("submit", function (event) {
     event.preventDefault();
 
     if (characters.unsavedChanges) {
-      saveCharacter(
-        characters.savedCharacters,
-        characters.characterCreation,
-        battle
-      );
-      saveButtonGreen(characters.saveButton);
+      saveCharacter(characters.savedCharacters, characterCreation, battle);
+      saveButtonGreen(saveButton);
       characters.unsavedChanges = false;
     }
   });
@@ -695,7 +693,26 @@ function characterCreationListener(characters, battle) {
   document.addEventListener("keydown", function (event) {
     if (event.ctrlKey && event.key === "s") {
       event.preventDefault();
-      characters.saveButton.click();
+      saveButton.click();
+    }
+  });
+
+  weaponCategory.addEventListener("mouseover", function (event) {
+    label = event.target.closest("label");
+
+    if (label) {
+      var tooltip = label.lastChild;
+
+      if (tooltip.classList.contains("popContenu")) {
+        var tooltipRect = tooltip.getBoundingClientRect();
+        var modalRect = weaponCategory.getBoundingClientRect();
+
+        if (tooltipRect.right > modalRect.right) {
+          tooltip.style.left = "-100%";
+        } else if (tooltipRect.left < modalRect.left) {
+          tooltip.style.left = "200%";
+        }
+      }
     }
   });
 }
@@ -1227,6 +1244,36 @@ function handleBonusVariationUpdate(characterCreation, bonusVariation) {
   }
 }
 
+function getTargetContent(targetParent, targetName, isSkill) {
+  var targetContent = "";
+
+  if (targetParent.children.length <= 1) {
+    targetContent = targetParent.textContent;
+  } else if (targetName === "weaponUpgrade") {
+    targetContent = targetParent.children[1].textContent;
+  } else if (isSkill) {
+    var container = targetParent.children[1];
+
+    for (var index = 1; index < container.children.length; index++) {
+      var element = container.children[index];
+
+      if (element.checkVisibility()) {
+        targetContent += element.textContent;
+      }
+    }
+  } else {
+    for (var index = 1; index < targetParent.children.length; index++) {
+      var element = targetParent.children[index];
+
+      if (element.checkVisibility()) {
+        targetContent += element.textContent;
+      }
+    }
+  }
+
+  return targetContent;
+}
+
 function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   var { activation, inputDisplay, minValue, maxValue, container } =
     bonusVariation;
@@ -1264,33 +1311,8 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
 
   if (isSelectedByUser) {
     var { input, tab } = bonusVariation;
-    var targetContent = "";
 
-    if (targetParent.children.length <= 1) {
-      targetContent = targetParent.textContent;
-    } else if (targetName === "weaponUpgrade") {
-      targetContent = targetParent.children[1].textContent;
-    } else if (isSkill) {
-      var container = targetParent.children[1];
-
-      for (var index = 1; index < container.children.length; index++) {
-        var element = container.children[index];
-
-        if (element.checkVisibility()) {
-          targetContent += element.textContent;
-        }
-      }
-    } else {
-      for (var index = 1; index < targetParent.children.length; index++) {
-        var element = targetParent.children[index];
-
-        if (element.checkVisibility()) {
-          targetContent += element.textContent;
-        }
-      }
-    }
-
-    inputDisplay.value = targetContent;
+    inputDisplay.value = getTargetContent(targetParent, targetName, isSkill);
 
     targetValue = Number(targetValue);
 
@@ -1309,7 +1331,7 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
       minValue.value = targetMin;
       minValue.dispatchEvent(new Event("change", { bubbles: true }));
     }
-  
+
     if (maxValue.value > targetMax) {
       maxValue.value = targetMax;
       maxValue.dispatchEvent(new Event("change", { bubbles: true }));
