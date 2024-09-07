@@ -3741,6 +3741,12 @@ function damagesWithVariation(
 
   hideElement(battle.fightResultContainer);
   showElement(battle.bonusVariationResultContainer);
+
+  if (isChecked(attacker.bonusVariationActivation) && isChecked(victim.bonusVariationActivation)) {
+    showElement(battle.errorInformation["attacker-victim-variation"]);
+  } else {
+    hideElement(battle.errorInformation["attacker-victim-variation"]);
+  }
 }
 
 function changeMonsterValues(monster, instance, attacker) {
@@ -4908,9 +4914,7 @@ function createDamageCalculatorInformation(chartSource) {
   reduceChartPointsListener(battle);
   downloadRawDataListener(battle);
 
-  var errorElements = document
-    .getElementById("error-information")
-    .querySelectorAll("li[data-error]");
+  var errorElements = document.querySelectorAll("[data-error]");
 
   for (var index = 0; index < errorElements.length; index++) {
     var errorElement = errorElements[index];
