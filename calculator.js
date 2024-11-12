@@ -1909,7 +1909,11 @@ function calcMagicAttackValue(attacker) {
   return {
     minMagicAttackValue: minMagicAttackValue,
     maxMagicAttackValue: maxMagicAttackValue,
-    magicAttackValueBonus: attacker.magicAttackValue,
+    magicAttackValueAugmentation: getMagicAttackValueAugmentation(
+      minMagicAttackValue,
+      maxMagicAttackValue,
+      attacker.magicAttackValue
+    ),
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
     possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1,
@@ -3347,11 +3351,39 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
   updateBattleValues(battleValues, skillFormula, skillInfo);
 }
 
-function calcMagicAttackValueAugmentation(magicAttackValueWeapon, magicAttackValueBonus) {
+function calcMagicAttackValueAugmentation(
+  magicAttackValueWeapon,
+  magicAttackValueBonus
+) {
   if (magicAttackValueBonus) {
-    return Math.max(1, 0.0025056 * magicAttackValueBonus**0.602338 * magicAttackValueWeapon**1.20476)
+    return Math.max(
+      1,
+      0.0025056 *
+        magicAttackValueBonus ** 0.602338 *
+        magicAttackValueWeapon ** 1.20476
+    );
   }
   return 0;
+}
+
+function getMagicAttackValueAugmentation(
+  minMagicAttackValue,
+  maxMagicAttackValue,
+  magicAttackValueBonus
+) {
+  var magicAttackValueAugmentation = [];
+
+  for (
+    var magicAttackValue = minMagicAttackValue;
+    magicAttackValue <= maxMagicAttackValue;
+    magicAttackValue++
+  ) {
+    magicAttackValueAugmentation.push(
+      calcMagicAttackValueAugmentation(magicAttackValue, magicAttackValueBonus)
+    );
+  }
+
+  return magicAttackValueAugmentation;
 }
 
 function calcPhysicalDamages(battleValues) {
@@ -3529,7 +3561,12 @@ function calcPhysicalSkillDamages(battleValues) {
 
 function calcMagicSkillDamages(battleValues) {
   var {
-    attackValues: { minMagicAttackValue, maxMagicAttackValue, magicAttackValueBonus, weights },
+    attackValues: {
+      minMagicAttackValue,
+      maxMagicAttackValue,
+      magicAttackValueAugmentation,
+      weights,
+    },
     bonusValues,
     damagesTypeCombinaison,
     skillFormula,
@@ -3553,15 +3590,18 @@ function calcMagicSkillDamages(battleValues) {
       magicAttackValue <= maxMagicAttackValue;
       magicAttackValue++
     ) {
-      var weight =
-        weights[magicAttackValue - minMagicAttackValue] * damagesType.weight;
+      var index = magicAttackValue - minMagicAttackValue;
+      var weight = weights[index] * damagesType.weight;
 
       for (
         var variation = minVariation;
         variation <= maxVariation;
         variation++
       ) {
-        var rawDamages = skillFormula(magicAttackValue + calcMagicAttackValueAugmentation(magicAttackValue, magicAttackValueBonus), variation);
+        var rawDamages = skillFormula(
+          magicAttackValue + magicAttackValueAugmentation[index],
+          variation
+        );
 
         if (savedDamages.hasOwnProperty(rawDamages)) {
           var finalDamages = savedDamages[rawDamages];
@@ -3647,7 +3687,7 @@ function calcDamages(
     damagesWeightedByType: damagesCalculator(battleValues),
     totalCardinal: totalCardinal,
     possibleDamagesCount: possibleDamagesCount,
-    skillType: skillType
+    skillType: skillType,
   };
 }
 
@@ -3660,8 +3700,12 @@ function damagesWithoutVariation(
 ) {
   startDamagesTime = performance.now();
 
-  var { damagesWeightedByType, totalCardinal, possibleDamagesCount, skillType } =
-    calcDamages(attacker, victim, attackType, battle);
+  var {
+    damagesWeightedByType,
+    totalCardinal,
+    possibleDamagesCount,
+    skillType,
+  } = calcDamages(attacker, victim, attackType, battle);
 
   endDamagesTime = performance.now();
 
@@ -3764,7 +3808,10 @@ function damagesWithVariation(
   hideElement(battle.fightResultContainer);
   showElement(battle.bonusVariationResultContainer);
 
-  if (isChecked(attacker.bonusVariationActivation) && isChecked(victim.bonusVariationActivation)) {
+  if (
+    isChecked(attacker.bonusVariationActivation) &&
+    isChecked(victim.bonusVariationActivation)
+  ) {
     showElement(battle.errorInformation["attacker-victim-variation"]);
   } else {
     hideElement(battle.errorInformation["attacker-victim-variation"]);
