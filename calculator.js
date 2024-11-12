@@ -1706,6 +1706,18 @@ function isStone(character) {
   return character.race === 1;
 }
 
+function isMeleeAttacker(monster) {
+  return monster.attack == 0;
+}
+
+function isRangeAttacker(monster) {
+  return monster.attack == 1;
+}
+
+function isMagicAttacker(monster) {
+  return monster.attack == 2;
+}
+
 function isMagicClass(character) {
   return character.race === "shaman" || character.class === "black_magic";
 }
@@ -2427,16 +2439,16 @@ function createBattleValues(attacker, victim, battle, skillType) {
       }
 
       if (!skillType) {
-        if (attacker.attack == 0) {
+        if (isMeleeAttacker(attacker)) {
           missPercentage = victim.meleeBlock;
           averageDamageResistance = victim.averageDamageResistance;
           blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-        } else if (attacker.attack == 1) {
+        } else if (isRangeAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           weaponDefense = victim.arrowDefense;
           averageDamageResistance = victim.averageDamageResistance;
           blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-        } else {
+        } else if (isMagicAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           skillDamageResistance = victim.skillDamageResistance;
           magicResistance = victim.magicResistance;
@@ -3635,6 +3647,7 @@ function calcDamages(
     damagesWeightedByType: damagesCalculator(battleValues),
     totalCardinal: totalCardinal,
     possibleDamagesCount: possibleDamagesCount,
+    skillType: skillType
   };
 }
 
@@ -3647,7 +3660,7 @@ function damagesWithoutVariation(
 ) {
   startDamagesTime = performance.now();
 
-  var { damagesWeightedByType, totalCardinal, possibleDamagesCount } =
+  var { damagesWeightedByType, totalCardinal, possibleDamagesCount, skillType } =
     calcDamages(attacker, victim, attackType, battle);
 
   endDamagesTime = performance.now();
@@ -3673,6 +3686,7 @@ function damagesWithoutVariation(
     battle.errorInformation,
     attacker,
     victim,
+    skillType,
     characters
   );
 
@@ -3870,6 +3884,7 @@ function addPotentialErrorInformation(
   errorInformation,
   attacker,
   victim,
+  skillType,
   characters
 ) {
   for (var error of Object.values(errorInformation)) {
@@ -3894,8 +3909,19 @@ function addPotentialErrorInformation(
         showElement(errorInformation["polymorph-bonus"]);
       }
     }
+    if (skillType === "magic") {
+      if (attacker.magicAttackValue) {
+        showElement(errorInformation["magic-attack-value-bonus"]);
+      }
+      if (victim.magicResistance) {
+        showElement(errorInformation["magic-resistance"]);
+      }
+    }
   } else {
     showElement(errorInformation["monster-attacker"]);
+    if (isMagicAttacker(attacker) && victim.magicResistance) {
+      showElement(errorInformation["magic-resistance"]);
+    }
   }
 
   if (isPC(victim)) {
