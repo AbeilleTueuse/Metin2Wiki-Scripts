@@ -1897,6 +1897,7 @@ function calcMagicAttackValue(attacker) {
   return {
     minMagicAttackValue: minMagicAttackValue,
     maxMagicAttackValue: maxMagicAttackValue,
+    magicAttackValueBonus: attacker.magicAttackValue,
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
     possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1,
@@ -3334,6 +3335,13 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
   updateBattleValues(battleValues, skillFormula, skillInfo);
 }
 
+function calcMagicAttackValueAugmentation(magicAttackValueWeapon, magicAttackValueBonus) {
+  if (magicAttackValueBonus) {
+    return Math.max(1, 0.0025056 * magicAttackValueBonus**0.602338 * magicAttackValueWeapon**1.20476)
+  }
+  return 0;
+}
+
 function calcPhysicalDamages(battleValues) {
   var {
     attackFactor,
@@ -3509,7 +3517,7 @@ function calcPhysicalSkillDamages(battleValues) {
 
 function calcMagicSkillDamages(battleValues) {
   var {
-    attackValues: { minMagicAttackValue, maxMagicAttackValue, weights },
+    attackValues: { minMagicAttackValue, maxMagicAttackValue, magicAttackValueBonus, weights },
     bonusValues,
     damagesTypeCombinaison,
     skillFormula,
@@ -3541,7 +3549,7 @@ function calcMagicSkillDamages(battleValues) {
         variation <= maxVariation;
         variation++
       ) {
-        var rawDamages = skillFormula(magicAttackValue, variation);
+        var rawDamages = skillFormula(magicAttackValue + calcMagicAttackValueAugmentation(magicAttackValue, magicAttackValueBonus), variation);
 
         if (savedDamages.hasOwnProperty(rawDamages)) {
           var finalDamages = savedDamages[rawDamages];
