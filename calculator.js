@@ -2227,7 +2227,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var calcAttackValues;
 
   var missPercentage = 0;
-  var adjustCoeff = 0;
   var attackValueMeleeMagic = 0;
   var attackValueMarriage = 0;
   var monsterResistanceMarriage = 0;
@@ -2520,7 +2519,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var bonusValues = {
     missPercentage: missPercentage,
     weaponBonusCoeff: 1,
-    adjustCoeff: adjustCoeff,
     attackValueCoeff: 100 + attackValueMeleeMagic,
     attackValueMarriage: attackValueMarriage,
     monsterResistanceMarriageCoeff: 100 - monsterResistanceMarriage,
