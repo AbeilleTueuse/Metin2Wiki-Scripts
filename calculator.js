@@ -1946,9 +1946,7 @@ function getMarriageBonusValue(character, marriageTable, itemName) {
 }
 
 function calcDamageWithPrimaryBonuses(damages, bonusValues) {
-  damages = Math.floor(
-    (damages * bonusValues.attackValueCoeff) / 100 + bonusValues.adjustCoeff
-  );
+  damages = Math.floor((damages * bonusValues.attackValueCoeff) / 100);
 
   damages += bonusValues.attackValueMarriage;
 
@@ -2045,6 +2043,8 @@ function calcSkillDamageWithSecondaryBonuses(
   );
 
   damages = Math.floor((tempDamages * bonusValues.tigerStrengthCoeff) / 100);
+
+  damages = Math.floor((damages * bonusValues.magicAttackValueCoeff) / 100 + 0.5);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -2228,8 +2228,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
   var missPercentage = 0;
   var adjustCoeff = 0;
-  var attackValuePercent = 0;
-  var attackMeleeMagic = 0;
+  var attackValueMeleeMagic = 0;
   var attackValueMarriage = 0;
   var monsterResistanceMarriage = 0;
   var monsterResistance = 0;
@@ -2248,6 +2247,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var weaponDefense = 0;
   var tigerStrength = 0;
   var blessingBonus = 0;
+  var magicAttackValueMeleeMagic = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
   var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
@@ -2274,8 +2274,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
       attacker.weapon = createWeapon(0);
     }
 
-    attackValuePercent = attacker.attackValuePercent;
-    attackMeleeMagic = attacker.attackMeleeMagic;
+    attackValueMeleeMagic = attacker.attackValuePercent + Math.min(100, attacker.attackMeleeMagic);
 
     var weaponType = attacker.weapon.type;
 
@@ -2503,8 +2502,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
   }
 
   if (skillType === "magic") {
-    adjustCoeff = 0.5;
-    attackValuePercent = attacker.attackMagic;
+    attackValueCoeff = 0;
+    magicAttackValueMeleeMagic = attacker.attackMagic + Math.min(100, attacker.attackMeleeMagic);
     attackValueMarriage = 0;
     defense = 0;
     if (!isDispell(attacker, 6)) {
@@ -2522,8 +2521,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     missPercentage: missPercentage,
     weaponBonusCoeff: 1,
     adjustCoeff: adjustCoeff,
-    attackValueCoeff:
-      100 + attackValuePercent + Math.min(100, attackMeleeMagic),
+    attackValueCoeff: 100 + attackValueMeleeMagic,
     attackValueMarriage: attackValueMarriage,
     monsterResistanceMarriageCoeff: 100 - monsterResistanceMarriage,
     monsterResistanceCoeff: 100 - monsterResistance,
@@ -2542,6 +2540,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 100 - weaponDefense,
     blessingBonusCoeff: 100 - blessingBonus,
+    magicAttackValueCoeff: 100 + magicAttackValueMeleeMagic,
     extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
     averageDamageCoeff: 100 + averageDamage,
     averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
