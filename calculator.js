@@ -2045,8 +2045,9 @@ function calcSkillDamageWithSecondaryBonuses(
   );
 
   damages = Math.floor((tempDamages * bonusValues.tigerStrengthCoeff) / 100);
-
-  damages = Math.floor((damages * bonusValues.magicAttackValueCoeff) / 100 + 0.5);
+  damages = Math.floor(
+    (damages * bonusValues.magicAttackValueCoeff) / 100 + 0.5
+  );
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -2275,7 +2276,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
       attacker.weapon = createWeapon(0);
     }
 
-    attackValueMeleeMagic = attacker.attackValuePercent + Math.min(100, attacker.attackMeleeMagic);
+    attackValueMeleeMagic =
+      attacker.attackValuePercent + Math.min(100, attacker.attackMeleeMagic);
 
     var weaponType = attacker.weapon.type;
 
@@ -2503,8 +2505,9 @@ function createBattleValues(attacker, victim, battle, skillType) {
   }
 
   if (skillType === "magic") {
-    attackValueCoeff = 0;
-    magicAttackValueMeleeMagic = attacker.attackMagic + Math.min(100, attacker.attackMeleeMagic);
+    attackValueMeleeMagic = 0;
+    magicAttackValueMeleeMagic =
+      attacker.attackMagic + Math.min(100, attacker.attackMeleeMagic);
     attackValueMarriage = 0;
     defense = 0;
     if (!isDispell(attacker, 6)) {
