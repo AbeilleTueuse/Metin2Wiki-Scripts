@@ -2043,11 +2043,11 @@ function calcSkillDamageWithSecondaryBonuses(
   var tempDamages = Math.floor(
     (damages * bonusValues.skillBonusByBonusCoeff) / 100
   );
-
-  damages = Math.floor((tempDamages * bonusValues.tigerStrengthCoeff) / 100);
+  
   damages = Math.floor(
-    (damages * bonusValues.magicAttackValueCoeff) / 100 + 0.5
+    (tempDamages * bonusValues.magicAttackValueCoeff) / 100 + 0.5
   );
+  damages = Math.floor((damages * bonusValues.tigerStrengthCoeff) / 100);
 
   if (damagesType.criticalHit) {
     damages *= 2;
