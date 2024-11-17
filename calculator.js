@@ -1287,6 +1287,10 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     tagName,
   } = target;
 
+  targetMin = Number(targetMin);
+  targetMax = Number(targetMax);
+  targetValue = Number(targetValue);
+
   var isSkill = tagName === "SELECT";
 
   if (container.contains(target) || targetName == 0) {
@@ -1313,8 +1317,6 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
     var { input, tab } = bonusVariation;
 
     inputDisplay.value = getTargetContent(targetParent, targetName, isSkill);
-
-    targetValue = Number(targetValue);
 
     input.value = targetName;
     minValue.value = Math.max(targetValue - 10, targetMin);
