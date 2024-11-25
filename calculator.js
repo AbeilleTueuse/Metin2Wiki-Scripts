@@ -3857,6 +3857,14 @@ function changeMonsterValues(monster, instance, attacker) {
       monster.magicResistance = 0;
       monster.fireResistance = -20;
   }
+
+  // Alastor
+  if (monster.vnum === 6790) {
+    monster.iceResistance = 0;
+    monster.iceBonus = 0,
+    monster.lightningResistance = -10;
+    monster.lightningBonus = 65;
+  }
 }
 
 function createWeapon(weaponVnum) {
@@ -3879,6 +3887,7 @@ function createMonster(monsterVnum, attacker) {
   var monsterAttributes = monsterData[monsterVnum];
 
   var monster = {
+    vnum: monsterVnum,
     name: monsterAttributes[36],
     rank: monsterAttributes[0],
     race: monsterAttributes[1],
@@ -3923,6 +3932,8 @@ function createMonster(monsterVnum, attacker) {
   // if (attacker && monster.instance === 0) {
   //   changeMonsterValues(monster, "SungMahiTower", attacker);
   // }
+
+  changeMonsterValues(monster);
 
   monster.defense = monster.rawDefense + monster.level + monster.vit;
 
