@@ -3887,7 +3887,7 @@ function createMonster(monsterVnum, attacker) {
   var monsterAttributes = monsterData[monsterVnum];
 
   var monster = {
-    vnum: monsterVnum,
+    vnum: Number(monsterVnum),
     name: monsterAttributes[36],
     rank: monsterAttributes[0],
     race: monsterAttributes[1],
