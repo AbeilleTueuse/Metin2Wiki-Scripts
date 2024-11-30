@@ -1,3 +1,11 @@
+function showElement(element) {
+  element.classList.remove("tabber-noactive");
+}
+
+function hideElement(element) {
+  element.classList.add("tabber-noactive");
+}
+
 function removeAccent(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -1540,6 +1548,30 @@ function monsterManagement(characters, battle) {
   var monsterList = characters.monsterList;
   var searchMonster = characters.searchMonster;
   var monsterListForm = characters.monsterListForm;
+  var chooseMonsterContainer = characters.chooseMonsterContainer;
+  var iframeContainer = chooseMonsterContainer.querySelector(".modal-body");
+
+  var iframe = document.createElement("iframe");
+  iframe.src = mw.util.getUrl("Monstres");
+  iframe.width = "100%";
+  iframe.height = "800px";
+
+  iframeContainer.appendChild(iframe);
+
+  iframe.onload = () => {
+    var  iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    content = iframeDoc.querySelector("#hide-all");
+    iframeDoc.body.firstElementChild.replaceWith(content);
+    iframeDoc.body.style.background = "transparent";
+
+    iframeDoc.addEventListener("click", (event) => {
+      var link = event.target.closest("a");
+      if (link) {
+        event.preventDefault();
+        window.open(link.href, "_blank");
+      }
+    });
+  };
 
   document
     .getElementById("monster-link")
@@ -2035,7 +2067,7 @@ function calcSkillDamageWithSecondaryBonuses(
   var tempDamages = Math.floor(
     (damages * bonusValues.skillBonusByBonusCoeff) / 100
   );
-  
+
   damages = Math.floor(
     (tempDamages * bonusValues.magicAttackValueCoeff) / 100 + 0.5
   );
@@ -3853,8 +3885,7 @@ function changeMonsterValues(monster, instance, attacker) {
   // Alastor
   if (monster.vnum === 6790) {
     monster.iceResistance = 0;
-    monster.iceBonus = 0,
-    monster.lightningResistance = -10;
+    (monster.iceBonus = 0), (monster.lightningResistance = -10);
     monster.lightningBonus = 65;
   }
 }
@@ -4897,6 +4928,7 @@ function createDamageCalculatorInformation(chartSource) {
     monsterListForm: document.getElementById("monster-list-form"),
     searchMonster: document.getElementById("search-monster"),
     monsterList: document.getElementById("monster-list"),
+    chooseMonsterContainer: document.getElementById("choose-monster-container"),
     saveButton: document.getElementById("save-character"),
     weaponCategory: document.getElementById("weapon-category"),
     weaponDisplay: document.getElementById("weapon-display"),
