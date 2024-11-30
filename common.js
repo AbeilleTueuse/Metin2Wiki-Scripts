@@ -19,13 +19,13 @@ function fixInsecureFavicon() {
 }
 
 /* Liste des équipements */
-function changeDisplay(content) {
-  var boutonSwitch = content.querySelector(".button");
-  var frereList = content.nextElementSibling;
+function changeDisplay(container) {
+  var switchButton = container.querySelector(".button");
+  var content = container.nextElementSibling;
 
-  boutonSwitch.addEventListener("click", function () {
-    this.classList.toggle("tabber-active");
-    frereList.classList.toggle("tabber-noactive");
+  switchButton.addEventListener("click", function () {
+    toggleElement(switchButton);
+    toggleElement(content);
   });
 }
 
@@ -138,9 +138,9 @@ Exécutée une fois au chargement de la page
   );
   var loadScripts = document.querySelectorAll("div[data-load-javascript]");
 
-  equipmentContainer.forEach(function (container) {
-    changeDisplay(container);
-  });
+    equipmentContainer.forEach(function (container) {
+      changeDisplay(container);
+    });
 
   /* Charge des scripts spécifiques au chargement de certaines pages */
   if (loadScripts.length > 0) {
