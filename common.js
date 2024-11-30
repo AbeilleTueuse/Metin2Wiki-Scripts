@@ -12,6 +12,10 @@ function hideElement(element) {
   element.classList.add("tabber-noactive");
 }
 
+function toggleElement(element) {
+  element.classList.toggle("tabber-noactive");
+}
+
 /* Favicon */
 function fixInsecureFavicon() {
   document.querySelector('link[rel="shortcut icon"]').href =
@@ -19,12 +23,12 @@ function fixInsecureFavicon() {
 }
 
 /* Liste des équipements */
-function changeDisplay(container) {
+function changeEquipementDisplay(container) {
   var switchButton = container.querySelector(".button");
   var content = container.nextElementSibling;
 
   switchButton.addEventListener("click", function () {
-    toggleElement(switchButton);
+    switchButton.classList.toggle("tabber-active");
     toggleElement(content);
   });
 }
@@ -138,9 +142,9 @@ Exécutée une fois au chargement de la page
   );
   var loadScripts = document.querySelectorAll("div[data-load-javascript]");
 
-    equipmentContainer.forEach(function (container) {
-      changeDisplay(container);
-    });
+  equipmentContainer.forEach(function (container) {
+    changeEquipementDisplay(container);
+  });
 
   /* Charge des scripts spécifiques au chargement de certaines pages */
   if (loadScripts.length > 0) {
