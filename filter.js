@@ -1,11 +1,3 @@
-function hideElement(element) {
-  element.classList.add("tabber-noactive");
-}
-
-function showElement(element) {
-  element.classList.remove("tabber-noactive");
-}
-
 function removeAccent(str) {
   return str
     .normalize("NFD")
@@ -23,14 +15,6 @@ function addValueToObject(object, key, value) {
   } else {
     object[key] = [value];
   }
-}
-
-function loading() {
-  var mainContainer = document.getElementById("hide-all");
-  var loadingAnimation = document.getElementById("loading-animation");
-
-  mainContainer.classList.remove("tabber-noactive");
-  loadingAnimation.classList.add("tabber-noactive");
 }
 
 function handleDropdowns(filterInformation) {
@@ -675,5 +659,4 @@ function loadStyle(src) {
   filterWithUrl(filterInformation, cardInformation);
   filterItems(filterInformation, cardInformation);
   updateFilterObject(filterInformation, cardInformation);
-  loading();
 })();

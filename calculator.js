@@ -1,11 +1,3 @@
-function showElement(element) {
-  element.classList.remove("tabber-noactive");
-}
-
-function hideElement(element) {
-  element.classList.add("tabber-noactive");
-}
-
 function removeAccent(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -5001,7 +4993,7 @@ function createDamageCalculatorInformation(chartSource) {
     battle.attackTypeSelection
   );
   initResultTableHistory(battle);
-  loadScript(chartSource, function () {
+  addScript(chartSource, function () {
     initDamagesChart(battle);
     initBonusVariationChart(battle);
   });
@@ -5018,39 +5010,12 @@ function createDamageCalculatorInformation(chartSource) {
   return [characters, battle];
 }
 
-function loadScript(src, callback) {
-  var script = document.createElement("script");
-  script.src = src;
-
-  function onComplete() {
-    if (script.parentNode) {
-      script.parentNode.removeChild(script);
-    }
-    if (callback) {
-      callback();
-    }
-  }
-
-  document.head.appendChild(script);
-
-  script.onload = onComplete;
-  script.onerror = onComplete;
-}
-
 function loadStyle(src) {
   var link = document.createElement("link");
   link.href = src;
   link.rel = "stylesheet";
 
   document.head.appendChild(link);
-}
-
-function loading() {
-  var mainContainer = document.getElementById("hide-all");
-  var loadingAnimation = document.getElementById("loading-animation");
-
-  mainContainer.classList.remove("tabber-noactive");
-  loadingAnimation.classList.add("tabber-noactive");
 }
 
 (function () {
@@ -5070,8 +5035,6 @@ function loading() {
 
     updateBattleChoice(characters, battle);
     createBattle(characters, battle);
-
-    loading();
   }
-  loadScript(javascriptSource, main);
+  addScript(javascriptSource, main);
 })();
