@@ -14,6 +14,7 @@ modalButtons.forEach((button) => {
 
   const closeButton = modalContainer.querySelector(".close-button");
   const autoClose = modalContainer.dataset.autoClose === "1";
+  const addEvent = modalContainer.dataset.addEvent === "1";
 
   button.addEventListener("click", openModal);
   closeButton.addEventListener("click", closeModal);
@@ -22,11 +23,24 @@ modalButtons.forEach((button) => {
     modalContainer.addEventListener("change", closeModal);
   }
 
+  if (addEvent) {
+    const event = new Event("modalOpened");
+    modalContainer.dispatchEvent(event);
+  }
+
   function openModal() {
     button.classList.add("tabber-active");
     modalContainer.classList.add("show-modal");
     window.addEventListener("click", handleClickOutside);
     window.addEventListener("keydown", handleEscape);
+
+    if (addEvent) {
+        const modalOpenEvent = new CustomEvent('modalOpen', {
+            bubbles: true,
+            detail: { modal: modalContainer, name: modalName }
+        });
+        button.dispatchEvent(modalOpenEvent);
+    }
   }
 
   function closeModal() {
