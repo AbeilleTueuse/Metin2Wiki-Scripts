@@ -183,6 +183,8 @@ Exécutée une fois au chargement de la page
             ".js&action=raw&ctype=text/javascript",
           loadNextScript
         );
+      } else {
+        removeLoadingAnimation();
       }
     }
 
@@ -195,7 +197,6 @@ Exécutée une fois au chargement de la page
     );
   }
 
-  removeLoadingAnimation();
   addButtonTop();
   buttonTop();
   cookies();

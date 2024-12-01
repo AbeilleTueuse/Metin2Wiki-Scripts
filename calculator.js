@@ -1,20 +1,5 @@
-function showElement(element) {
-  element.classList.remove("tabber-noactive");
-}
-
-function hideElement(element) {
-  element.classList.add("tabber-noactive");
-}
-
 function removeAccent(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-function toNormalForm(str) {
-  return removeAccent(str)
-    .replace("-", " ")
-    .replace(/[^a-zA-Z0-9 ]/g, "")
-    .toLowerCase();
 }
 
 function pseudoFormat(str) {
@@ -1488,81 +1473,24 @@ function handleNewMonster(
 }
 
 function monsterManagement(characters, battle) {
-  function handleDropdown(searchMonster, monsterList) {
-    searchMonster.addEventListener("focus", function (event) {
-      showElement(monsterList);
-    });
-
-    document.addEventListener("mousedown", function (event) {
-      var target = event.target;
-      if (!monsterList.contains(target) && !searchMonster.contains(target)) {
-        hideElement(monsterList);
-      }
-    });
-  }
-
-  function addMonsterNames(monsterList) {
-    var lastMonsterAttributeIndex = monsterData[101].length - 1;
-
-    for (var monsterVnum in monsterData) {
-      var li = document.createElement("li");
-      var label = document.createElement("label");
-      var input = document.createElement("input");
-      var textNode = document.createTextNode(
-        monsterData[monsterVnum][lastMonsterAttributeIndex]
-      );
-
-      label.htmlFor = "monster" + monsterVnum;
-      input.id = "monster" + monsterVnum;
-      input.type = "checkbox";
-
-      input.name = monsterVnum;
-
-      label.appendChild(input);
-      label.appendChild(textNode);
-      li.appendChild(label);
-      monsterList.appendChild(li);
-    }
-  }
-
-  function filterNames(searchMonster, monsterList) {
-    var debounceTimer;
-
-    searchMonster.addEventListener("input", function (event) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(function () {
-        var value = toNormalForm(event.target.value);
-        for (var element of monsterList.children) {
-          if (!isValueInArray(value, toNormalForm(element.textContent))) {
-            hideElement(element);
-          } else {
-            showElement(element);
-          }
-        }
-      }, 500);
-    });
-  }
-
-  var monsterTemplate = characters.newMonsterTemplate;
-  var monstersContainer = characters.monstersContainer;
-  var monsterList = characters.monsterList;
-  var searchMonster = characters.searchMonster;
-  var monsterListForm = characters.monsterListForm;
-  var chooseMonsterContainer = characters.chooseMonsterContainer;
-  var iframeContainer = chooseMonsterContainer.querySelector(".modal-body");
+  var {newMonsterTemplate: monsterTemplate, monstersContainer, monsteriFrame} = characters;
 
   var iframe = document.createElement("iframe");
+
   iframe.src = mw.util.getUrl("Monstres");
   iframe.width = "100%";
-  iframe.height = "800px";
+  iframe.height = "100%";
+  iframe.style.border = "none";
+  monsteriFrame.parentElement.style.paddingRight = "0";
 
-  iframeContainer.appendChild(iframe);
+  monsteriFrame.appendChild(iframe);
 
-  iframe.onload = () => {
-    var  iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    content = iframeDoc.querySelector("#hide-all");
+  iframe.addEventListener("load", function() {
+    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    content = iframeDoc.querySelector("#show-after-loading");
     iframeDoc.body.firstElementChild.replaceWith(content);
     iframeDoc.body.style.background = "transparent";
+    iframeDoc.body.style.paddingRight = "10px";
 
     iframeDoc.addEventListener("click", (event) => {
       var link = event.target.closest("a");
@@ -1571,92 +1499,69 @@ function monsterManagement(characters, battle) {
         window.open(link.href, "_blank");
       }
     });
-  };
-
-  document
-    .getElementById("monster-link")
-    .querySelector("a")
-    .setAttribute("target", "_blank");
-
-  handleDropdown(searchMonster, monsterList);
-  addMonsterNames(monsterList, characters.monsterListTemplate);
-  filterNames(searchMonster, monsterList);
-
-  characters.savedMonsters.slice().forEach(function (monsterVnum) {
-    var inputMonster = monsterList.querySelector(
-      "input[name='" + monsterVnum + "']"
-    );
-
-    if (inputMonster) {
-      handleNewMonster(
-        characters,
-        monsterTemplate,
-        monstersContainer,
-        battle,
-        monsterVnum,
-        monsterList
-      );
-      inputMonster.checked = true;
-    } else {
-      deleteMonster(characters, monsterVnum, null, battle);
-    }
   });
 
-  monsterListForm.addEventListener("submit", function (event) {
-    event.preventDefault();
-  });
+  // var monsterFrame = createMonsterFrame(chooseMonsterContainer);
+  // var nameToVnum = {};
+  // var monsterParametersLength = monsterData[101].length;
 
-  monsterListForm.addEventListener("change", function (event) {
-    var target = event.target;
-    var monsterVnum = target.name;
+  // var listToFilter = document.getElementById("list-to-filter");
+  // var cardToEdit = listToFilter.children;
+  
+  // for (monsterVnum in monsterData) {
+  //   nameToVnum[monsterData[monsterVnum][monsterParametersLength - 1]] =
+  //     monsterVnum;
+  // }
 
-    if (monsterVnum === "search-monster") {
-      return;
-    }
+  // characters.savedMonsters.slice().forEach(function (monsterVnum) {
+  //   var inputMonster = monsterList.querySelector(
+  //     "input[name='" + monsterVnum + "']"
+  //   );
 
-    if (target.checked) {
-      handleNewMonster(
-        characters,
-        monsterTemplate,
-        monstersContainer,
-        battle,
-        monsterVnum,
-        monsterList
-      );
+  //   if (inputMonster) {
+  //     handleNewMonster(
+  //       characters,
+  //       monsterTemplate,
+  //       monstersContainer,
+  //       battle,
+  //       monsterVnum,
+  //       monsterList
+  //     );
+  //     inputMonster.checked = true;
+  //   } else {
+  //     deleteMonster(characters, monsterVnum, null, battle);
+  //   }
+  // });
 
-      characters.savedMonsters.push(monsterVnum);
-      updateSavedMonsters(characters.savedMonsters);
-      addBattleChoice(battle, monsterVnum, true);
-    } else {
-      var currentMonsterTemplate = monstersContainer.querySelector(
-        "[data-name='" + monsterVnum + "']"
-      );
-      deleteMonster(characters, monsterVnum, currentMonsterTemplate, battle);
-    }
-  });
 
-  addEventListener("storage", function (event) {
-    if (event.key === "newMonsterCalculator") {
-      var monsterVnum = Number(event.newValue);
+  // monsterListForm.addEventListener("change", function (event) {
+  //   var target = event.target;
+  //   var monsterVnum = target.name;
 
-      if (!monsterVnum) {
-        return;
-      }
+  //   if (monsterVnum === "search-monster") {
+  //     return;
+  //   }
 
-      var inputMonster = monsterList.querySelector(
-        "input[name='" + Math.abs(monsterVnum) + "']"
-      );
+  //   if (target.checked) {
+  //     handleNewMonster(
+  //       characters,
+  //       monsterTemplate,
+  //       monstersContainer,
+  //       battle,
+  //       monsterVnum,
+  //       monsterList
+  //     );
 
-      if (inputMonster) {
-        if (
-          (monsterVnum > 0 && !inputMonster.checked) ||
-          (monsterVnum < 0 && inputMonster.checked)
-        ) {
-          inputMonster.click();
-        }
-      }
-    }
-  });
+  //     characters.savedMonsters.push(monsterVnum);
+  //     updateSavedMonsters(characters.savedMonsters);
+  //     addBattleChoice(battle, monsterVnum, true);
+  //   } else {
+  //     var currentMonsterTemplate = monstersContainer.querySelector(
+  //       "[data-name='" + monsterVnum + "']"
+  //     );
+  //     deleteMonster(characters, monsterVnum, currentMonsterTemplate, battle);
+  //   }
+  // });
 }
 
 function removeBattleChoice(battle, name) {
@@ -4925,10 +4830,7 @@ function createDamageCalculatorInformation(chartSource) {
     newMonsterTemplate: document.getElementById("new-monster-template")
       .children[0],
     monstersContainer: document.getElementById("monsters-container"),
-    monsterListForm: document.getElementById("monster-list-form"),
-    searchMonster: document.getElementById("search-monster"),
-    monsterList: document.getElementById("monster-list"),
-    chooseMonsterContainer: document.getElementById("choose-monster-container"),
+    monsteriFrame: document.getElementById("monster-iframe"),
     saveButton: document.getElementById("save-character"),
     weaponCategory: document.getElementById("weapon-category"),
     weaponDisplay: document.getElementById("weapon-display"),
