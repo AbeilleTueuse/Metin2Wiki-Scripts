@@ -853,16 +853,20 @@ function deleteCharacter(characters, pseudo, element, battle) {
   }
 }
 
-function deleteMonster(characters, monsterVnum, element, battle) {
+function deleteMonster(characters, battle, monsterVnum, monsterElement) {
+  var monsterElement = monsterElement || characters.monstersContainer.querySelector(
+    "[data-monster-id='" + monsterVnum + "']"
+  );
+
+  if (monsterElement) {
+    monsterElement.remove();
+  }
+
   battle.battleForm.reset();
   characters.savedMonsters.splice(
     characters.savedMonsters.indexOf(monsterVnum),
     1
   );
-
-  if (element) {
-    element.remove();
-  }
 
   updateSavedMonsters(characters.savedMonsters);
   removeBattleChoice(battle, monsterVnum);
@@ -1438,17 +1442,16 @@ function characterManagement(characters, battle) {
   });
 }
 
-function handleNewMonster(
+function addMonsterElement(
   characters,
-  monsterTemplate,
-  monstersContainer,
   battle,
-  monsterVnum,
-  monsterList
+  monsterTemplate,
+  monsterVnum
 ) {
-  var newMonsterTemplate = monsterTemplate.cloneNode(true);
-  var spanInput = newMonsterTemplate.querySelector("span.input");
-  var deleteSvg = newMonsterTemplate.querySelector("svg");
+  var monsterElement = monsterTemplate.cloneNode(true);
+
+  var spanInput = monsterElement.querySelector("span.input");
+  var deleteSvg = monsterElement.querySelector("svg");
   var monsterName = getMonsterName(monsterVnum);
 
   var link = document.createElement("a");
@@ -1457,111 +1460,153 @@ function handleNewMonster(
   link.textContent = monsterName;
 
   spanInput.appendChild(link);
-  monstersContainer.appendChild(newMonsterTemplate);
 
-  newMonsterTemplate.setAttribute("tabindex", "0");
-  newMonsterTemplate.setAttribute("data-name", monsterVnum);
-  monstersContainer.appendChild(newMonsterTemplate);
+  monsterElement.setAttribute("tabindex", "0");
+  monsterElement.setAttribute("data-monster-id", monsterVnum);
+
+  characters.monstersContainer.appendChild(monsterElement);
 
   deleteSvg.addEventListener("click", function (event) {
-    deleteMonster(characters, monsterVnum, newMonsterTemplate, battle);
-    var inputMonster = monsterList.querySelector(
-      "input[name='" + monsterVnum + "']"
-    );
-    inputMonster.checked = false;
+    deleteMonster(characters, battle, monsterVnum, monsterElement);
   });
 }
 
+function addNewMonster(
+  characters,
+  battle,
+  monsterTemplate,
+  monsterVnum
+) {
+  if (isValueInArray(monsterVnum, characters.savedMonsters)) return;
+
+  characters.savedMonsters.push(monsterVnum);
+  addMonsterElement(
+    characters,
+    battle,
+    monsterTemplate,
+    monsterVnum
+  );
+  updateSavedMonsters(characters.savedMonsters);
+  addBattleChoice(battle, monsterVnum, true);
+}
+
+function replaceMonsterButton(currentButton, newButton, monsterVnum) {
+  var newButtonClone = newButton.cloneNode(true);
+  newButtonClone.dataset.monsterId = monsterVnum;
+  currentButton.replaceWith(newButtonClone);
+}
+
 function monsterManagement(characters, battle) {
-  var {newMonsterTemplate: monsterTemplate, monstersContainer, monsteriFrame} = characters;
+  var {
+    newMonsterTemplate: monsterTemplate,
+    monsteriFrame,
+    stoneiFrame,
+    monsterButtonTemplate,
+  } = characters;
 
-  var iframe = document.createElement("iframe");
+  var iframeContainerMapping = {
+    Monstres: monsteriFrame,
+    "Pierres Metin": stoneiFrame,
+  }
 
-  iframe.src = mw.util.getUrl("Monstres");
-  iframe.width = "100%";
-  iframe.height = "100%";
-  iframe.style.border = "none";
-  monsteriFrame.parentElement.style.paddingRight = "0";
+  var nameToVnum = {};
+  var monsterParametersLength = monsterData[101].length;
 
-  monsteriFrame.appendChild(iframe);
+  for (var monsterVnum in monsterData) {
+    nameToVnum[monsterData[monsterVnum][monsterParametersLength - 1]] =
+      monsterVnum;
+  }
 
-  iframe.addEventListener("load", function() {
-    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    content = iframeDoc.querySelector("#show-after-loading");
-    iframeDoc.body.firstElementChild.replaceWith(content);
-    iframeDoc.body.style.background = "transparent";
-    iframeDoc.body.style.paddingRight = "10px";
-
-    iframeDoc.addEventListener("click", (event) => {
-      var link = event.target.closest("a");
-      if (link) {
-        event.preventDefault();
-        window.open(link.href, "_blank");
+  for (var category of ["Monstres", "Pierres Metin"]) {
+    var iframeContainer = iframeContainerMapping[category];
+    var iframe = document.createElement("iframe");
+    var [addButton, removeButton] = monsterButtonTemplate.children;
+  
+    iframe.src = mw.util.getUrl(category);
+    iframe.width = "100%";
+    iframe.height = "100%";
+    iframe.style.border = "none";
+    iframeContainer.parentElement.style.paddingRight = "0";
+  
+    iframeContainer.appendChild(iframe);
+  
+    iframe.addEventListener("load", function () {
+      var iframeDoc = this.contentDocument || this.contentWindow.document;
+      var iframeBody = iframeDoc.body;
+      var listToFilter = iframeDoc.getElementById("list-to-filter");
+      var cardToEdit = listToFilter.children;
+  
+      content = iframeDoc.getElementById("show-after-loading");
+      console.log(iframeBody);
+      iframeBody.firstElementChild.replaceWith(content);
+      iframeBody.style.background = "transparent";
+      iframeBody.style.paddingRight = "10px";
+  
+      iframeDoc.addEventListener("click", function (event) {
+        var target = event.target;
+        var link = target.closest("a");
+        var currentButton = target.closest(".handle-monster");
+  
+        if (link) {
+          event.preventDefault();
+          window.open(link.href, "_blank");
+        } else if (currentButton) {
+          var { monsterId: monsterVnum, action } = currentButton.dataset;
+          var newButton;
+  
+          if (action === "add") {
+            addNewMonster(
+              characters,
+              battle,
+              monsterTemplate,
+              monsterVnum
+            );
+            newButton = removeButton;
+          } else if (action === "remove") {
+            deleteMonster(characters, battle, monsterVnum);
+            newButton = addButton;
+          }
+          replaceMonsterButton(currentButton, newButton, monsterVnum);
+        }
+      });
+  
+      for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
+        var card = cardToEdit[cardIndex];
+        var cardName = card.querySelector("[data-name]").firstChild.title;
+  
+        if (!nameToVnum.hasOwnProperty(cardName)) {
+          continue;
+        }
+  
+        var monsterVnum = nameToVnum[cardName];
+        var buttonClone;
+  
+        if (isValueInArray(monsterVnum, characters.savedMonsters)) {
+          buttonClone = removeButton.cloneNode(true);
+        } else {
+          buttonClone = addButton.cloneNode(true);
+        }
+        buttonClone.dataset.monsterId = monsterVnum;
+        card.lastElementChild.appendChild(buttonClone);
       }
     });
+  }
+
+  var monsterVnums = Object.keys(monsterData);
+
+  characters.savedMonsters.slice().forEach(function (monsterVnum) {
+    if (isValueInArray(monsterVnum, monsterVnums)) {
+      addMonsterElement(
+        characters,
+        battle,
+        monsterTemplate,
+        monsterVnum
+      );
+    } else {
+      console.log(monsterVnum);
+      deleteMonster(characters, battle, monsterVnum);
+    }
   });
-
-  // var monsterFrame = createMonsterFrame(chooseMonsterContainer);
-  // var nameToVnum = {};
-  // var monsterParametersLength = monsterData[101].length;
-
-  // var listToFilter = document.getElementById("list-to-filter");
-  // var cardToEdit = listToFilter.children;
-  
-  // for (monsterVnum in monsterData) {
-  //   nameToVnum[monsterData[monsterVnum][monsterParametersLength - 1]] =
-  //     monsterVnum;
-  // }
-
-  // characters.savedMonsters.slice().forEach(function (monsterVnum) {
-  //   var inputMonster = monsterList.querySelector(
-  //     "input[name='" + monsterVnum + "']"
-  //   );
-
-  //   if (inputMonster) {
-  //     handleNewMonster(
-  //       characters,
-  //       monsterTemplate,
-  //       monstersContainer,
-  //       battle,
-  //       monsterVnum,
-  //       monsterList
-  //     );
-  //     inputMonster.checked = true;
-  //   } else {
-  //     deleteMonster(characters, monsterVnum, null, battle);
-  //   }
-  // });
-
-
-  // monsterListForm.addEventListener("change", function (event) {
-  //   var target = event.target;
-  //   var monsterVnum = target.name;
-
-  //   if (monsterVnum === "search-monster") {
-  //     return;
-  //   }
-
-  //   if (target.checked) {
-  //     handleNewMonster(
-  //       characters,
-  //       monsterTemplate,
-  //       monstersContainer,
-  //       battle,
-  //       monsterVnum,
-  //       monsterList
-  //     );
-
-  //     characters.savedMonsters.push(monsterVnum);
-  //     updateSavedMonsters(characters.savedMonsters);
-  //     addBattleChoice(battle, monsterVnum, true);
-  //   } else {
-  //     var currentMonsterTemplate = monstersContainer.querySelector(
-  //       "[data-name='" + monsterVnum + "']"
-  //     );
-  //     deleteMonster(characters, monsterVnum, currentMonsterTemplate, battle);
-  //   }
-  // });
 }
 
 function removeBattleChoice(battle, name) {
@@ -4827,10 +4872,12 @@ function createDamageCalculatorInformation(chartSource) {
     newCharacterTemplate: document.getElementById("new-character-template")
       .children[0],
     charactersContainer: document.getElementById("characters-container"),
+    monsterButtonTemplate: document.getElementById("monster-button-template"),
     newMonsterTemplate: document.getElementById("new-monster-template")
       .children[0],
     monstersContainer: document.getElementById("monsters-container"),
     monsteriFrame: document.getElementById("monster-iframe"),
+    stoneiFrame: document.getElementById("stone-iframe"),
     saveButton: document.getElementById("save-character"),
     weaponCategory: document.getElementById("weapon-category"),
     weaponDisplay: document.getElementById("weapon-display"),
