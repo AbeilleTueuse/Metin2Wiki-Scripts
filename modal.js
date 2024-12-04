@@ -23,11 +23,6 @@ modalButtons.forEach((button) => {
     modalContainer.addEventListener("change", closeModal);
   }
 
-  if (addEvent) {
-    const event = new Event("modalOpened");
-    modalContainer.dispatchEvent(event);
-  }
-
   function openModal() {
     button.classList.add("tabber-active");
     modalContainer.classList.add("show-modal");

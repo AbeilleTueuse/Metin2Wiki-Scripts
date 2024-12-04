@@ -88,14 +88,18 @@ function replaceElement(
 }
 
 function addCollapsible(collapsibleContainer) {
-  var toggleButton = collapsibleContainer.querySelector(".mw-collapsible-toggle");
-  var collapsibleContent = collapsibleContainer.querySelector(".mw-collapsible-content");
+  var toggleButton = collapsibleContainer.querySelector(
+    ".mw-collapsible-toggle"
+  );
+  var collapsibleContent = collapsibleContainer.querySelector(
+    ".mw-collapsible-content"
+  );
   var collapsibleContentChild = collapsibleContent.firstElementChild;
   var expandedClass = "mw-collapsible-toggle-expanded";
   var isCollapsed = false;
-  
+
   toggleButton.setAttribute("tabindex", 0);
-  
+
   toggleButton.addEventListener("click", function (event) {
     if (isCollapsed) {
       this.classList.remove(expandedClass);
@@ -134,6 +138,7 @@ function addCollapsible(collapsibleContainer) {
     "path",
     "title",
     "canvas",
+    "iframe",
   ];
   var elementsNS = ["svg", "path", "title"];
   var allowedProperties = [
