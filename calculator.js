@@ -1444,8 +1444,25 @@ function characterManagement(characters, battle) {
   });
 }
 
+function removeFromIframe(iframe, monsterVnum, addButton) {
+  var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  var removeButton = iframeDoc.querySelector(
+    ".handle-monster[data-monster-id='" + monsterVnum + "']"
+  );
+
+  if (removeButton) {
+    replaceMonsterButton(removeButton, addButton, monsterVnum);
+    return true;
+  }
+
+  return false;
+}
+
 function addMonsterElement(characters, battle, monsterVnum) {
-  var monsterElement = characters.monsterTemplate.cloneNode(true);
+  var { monsteriFrame, stoneiFrame, monsterTemplate, monstersContainer, monsterButtonTemplates } =
+    characters;
+  var addButton = monsterButtonTemplates.children[0];
+  var monsterElement = monsterTemplate.cloneNode(true);
 
   var spanInput = monsterElement.querySelector("span.input");
   var deleteSvg = monsterElement.querySelector("svg");
@@ -1461,10 +1478,14 @@ function addMonsterElement(characters, battle, monsterVnum) {
   monsterElement.setAttribute("tabindex", "0");
   monsterElement.setAttribute("data-monster-id", monsterVnum);
 
-  characters.monstersContainer.appendChild(monsterElement);
+  monstersContainer.appendChild(monsterElement);
 
-  deleteSvg.addEventListener("click", function (event) {
+  deleteSvg.addEventListener("click", function () {
     deleteMonster(characters, battle, monsterVnum, monsterElement);
+    var isRemoved = removeFromIframe(monsteriFrame, monsterVnum, addButton);
+    if (!isRemoved) {
+      removeFromIframe(stoneiFrame, monsterVnum, addButton);
+    }
   });
 }
 
@@ -1513,13 +1534,7 @@ function addButtonsToCards(
   }
 }
 
-function handleiFrame(
-  category,
-  iframe,
-  nameToVnum,
-  characters,
-  battle
-) {
+function handleiFrame(category, iframe, nameToVnum, characters, battle) {
   var [addButton, removeButton] = characters.monsterButtonTemplates.children;
 
   iframe.src = mw.util.getUrl(category);
@@ -1588,7 +1603,7 @@ function monsterManagement(characters, battle) {
 
   document.addEventListener("modalOpen", function (event) {
     var modalName = event.detail.name;
-    
+
     if (modalName === "monster" && !iframeLoaded.monster) {
       handleiFrame("Monstres", monsteriFrame, nameToVnum, characters, battle);
       iframeLoaded.monster = true;
