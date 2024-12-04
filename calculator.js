@@ -1483,7 +1483,13 @@ function replaceMonsterButton(currentButton, newButton, monsterVnum) {
   currentButton.replaceWith(newButtonClone);
 }
 
-function addButtonsToCards(iframeDoc, nameToVnum, addButton, removeButton) {
+function addButtonsToCards(
+  iframeDoc,
+  nameToVnum,
+  addButton,
+  removeButton,
+  characters
+) {
   var cardToEdit = iframeDoc.getElementById("list-to-filter").children;
 
   for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
@@ -1507,17 +1513,16 @@ function addButtonsToCards(iframeDoc, nameToVnum, addButton, removeButton) {
   }
 }
 
-function handleiFrame(category, iframeContainer, nameToVnum, characters) {
-  var iframe = document.createElement("iframe");
+function handleiFrame(
+  category,
+  iframe,
+  nameToVnum,
+  characters,
+  battle
+) {
   var [addButton, removeButton] = characters.monsterButtonTemplates.children;
 
   iframe.src = mw.util.getUrl(category);
-  iframe.width = "100%";
-  iframe.height = "100%";
-  iframe.style.border = "none";
-  iframeContainer.parentElement.style.paddingRight = "0";
-
-  iframeContainer.appendChild(iframe);
 
   iframe.addEventListener("load", function () {
     var iframeDoc = this.contentDocument || this.contentWindow.document;
@@ -1530,7 +1535,13 @@ function handleiFrame(category, iframeContainer, nameToVnum, characters) {
     iframeBody.style.background = "transparent";
     iframeBody.style.paddingRight = "10px";
 
-    addButtonsToCards(iframeDoc, nameToVnum, addButton, removeButton);
+    addButtonsToCards(
+      iframeDoc,
+      nameToVnum,
+      addButton,
+      removeButton,
+      characters
+    );
 
     iframeDoc.addEventListener("click", function (event) {
       var target = event.target;
@@ -1577,11 +1588,18 @@ function monsterManagement(characters, battle) {
 
   document.addEventListener("modalOpen", function (event) {
     var modalName = event.detail.name;
+    
     if (modalName === "monster" && !iframeLoaded.monster) {
-      handleiFrame("Monstres", monsteriFrame, nameToVnum, characters);
+      handleiFrame("Monstres", monsteriFrame, nameToVnum, characters, battle);
       iframeLoaded.monster = true;
     } else if (modalName === "stone" && !iframeLoaded.stone) {
-      handleiFrame("Pierres Metin", stoneiFrame, nameToVnum, characters);
+      handleiFrame(
+        "Pierres Metin",
+        stoneiFrame,
+        nameToVnum,
+        characters,
+        battle
+      );
       iframeLoaded.stone = true;
     }
   });
