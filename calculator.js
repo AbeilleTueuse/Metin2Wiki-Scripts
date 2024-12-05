@@ -598,11 +598,21 @@ function getSavedCharacters() {
 }
 
 function getSavedMonsters() {
-  return getLocalStorageValue("savedMonstersCalculator", []).filter(function (
-    num
-  ) {
-    return !isNaN(Number(num));
-  });
+  var savedMonsters = getLocalStorageValue("savedMonstersCalculator", {});
+
+  if (Array.isArray(savedMonsters)) {
+    return {};
+  }
+
+  var filteredMonsters = {};
+
+  for (var vnum in savedMonsters) {
+    if (String(Number(vnum)) === vnum) {
+      filteredMonsters[vnum] = savedMonsters[vnum];
+    }
+  }
+
+  return filteredMonsters;
 }
 
 function getSavedFights() {
@@ -865,10 +875,7 @@ function deleteMonster(characters, battle, monsterVnum, monsterElement) {
   }
 
   battle.battleForm.reset();
-  characters.savedMonsters.splice(
-    characters.savedMonsters.indexOf(monsterVnum),
-    1
-  );
+  delete characters.savedMonsters[monsterVnum];
 
   updateSavedMonsters(characters.savedMonsters);
   removeBattleChoice(battle, monsterVnum);
@@ -1490,9 +1497,9 @@ function addMonsterElement(characters, battle, monsterVnum) {
 }
 
 function addNewMonster(characters, battle, monsterVnum) {
-  if (isValueInArray(monsterVnum, characters.savedMonsters)) return;
+  if (isValueInArray(monsterVnum, Object.keys(characters.savedMonsters))) return;
 
-  characters.savedMonsters.push(monsterVnum);
+  characters.savedMonsters[monsterVnum] = {};
   addMonsterElement(characters, battle, monsterVnum);
   updateSavedMonsters(characters.savedMonsters);
   addBattleChoice(battle, monsterVnum, true);
@@ -1512,6 +1519,7 @@ function addButtonsToCards(
   characters
 ) {
   var cardToEdit = iframeDoc.getElementById("list-to-filter").children;
+  var addedMonsters = Object.keys(characters.savedMonsters);
 
   for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
     var card = cardToEdit[cardIndex];
@@ -1524,7 +1532,7 @@ function addButtonsToCards(
     var monsterVnum = nameToVnum[cardName];
     var buttonClone;
 
-    if (isValueInArray(monsterVnum, characters.savedMonsters)) {
+    if (isValueInArray(monsterVnum, addedMonsters)) {
       buttonClone = removeButton.cloneNode(true);
     } else {
       buttonClone = addButton.cloneNode(true);
@@ -1619,7 +1627,7 @@ function monsterManagement(characters, battle) {
     }
   });
 
-  characters.savedMonsters.slice().forEach(function (monsterVnum) {
+  Object.keys(characters.savedMonsters).slice().forEach(function (monsterVnum) {
     if (isValueInArray(monsterVnum, monsterVnums)) {
       addMonsterElement(characters, battle, monsterVnum);
     } else {
@@ -1674,17 +1682,19 @@ function addBattleChoice(battle, name, isMonster = false) {
 }
 
 function updateBattleChoice(characters, battle) {
-  var keys = Object.keys(characters.savedCharacters);
-
-  for (var index = 0; index < keys.length; index++) {
-    var pseudo = keys[index];
-    addBattleChoice(battle, pseudo);
+  function addChoices(names, isMonster) {
+    for (var index = 0; index < names.length; index++) {
+      addBattleChoice(battle, names[index], isMonster);
+    }
   }
 
-  characters.savedMonsters.forEach(function (monsterVnum) {
-    addBattleChoice(battle, monsterVnum, true);
-  });
+  var characterNames = Object.keys(characters.savedCharacters);
+  var monsterNames = Object.keys(characters.savedMonsters);
+
+  addChoices(characterNames, false);
+  addChoices(monsterNames, true);
 }
+
 
 function isPC(character) {
   if (character.race === 0 || character.race === 1) {
