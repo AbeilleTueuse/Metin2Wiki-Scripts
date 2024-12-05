@@ -399,14 +399,6 @@ function filterUpgrade(
   }
 }
 
-function filterState(selectedState, polymorphMonster) {
-  if (selectedState === "polymorph") {
-    showElement(polymorphMonster.parentElement);
-  } else {
-    hideElement(polymorphMonster.parentElement);
-  }
-}
-
 function filterCheckbox(checkbox, element) {
   if (checkbox.checked) {
     showElement(element);
@@ -527,8 +519,8 @@ function filterForm(characters, battle) {
           characters.randomMagicAttackValue
         );
         break;
-      case "state":
-        filterState(target.value, characterCreation.polymorphMonster);
+      case "isPolymorph":
+        filterCheckbox(target, characterCreation.polymorphMonster.parentElement);
         if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
         }
@@ -945,9 +937,9 @@ function updateForm(
     characters.randomMagicAttackValue,
     formData.weaponUpgrade
   );
-  filterState(
-    characterCreation.state.value,
-    characterCreation.polymorphMonster
+  filterCheckbox(
+    characterCreation.isPolymorph,
+    characterCreation.polymorphMonster.parentElement
   );
   filterCheckbox(
     characterCreation.lowRank,
@@ -1496,10 +1488,10 @@ function addMonsterElement(characters, battle, monsterVnum) {
   });
 }
 
-function addNewMonster(characters, battle, monsterVnum) {
+function addNewMonster(characters, battle, monsterVnum, monsterImage) {
   if (isValueInArray(monsterVnum, Object.keys(characters.savedMonsters))) return;
 
-  characters.savedMonsters[monsterVnum] = {};
+  characters.savedMonsters[monsterVnum] = {image: monsterImage};
   addMonsterElement(characters, battle, monsterVnum);
   updateSavedMonsters(characters.savedMonsters);
   addBattleChoice(battle, monsterVnum, true);
@@ -1542,6 +1534,17 @@ function addButtonsToCards(
   }
 }
 
+function getMonsterImage(addButton) {
+  var elder = addButton.parentElement.firstElementChild;
+  var image = elder.querySelector("img");
+
+  if (image) {
+    return image.getAttribute("src") || "";
+  }
+
+  return "";
+}
+
 function handleiFrame(category, iframe, nameToVnum, characters, battle) {
   var [addButton, removeButton] = characters.monsterButtonTemplates.children;
 
@@ -1579,7 +1582,8 @@ function handleiFrame(category, iframe, nameToVnum, characters, battle) {
         var newButton;
 
         if (action === "add") {
-          addNewMonster(characters, battle, monsterVnum);
+          var monsterImage = getMonsterImage(currentButton);
+          addNewMonster(characters, battle, monsterVnum, monsterImage);
           newButton = removeButton;
         } else if (action === "remove") {
           deleteMonster(characters, battle, monsterVnum);
@@ -1732,11 +1736,11 @@ function isDispell(character, skillId) {
 }
 
 function isPolymorph(character) {
-  return character.state === "polymorph";
+  return isChecked(character.isPolymorph);
 }
 
 function isRiding(character) {
-  return character.state === "horse";
+  return isChecked(character.isRiding);
 }
 
 function isBow(weapon) {
@@ -2151,7 +2155,7 @@ function computeHorse(attacker) {
 }
 
 function getRankBonus(attacker) {
-  if (attacker.lowRank !== "on") {
+  if (!isChecked(attacker.lowRank)) {
     return 0;
   }
 
@@ -2680,7 +2684,7 @@ function calcWeights(minValue, maxValue, minInterval) {
 }
 
 function calcBlessingBonus(skillPowerTable, victim) {
-  if (victim.isBlessed !== "on") {
+  if (!isChecked(victim.isBlessed)) {
     return 0;
   }
 
