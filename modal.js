@@ -1,6 +1,11 @@
-const modalButtons = document.querySelectorAll(".modal-trigger");
+mainModal();
 
-modalButtons.forEach((button) => {
+function mainModal() {
+  const modalButtons = document.querySelectorAll(".modal-trigger");
+  modalButtons.forEach(handleModal);
+}
+
+function handleModal(button) {
   const modalName = button.dataset.modal;
   let modalContainer;
 
@@ -30,11 +35,11 @@ modalButtons.forEach((button) => {
     window.addEventListener("keydown", handleEscape);
 
     if (addEvent) {
-        const modalOpenEvent = new CustomEvent('modalOpen', {
-            bubbles: true,
-            detail: { modal: modalContainer, name: modalName }
-        });
-        button.dispatchEvent(modalOpenEvent);
+      const modalOpenEvent = new CustomEvent('modalOpen', {
+        bubbles: true,
+        detail: { modal: modalContainer, name: modalName }
+      });
+      button.dispatchEvent(modalOpenEvent);
     }
   }
 
@@ -56,4 +61,4 @@ modalButtons.forEach((button) => {
       closeModal();
     }
   }
-});
+}
