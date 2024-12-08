@@ -520,7 +520,10 @@ function filterForm(characters, battle) {
         );
         break;
       case "isPolymorph":
-        filterCheckbox(target, characterCreation.polymorphMonster.parentElement);
+        filterCheckbox(
+          target,
+          characterCreation.polymorphMonster.parentElement
+        );
         if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
         }
@@ -1458,8 +1461,13 @@ function removeFromIframe(iframe, monsterVnum, addButton) {
 }
 
 function addMonsterElement(characters, battle, monsterVnum) {
-  var { monsteriFrame, stoneiFrame, monsterTemplate, monstersContainer, monsterButtonTemplates } =
-    characters;
+  var {
+    monsteriFrame,
+    stoneiFrame,
+    monsterTemplate,
+    monstersContainer,
+    monsterButtonTemplates,
+  } = characters;
   var addButton = monsterButtonTemplates.children[0];
   var monsterElement = monsterTemplate.cloneNode(true);
 
@@ -1489,9 +1497,10 @@ function addMonsterElement(characters, battle, monsterVnum) {
 }
 
 function addNewMonster(characters, battle, monsterVnum, monsterImage) {
-  if (isValueInArray(monsterVnum, Object.keys(characters.savedMonsters))) return;
+  if (isValueInArray(monsterVnum, Object.keys(characters.savedMonsters)))
+    return;
 
-  characters.savedMonsters[monsterVnum] = {image: monsterImage};
+  characters.savedMonsters[monsterVnum] = { image: monsterImage };
   addMonsterElement(characters, battle, monsterVnum);
   updateSavedMonsters(characters.savedMonsters);
   addBattleChoice(battle, monsterVnum, true);
@@ -1631,13 +1640,15 @@ function monsterManagement(characters, battle) {
     }
   });
 
-  Object.keys(characters.savedMonsters).slice().forEach(function (monsterVnum) {
-    if (isValueInArray(monsterVnum, monsterVnums)) {
-      addMonsterElement(characters, battle, monsterVnum);
-    } else {
-      deleteMonster(characters, battle, monsterVnum);
-    }
-  });
+  Object.keys(characters.savedMonsters)
+    .slice()
+    .forEach(function (monsterVnum) {
+      if (isValueInArray(monsterVnum, monsterVnums)) {
+        addMonsterElement(characters, battle, monsterVnum);
+      } else {
+        deleteMonster(characters, battle, monsterVnum);
+      }
+    });
 }
 
 function removeBattleChoice(battle, name) {
@@ -1698,7 +1709,6 @@ function updateBattleChoice(characters, battle) {
   addChoices(characterNames, false);
   addChoices(monsterNames, true);
 }
-
 
 function isPC(character) {
   if (character.race === 0 || character.race === 1) {
@@ -3963,7 +3973,9 @@ function addPotentialErrorInformation(
         showElement(errorInformation["horse-level"]);
       }
       showElement(errorInformation["horse-stat"]);
-    } else if (isPolymorph(attacker)) {
+    }
+
+    if (isPolymorph(attacker)) {
       if (attacker.polymorphPoint === 0) {
         showElement(errorInformation["polymorph-level"]);
       }
@@ -3993,7 +4005,8 @@ function addPotentialErrorInformation(
   if (isPC(victim)) {
     if (isRiding(victim)) {
       showElement(errorInformation["horse-stat"]);
-    } else if (isPolymorph(victim)) {
+    }
+    if (isPolymorph(victim)) {
       if (attacker.polymorphPoint === 0) {
         showElement(errorInformation["polymorph-level"]);
       }
