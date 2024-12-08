@@ -114,6 +114,11 @@ function extractDamageData(card, cardData) {
   cardData.damage = removeAccent(damageElement.textContent.replace(" + ", " "));
 }
 
+function extractLocData(card, cardData) {
+  const locElement = card.querySelector("[data-loc]");
+  cardData.loc = locElement.dataset.loc;
+}
+
 function getCardData(cardsContainer, filterData, dataExtractionMapping) {
   const cards = cardsContainer.children;
   const activeExtractors = [extractInitData];
@@ -406,6 +411,7 @@ function main_filter() {
     elem: extractElementData,
     type: extractTypeData,
     damage: extractDamageData,
+    loc: extractLocData
   };
 
   const filterData = filterInitialization(filterForm);
