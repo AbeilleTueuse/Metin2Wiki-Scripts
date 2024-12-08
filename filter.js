@@ -39,7 +39,7 @@ function openFilter() {
   filterButton.addEventListener("click", handleDropdown);
 
   function handleDropdown() {
-    showElement(filterDropdown);
+    toggleElement(filterDropdown);
   }
 
   document.addEventListener("mousedown", function (event) {
@@ -180,28 +180,23 @@ function updateCounter(cardData, checkbox, filterCategory) {
 }
 
 function isObjectValuesInRangeFilter(parameters, rangeFilter) {
-  return Object.keys(rangeFilter).every(function (property) {
-    var propertyValue = parameters[property];
-    return (
-      rangeFilter[property].min <= propertyValue &&
-      rangeFilter[property].max >= propertyValue
-    );
-  });
+  return Object.entries(rangeFilter).every(
+    ([property, { min, max }]) =>
+      parameters[property] >= min && parameters[property] <= max
+  );
 }
 
 function filterByName(parameters, filterName) {
   if (filterName) {
-    return parameters.name.indexOf(filterName) !== -1;
+    return parameters.name.includes(filterName);
   }
   return true;
 }
 
 function isObjectValuesInFilter(parameters, filter) {
-  return Object.keys(filter).every(function (property) {
-    return parameters[property].split(" ").some(function (value) {
-      return filter[property].indexOf(value) !== -1;
-    });
-  });
+  return Object.entries(filter).every(([property, values]) =>
+    parameters[property].split(" ").some((value) => values.includes(value))
+  );
 }
 
 function isObjectValuesInFilters(parameters, filter, rangeFilter, filterName) {
