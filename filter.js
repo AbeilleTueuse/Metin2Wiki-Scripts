@@ -272,6 +272,7 @@ function filterInitialization() {
     var span = document.createElement("span");
     span.style.color = "#9F9F9F";
     span.style.fontSize = "12px";
+    span.style.marginLeft = "auto";
     return span;
   }
 
@@ -339,7 +340,8 @@ function filterInitialization() {
       filterObj.init.max = Number(buttonSibling.children[0].firstChild.max);
     }
   });
-
+  console.log(filterParameters);
+  console.log(filterInformation);
   return [filterInformation, filterParameters];
 }
 

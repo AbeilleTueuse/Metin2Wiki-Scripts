@@ -3878,7 +3878,8 @@ function changeMonsterValues(monster, instance, attacker) {
   // Alastor
   if (monster.vnum === 6790) {
     monster.iceResistance = 0;
-    (monster.iceBonus = 0), (monster.lightningResistance = -10);
+    monster.iceBonus = 0;
+    monster.lightningResistance = -10;
     monster.lightningBonus = 65;
   }
 }
