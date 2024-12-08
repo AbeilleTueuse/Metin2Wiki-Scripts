@@ -1,10 +1,3 @@
-mainModal();
-
-function mainModal() {
-  const modalButtons = document.querySelectorAll(".modal-trigger");
-  modalButtons.forEach(handleModal);
-}
-
 function handleModal(button) {
   const modalName = button.dataset.modal;
   let modalContainer;
@@ -62,3 +55,10 @@ function handleModal(button) {
     }
   }
 }
+
+function mainModal() {
+  const modalButtons = document.querySelectorAll(".modal-trigger");
+  modalButtons.forEach(handleModal);
+}
+
+mainModal();

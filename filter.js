@@ -9,533 +9,422 @@ function toNormalForm(str) {
   return removeAccent(str).replace(/[^a-zA-Z0-9 ]/g, "");
 }
 
-function addValueToObject(object, key, value) {
-  if (object[key]) {
-    object[key].push(value);
-  } else {
-    object[key] = [value];
+function editCardData(cardsData) {
+  for (let cardIndex = 0; cardIndex < cardsData.length; cardIndex++) {
+    const cardData = cardsData[cardIndex];
+    const cardName = cardData.card.querySelector("[data-name]").textContent;
+
+    cardData.name = toNormalForm(cardName);
   }
 }
 
-function handleDropdowns(filterInformation) {
-  var form = filterInformation.form;
-  var activeButton = null;
-
-  function toggleDropdown(button, dropdownMenu) {
-    if (button === activeButton) {
-      hideElement(dropdownMenu);
-      activeButton = null;
-    } else {
-      if (activeButton) {
-        hideElement(activeButton.nextElementSibling);
-      }
-      showElement(dropdownMenu);
-      activeButton = button;
-    }
-  }
-
-  function closeDropdowns() {
-    if (activeButton) {
-      hideElement(activeButton.nextElementSibling);
-      activeButton = null;
-    }
-  }
-
-  form.addEventListener("click", function (event) {
-    var target = event.target;
-    var button = target.closest("button");
-
-    if (button) {
-      var dropdownMenu = button.nextElementSibling;
-
-      toggleDropdown(button, dropdownMenu);
-    } else if (!target.closest(".dropdown-menu")) {
-      closeDropdowns();
-    }
-  });
-
-  document.addEventListener("mousedown", function (event) {
-    if (!form.contains(event.target)) {
-      closeDropdowns();
-    }
-  });
-}
-
-function incrementCounter(counterElement, counterValue) {
-  if (counterValue === 0) {
-    showElement(counterElement);
-  }
-
-  counterElement.textContent = counterValue + 1;
-}
-
-function decrementCounter(counterElement, counterValue) {
-  if (counterValue === 1) {
-    hideElement(counterElement);
-  }
-
-  counterElement.textContent = counterValue - 1;
-}
-
-function filterItems(filterInformation, cardInformation) {
-  function showCounter() {
-    var checkbox = filterInformation.checkbox;
-
-    for (var filterName in checkbox) {
-      var values = checkbox[filterName].values;
-
-      for (var filterValue in values) {
-        var span = values[filterValue].span;
-
-        span.textContent = " (" + values[filterValue].value + ")";
-        values[filterValue].value = 0;
-      }
-    }
-  }
-
-  function addCount(cardParameters, checkboxNames, parameter) {
-    cardParameters[parameter].split(" ").forEach(function (cardValue) {
-      checkboxNames[parameter].values[cardValue].value += 1;
-    });
-  }
-
-  function isObjectValuesInRangeFilter(parameters, rangeFilter) {
-    return Object.keys(rangeFilter).every(function (property) {
-      var propertyValue = parameters[property];
-      return (
-        rangeFilter[property].min <= propertyValue &&
-        rangeFilter[property].max >= propertyValue
-      );
-    });
-  }
-
-  function filterByName(parameters, filterName) {
-    if (filterName) {
-      return parameters.name.indexOf(filterName) !== -1;
-    }
-    return true;
-  }
-
-  function isObjectValuesInFilter(parameters, filter) {
-    return Object.keys(filter).every(function (property) {
-      return parameters[property].split(" ").some(function (value) {
-        return filter[property].indexOf(value) !== -1;
-      });
-    });
-  }
-
-  function isObjectValuesInFilters(
-    parameters,
-    filter,
-    rangeFilter,
-    filterName
-  ) {
-    return (
-      isObjectValuesInFilter(parameters, filter) &&
-      filterByName(parameters, filterName) &&
-      isObjectValuesInRangeFilter(parameters, rangeFilter)
-    );
-  }
-
-  var filter = filterInformation.filters.filter;
-  var rangeFilter = filterInformation.filters.rangeFilter;
-  var filterName = filterInformation.filters.filterName;
-  var checkboxNames = filterInformation.checkbox;
-  var listToFilter = cardInformation.listToFilter.children;
-  var cardData = cardInformation.data;
-
-  if (filterInformation.reverse) {
-    var parent = cardInformation.listToFilter;
-    for (
-      var reverseIndex = 1;
-      reverseIndex < listToFilter.length;
-      reverseIndex++
-    ) {
-      parent.insertBefore(listToFilter[reverseIndex], parent.firstChild);
-    }
-    cardInformation.data.reverse();
-    filterInformation.reverse = false;
-  }
-
-  for (var cardIndex = 0; cardIndex < listToFilter.length; cardIndex++) {
-    var card = listToFilter[cardIndex];
-    var cardParameters = cardData[cardIndex];
-    if (
-      isObjectValuesInFilters(cardParameters, filter, rangeFilter, filterName)
-    ) {
-      showElement(card);
-      for (var parameter in checkboxNames) {
-        addCount(cardParameters, checkboxNames, parameter);
-      }
-    } else {
-      hideElement(card);
-    }
-  }
-  showCounter();
-}
-
-function updateFilterObject(filterInformation, cardInformation) {
-  function updateFilter(event, filterByName = false) {
-    function handleNumberType(target) {
-      var [filterName, extremum] = target.id.split("-");
-      var currentValue = Number(target.value);
-      var counterElement = filterInformation.range[filterName].counter;
-      var counterValue = Number(counterElement.textContent);
-      var initialRange = filterInformation.range[filterName].init;
-      var rangeFilter = filterInformation.filters.rangeFilter;
-
-      if (rangeFilter[filterName]) {
-        rangeFilter[filterName][extremum] = currentValue;
-      } else {
-        incrementCounter(counterElement, counterValue);
-        rangeFilter[filterName] = {
-          min: initialRange.min,
-          max: initialRange.max,
-        };
-        rangeFilter[filterName][extremum] = currentValue;
-      }
-      if (
-        rangeFilter[filterName].max === initialRange.max &&
-        rangeFilter[filterName].min === initialRange.min
-      ) {
-        decrementCounter(counterElement, counterValue);
-        delete rangeFilter[filterName];
-      }
-    }
-
-    function handleCheckbox(target) {
-      var filterName = target.id.split("-")[0];
-      var filter = filterInformation.filters.filter;
-      var filterValue = target.dataset.filter;
-      var counterElement = filterInformation.checkbox[filterName].counter;
-      var counterValue = Number(counterElement.textContent);
-
-      if (target.checked) {
-        incrementCounter(counterElement, counterValue);
-        addValueToObject(filter, filterName, filterValue);
-      } else {
-        decrementCounter(counterElement, counterValue);
-        var index = filter[filterName].indexOf(filterValue);
-        if (index !== -1) {
-          if (filter[filterName].length === 1) {
-            delete filter[filterName];
-          } else {
-            filter[filterName].splice(index, 1);
-          }
-        }
-      }
-    }
-
-    var target = event.target;
-
-    if (filterByName) {
-      filterInformation.filters.filterName = toNormalForm(target.value);
-    } else {
-      var type = target.type;
-
-      if (type === "number") {
-        handleNumberType(target);
-      } else if (type === "checkbox") {
-        if (target.id === "filter-reverse") {
-          filterInformation.reverse = true;
-        } else {
-          handleCheckbox(target);
-        }
-      }
-    }
-    filterItems(filterInformation, cardInformation);
-  }
-
-  var form = filterInformation.form;
-  var debounceTimer;
-
-  form.addEventListener("submit", function (event) {
-    event.preventDefault();
-  });
-
-  form.addEventListener("change", function (event) {
-    updateFilter(event);
-  });
-
-  form.addEventListener("input", function (event) {
-    if (event.target.id === "filter-name") {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(function () {
-        updateFilter(event, true);
-      }, 500);
-    }
-  });
-}
-
-function filterInitialization() {
-  function createSpan() {
-    var span = document.createElement("span");
-    span.style.color = "#9F9F9F";
-    span.style.fontSize = "12px";
-    span.style.marginLeft = "auto";
-    return span;
-  }
-
-  function handlefilterParameters(filterParameters, param, filterName) {
-    if (param === "levels") {
-      addValueToObject(filterParameters, "levels", filterName);
-    } else if (param.startsWith("replace_")) {
-      var replace = param.split("replace_")[1].replace("_", " ");
-
-      if (!filterParameters["replace"]) {
-        filterParameters["replace"] = {};
-      }
-      filterParameters["replace"][filterName] = { value: replace };
-    } else if (param === "elem") {
-      filterParameters["elem"] = filterName;
-    }
-  }
-
-  var form = document.getElementById("filter-form");
-  var filters = { filterName: "", filter: {}, rangeFilter: {} };
-  var filterInformation = {
-    form: form,
-    filters: filters,
-    range: {},
-    checkbox: {},
-    reverse: false,
-  };
-  var allButton = form.querySelectorAll("button");
-  var filterParameters = {};
-
-  allButton.forEach(function (button) {
-    var buttonSibling = button.nextElementSibling;
-
-    if (!buttonSibling) return;
-
-    var filterName = buttonSibling.id;
-    var counter = buttonSibling.nextElementSibling;
-    var param = buttonSibling.dataset.param;
-
-    if (!filterName || !counter || !param) return;
-
-    var infoType = filterName.endsWith("-range") ? "range" : "checkbox";
-    var filterName = filterName.replace("-range", "");
-    var filterObj = (filterInformation[infoType][filterName] = {
-      counter: counter,
-    });
-
-    handlefilterParameters(filterParameters, param, filterName);
-
-    if (infoType === "checkbox") {
-      filterObj.values = {};
-      var allInput = buttonSibling.querySelectorAll("input");
-      allInput.forEach(function (input) {
-        var filterValue = input.dataset.filter;
-
-        if (!filterValue) return;
-
-        var span = createSpan();
-        input.parentElement.appendChild(span);
-        filterObj.values[filterValue] = { value: 0, span: span };
-      });
-    } else if (infoType === "range") {
-      filterObj.init = {};
-      filterObj.init.min = Number(buttonSibling.children[0].firstChild.min);
-      filterObj.init.max = Number(buttonSibling.children[0].firstChild.max);
-    }
-  });
-  console.log(filterParameters);
-  console.log(filterInformation);
-  return [filterInformation, filterParameters];
-}
-
-function getCardInformation(filterParameters) {
-  function createDataSelector(name) {
-    return "[data-" + name + "]";
-  }
-
-  var listToFilter = document.getElementById("list-to-filter");
-  var listToFilterChildren = listToFilter.children;
-  var allCardInformation = [];
-  var filterLevelsNames = filterParameters["levels"];
-  var filterWithReplace = filterParameters["replace"];
-  var filterElementName = filterParameters["elem"];
-
-  if (filterLevelsNames) {
-    var [level0, level1] = filterLevelsNames;
-    var levelsSelector = createDataSelector(level0);
-  }
-
-  if (filterWithReplace) {
-    for (var replaceName in filterWithReplace) {
-      filterWithReplace[replaceName].selector = createDataSelector(replaceName);
-    }
-  }
-
-  if (filterElementName) {
-    var elementSelector = createDataSelector(filterElementName);
-  }
-
-  for (
-    var cardIndex = 0;
-    cardIndex < listToFilterChildren.length;
-    cardIndex++
-  ) {
-    var card = listToFilterChildren[cardIndex];
-    var cardInformation = {};
-    var cardNameElement = card.querySelector("[data-name]");
-    cardInformation.name = toNormalForm(cardNameElement.textContent);
-    cardInformation.trueName = cardNameElement.firstChild.title;
-
-    if (filterLevelsNames) {
-      var levelsElement = card.querySelector(levelsSelector);
-      var [levelValue0, levelValue1] = levelsElement.textContent
-        .slice(1, -1)
-        .split(", ");
-      cardInformation[level0] = Number(levelValue0);
-      cardInformation[level1] = removeAccent(levelValue1);
-    }
-
-    if (filterElementName) {
-      var elementChild = card.querySelector(elementSelector).children;
-      var elementValue = "";
-      if (elementChild.length) {
-        for (
-          var elementIndex = 0;
-          elementIndex < elementChild.length;
-          elementIndex++
-        ) {
-          elementValue += elementChild[elementIndex].title + " ";
-        }
-      }
-      elementValue = elementValue.trim() || "Aucun";
-      cardInformation[filterElementName] = removeAccent(elementValue);
-    }
-
-    if (filterWithReplace) {
-      for (var replaceName in filterWithReplace) {
-        var replaceInformation = filterWithReplace[replaceName];
-        var replaceValue = card
-          .querySelector(replaceInformation.selector)
-          .textContent.replace(replaceInformation.value, "");
-        cardInformation[replaceName] = removeAccent(replaceValue);
-      }
-    }
-
-    allCardInformation.push(cardInformation);
-  }
-  allCardInformation = { listToFilter: listToFilter, data: allCardInformation };
-
-  return allCardInformation;
-}
-
-function editCardInformation(cardInformation) {
-  var listToFilterChildren = cardInformation.listToFilter.children;
-
-  for (
-    var cardIndex = 0;
-    cardIndex < listToFilterChildren.length;
-    cardIndex++
-  ) {
-    var card = listToFilterChildren[cardIndex];
-    var cardName = card.querySelector("[data-name]").textContent;
-    cardInformation.data[cardIndex].name = toNormalForm(cardName);
-  }
-}
-
-function observeLanguageChange(cardInformation) {
-  var filterName = document.getElementById("filter-name");
-
+function observeLanguageChange(filterName, cardsData) {
   if (!filterName) {
     return;
   }
 
   var observer = new MutationObserver(function (mutation) {
-    editCardInformation(cardInformation);
+    editCardData(cardsData);
   });
 
   observer.observe(filterName, { attributes: true });
 }
 
-function filterWithUrl(filterInformation) {
-  function processParameter(key, value, filters) {
-    if (key === "name") {
-      var filterName = document.getElementById("filter-name");
-      filterName.value = toNormalForm(value);
-      filters.filterName = value;
-    } else if (Object.keys(filterInformation.checkbox).indexOf(key) !== -1) {
-      var checkboxElement = document.getElementById(key + "-" + value);
-      if (!checkboxElement) return;
-      var counterElement = filterInformation.checkbox[key].counter;
-      var counterValue = Number(counterElement.textContent);
-      incrementCounter(counterElement, counterValue);
-      checkboxElement.checked = true;
-      addValueToObject(filters.filter, key, value);
-    } else if (key === "reverse") {
-      if (value === "1") {
-        filterInformation.reverse = true;
-        var reverseElement = document.getElementById("filter-reverse");
-        if (reverseElement) {
-          reverseElement.checked = true;
-        }
-      }
-    } else {
-      var splitKey = key.split("-")[0];
-      if (Object.keys(filterInformation.range).indexOf(splitKey) !== -1) {
-        var rangeElement = document.getElementById(key);
-        if (!rangeElement) return;
-        rangeElement.value = value;
-        var rangeInformation = filterInformation.range[splitKey];
-        incrementCounter(rangeInformation.counter, 0);
-        var extremum = key.split("-")[1];
-        var rangeFilter = filters.rangeFilter;
-        if (rangeFilter[splitKey]) {
-          rangeFilter[splitKey][extremum] = value;
-        } else {
-          rangeFilter[splitKey] = {
-            min: rangeInformation.init.min,
-            max: rangeInformation.init.max,
-          };
-          rangeFilter[splitKey][extremum] = value;
-        }
-      }
+function openFilter() {
+  const filterButton = document.getElementById("open-filter");
+  const filterDropdown = filterButton.nextElementSibling;
+
+  hideElement(filterDropdown);
+
+  filterButton.addEventListener("click", handleDropdown);
+
+  function handleDropdown() {
+    showElement(filterDropdown);
+  }
+
+  document.addEventListener("mousedown", function (event) {
+    if (
+      !filterButton.contains(event.target) &&
+      !filterDropdown.contains(event.target)
+    ) {
+      hideElement(filterDropdown);
+    }
+  });
+}
+
+function fillData(filter, filterData) {
+  const { filter: category, value } = filter.dataset;
+
+  if (filter.type === "checkbox") {
+    const span = filter.parentElement.lastElementChild;
+    const filterInfo = { value: 0, span };
+    const { checkbox } = filterData;
+
+    checkbox[category] = checkbox[category] || {};
+    checkbox[category][value] = filterInfo;
+  } else if (filter.type === "number") {
+    const { range } = filterData;
+    if (range.hasOwnProperty(category)) {
+      return;
+    }
+    const init = { min: Number(filter.min), max: Number(filter.max) };
+    range[category] = { init: init };
+  }
+}
+
+function extractInitData(card, cardData) {
+  const cardNameElement = card.querySelector("[data-name]");
+
+  cardData.card = card;
+  cardData.name = toNormalForm(cardNameElement.textContent);
+  cardData.trueName = cardNameElement.firstChild.title;
+}
+
+function extractLevelData(card, cardData) {
+  const levelElement = card.querySelector("[data-level]");
+  const [level, rank] = levelElement.textContent.slice(1, -1).split(", ");
+
+  cardData["level"] = Number(level);
+  cardData["rank"] = removeAccent(rank);
+}
+
+function extractElementData(card, cardData) {
+  const elementChild = card.querySelector("[data-elem]").children;
+  let elementValue = "";
+  if (elementChild.length) {
+    for (
+      let elementIndex = 0;
+      elementIndex < elementChild.length;
+      elementIndex++
+    ) {
+      elementValue += elementChild[elementIndex].title + " ";
+    }
+  }
+  elementValue = elementValue.trim() || "Aucun";
+  cardData.elem = removeAccent(elementValue);
+}
+
+function extractTypeData(card, cardData) {
+  const typeElement = card.querySelector("[data-type]");
+  cardData.type = removeAccent(typeElement.textContent.split(" ")[0]);
+}
+
+function extractDamageData(card, cardData) {
+  const damageElement = card.querySelector("[data-damage]");
+  cardData.damage = removeAccent(damageElement.textContent.replace(" + ", " "));
+}
+
+function getCardData(cardsContainer, filterData, dataExtractionMapping) {
+  const cards = cardsContainer.children;
+  const activeExtractors = [extractInitData];
+
+  for (const [key, extractorFunction] of Object.entries(
+    dataExtractionMapping
+  )) {
+    if (
+      filterData.range.hasOwnProperty(key) ||
+      filterData.checkbox.hasOwnProperty(key)
+    ) {
+      activeExtractors.push(extractorFunction);
     }
   }
 
-  var url = new URL(window.location.href);
-  var urlHash = url.hash;
-  var useParams = true;
-  var filters = filterInformation.filters;
+  const cardsData = [];
 
-  if (urlHash) {
-    var start = ".3F";
-    var equal = ".3D";
-    var and = ".26";
-    var startParametersIndex = urlHash.indexOf(start);
+  for (let cardIndex = 0; cardIndex < cards.length; cardIndex++) {
+    const card = cards[cardIndex];
+    const cardData = {};
 
-    if (startParametersIndex !== -1) {
-      useParams = false;
-      var parameters = urlHash.slice(startParametersIndex + start.length);
-
-      parameters.split(and).forEach(function (keyValue) {
-        var [key, value] = keyValue.split(equal);
-        processParameter(key, value, filters);
-      });
+    for (const extractor of activeExtractors) {
+      extractor(card, cardData);
     }
+
+    cardsData.push(cardData);
   }
 
-  if (useParams) {
-    var URLparams = new URLSearchParams(url.search);
+  return cardsData;
+}
 
-    for (var [key, value] of URLparams.entries()) {
-      processParameter(key, value, filters);
+function filterInitialization(filterForm) {
+  const filterData = {
+    form: filterForm,
+    filters: { filterName: "", filter: {}, rangeFilter: {} },
+    range: {},
+    checkbox: {},
+    reverse: false,
+  };
+  const filters = filterForm.querySelectorAll("[data-filter]");
+
+  filters.forEach((filter) => fillData(filter, filterData));
+
+  return filterData;
+}
+
+function displayCounterValue(checkbox) {
+  for (let filterCategory in checkbox) {
+    const category = checkbox[filterCategory];
+
+    for (let filterValue in category) {
+      const valueData = category[filterValue];
+
+      valueData.span.textContent = " (" + valueData.value + ")";
+      valueData.value = 0;
     }
   }
 }
 
-(function () {
-  var [filterInformation, filterParameters] = filterInitialization();
-  var cardInformation = getCardInformation(filterParameters);
+function updateCounter(cardData, checkbox, filterCategory) {
+  cardData[filterCategory].split(" ").forEach((cardValue) => {
+    checkbox[filterCategory][cardValue].value += 1;
+  });
+}
 
-  observeLanguageChange(cardInformation);
-  handleDropdowns(filterInformation);
-  filterWithUrl(filterInformation);
-  filterItems(filterInformation, cardInformation);
-  updateFilterObject(filterInformation, cardInformation);
-})();
+function isObjectValuesInRangeFilter(parameters, rangeFilter) {
+  return Object.keys(rangeFilter).every(function (property) {
+    var propertyValue = parameters[property];
+    return (
+      rangeFilter[property].min <= propertyValue &&
+      rangeFilter[property].max >= propertyValue
+    );
+  });
+}
+
+function filterByName(parameters, filterName) {
+  if (filterName) {
+    return parameters.name.indexOf(filterName) !== -1;
+  }
+  return true;
+}
+
+function isObjectValuesInFilter(parameters, filter) {
+  return Object.keys(filter).every(function (property) {
+    return parameters[property].split(" ").some(function (value) {
+      return filter[property].indexOf(value) !== -1;
+    });
+  });
+}
+
+function isObjectValuesInFilters(parameters, filter, rangeFilter, filterName) {
+  return (
+    isObjectValuesInFilter(parameters, filter) &&
+    filterByName(parameters, filterName) &&
+    isObjectValuesInRangeFilter(parameters, rangeFilter)
+  );
+}
+
+function filterCards(cardsContainer, filterData, cardsData) {
+  const { filters, checkbox } = filterData;
+  const { filter, rangeFilter, filterName } = filters;
+
+  if (filterData.reverse) {
+    for (
+      var reverseIndex = 1;
+      reverseIndex < cardsData.length;
+      reverseIndex++
+    ) {
+      cardsContainer.insertBefore(
+        cardsData[reverseIndex].card,
+        cardsContainer.firstChild
+      );
+    }
+    cardsData.reverse();
+    filterData.reverse = false;
+  }
+
+  for (let cardIndex = 0; cardIndex < cardsData.length; cardIndex++) {
+    const cardData = cardsData[cardIndex];
+
+    if (isObjectValuesInFilters(cardData, filter, rangeFilter, filterName)) {
+      showElement(cardData.card);
+      for (let filterCategory in checkbox) {
+        updateCounter(cardData, checkbox, filterCategory);
+      }
+    } else {
+      hideElement(cardData.card);
+    }
+  }
+
+  displayCounterValue(checkbox);
+}
+
+function handleCheckbox(target, filter) {
+  const { filter: category, value } = target.dataset;
+
+  if (target.checked) {
+    filter[category] = filter[category] || [];
+    filter[category].push(value);
+  } else {
+    const index = filter[category].indexOf(value);
+    if (index !== -1) {
+      filter[category].splice(index, 1);
+    }
+    if (!filter[category].length) {
+      delete filter[category];
+    }
+  }
+}
+
+function handleNumberType(target, rangeFilter, range) {
+  const { filter: category, value: extremum } = target.dataset;
+  const currentValue = Number(target.value);
+  const initialRange = range[category].init;
+
+  if (rangeFilter[category]) {
+    rangeFilter[category][extremum] = currentValue;
+  } else {
+    rangeFilter[category] = {
+      min: initialRange.min,
+      max: initialRange.max,
+    };
+    rangeFilter[category][extremum] = currentValue;
+  }
+  if (
+    rangeFilter[category].max === initialRange.max &&
+    rangeFilter[category].min === initialRange.min
+  ) {
+    delete rangeFilter[category];
+  }
+}
+
+function handleFormEvents(cardsContainer, filterForm, filterData, cardsData) {
+  const { filters, range } = filterData;
+  let debounceTimer;
+
+  filterForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+  });
+
+  filterForm.addEventListener("change", updateFilter);
+
+  filterForm.addEventListener("input", function (event) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (event.target.id === "filter-name") {
+        updateFilter(event, true);
+      }
+    }, 500);
+  });
+
+  function updateFilter(event, filterByName = false) {
+    const target = event.target;
+    const targetType = target.type;
+
+    if (filterByName) {
+      filters.filterName = toNormalForm(target.value);
+    } else if (targetType === "checkbox") {
+      handleCheckbox(target, filters.filter);
+    } else if (targetType === "number") {
+      handleNumberType(target, filters.rangeFilter, range);
+    }
+
+    filterCards(cardsContainer, filterData, cardsData);
+  }
+}
+
+function processParameter(filterName, filterData, key, value) {
+  const { filters } = filterData;
+
+  if (key === "name") {
+    filterName.value = toNormalForm(value);
+    filters.filterName = value;
+  } else if (Object.keys(filterData.checkbox).indexOf(key) !== -1) {
+    const checkboxElement = document.getElementById(key + "-" + value);
+
+    if (!checkboxElement) return;
+
+    checkboxElement.checked = true;
+    filters.filter[key] = filters.filter[key] || [];
+    filters.filter[key].push(value);
+  } else if (key === "reverse") {
+    if (value === "1") {
+      filterData.reverse = true;
+      const reverseElement = document.getElementById("filter-reverse");
+      if (reverseElement) {
+        reverseElement.checked = true;
+      }
+    }
+  } else {
+    const [splitKey, extremum] = key.split("-");
+
+    if (Object.keys(filterData.range).indexOf(splitKey) !== -1) {
+      const rangeElement = document.getElementById(key);
+
+      if (!rangeElement) return;
+
+      rangeElement.value = value;
+
+      const rangeData = filterData.range[splitKey];
+      const rangeFilter = filters.rangeFilter;
+
+      if (rangeFilter[splitKey]) {
+        rangeFilter[splitKey][extremum] = value;
+      } else {
+        rangeFilter[splitKey] = {
+          min: rangeData.init.min,
+          max: rangeData.init.max,
+        };
+        rangeFilter[splitKey][extremum] = value;
+      }
+    }
+  }
+}
+
+function filterWithUrl(filterName, filterData) {
+  const url = new URL(window.location.href);
+  const { hash, search } = url;
+  let useParams = true;
+
+  if (hash) {
+    const start = ".3F";
+    const equal = ".3D";
+    const and = ".26";
+    const startParametersIndex = hash.indexOf(start);
+
+    if (startParametersIndex !== -1) {
+      const parameters = hash.slice(startParametersIndex + start.length);
+
+      parameters.split(and).forEach(function (keyValue) {
+        const [key, value] = keyValue.split(equal);
+        processParameter(filterName, filterData, key, value);
+      });
+
+      useParams = false;
+    }
+  }
+
+  if (useParams) {
+    const URLparams = new URLSearchParams(search);
+
+    for (const [key, value] of URLparams.entries()) {
+      processParameter(filterName, filterData, key, value);
+    }
+  }
+}
+
+function main_filter() {
+  const filterForm = document.getElementById("filter-form");
+  const filterName = document.getElementById("filter-name");
+  const cardsContainer = document.getElementById("cards-container");
+
+  const dataExtractionMapping = {
+    level: extractLevelData,
+    elem: extractElementData,
+    type: extractTypeData,
+    damage: extractDamageData,
+  };
+
+  const filterData = filterInitialization(filterForm);
+  const cardsData = getCardData(
+    cardsContainer,
+    filterData,
+    dataExtractionMapping
+  );
+
+  observeLanguageChange(filterName, cardsData);
+  openFilter();
+  filterWithUrl(filterName, filterData);
+  filterCards(cardsContainer, filterData, cardsData);
+  handleFormEvents(cardsContainer, filterForm, filterData, cardsData);
+}
+
+main_filter();
