@@ -23,7 +23,7 @@ function observeLanguageChange(filterName, cardsData) {
     return;
   }
 
-  var observer = new MutationObserver(function (mutation) {
+  const observer = new MutationObserver(function (mutation) {
     editCardData(cardsData);
   });
 
@@ -218,7 +218,7 @@ function filterCards(cardsContainer, filterData, cardsData) {
 
   if (filterData.reverse) {
     for (
-      var reverseIndex = 1;
+      let reverseIndex = 1;
       reverseIndex < cardsData.length;
       reverseIndex++
     ) {
