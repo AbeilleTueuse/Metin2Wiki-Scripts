@@ -56,7 +56,7 @@ function fillData(filter, filterData) {
   const { filter: category, value } = filter.dataset;
 
   if (filter.type === "checkbox") {
-    const span = filter.parentElement.lastElementChild;
+    const span = filter.parentElement.querySelector("span.counter");
     const filterInfo = { value: 0, span };
     const { checkbox } = filterData;
 
@@ -119,7 +119,7 @@ function extractLocData(card, cardData) {
   cardData.loc = locElement.dataset.loc;
 }
 
-function getCardData(cardsContainer, filterData, dataExtractionMapping) {
+function getCardsData(cardsContainer, filterData, dataExtractionMapping) {
   const cards = cardsContainer.children;
   const activeExtractors = [extractInitData];
 
@@ -321,7 +321,7 @@ function handleFormEvents(cardsContainer, filterForm, filterData, cardsData) {
   }
 }
 
-function processParameter(filterName, filterData, key, value) {
+function processUrlParameter(filterName, filterData, key, value) {
   const { filters } = filterData;
 
   if (key === "name") {
@@ -385,7 +385,7 @@ function filterWithUrl(filterName, filterData) {
 
       parameters.split(and).forEach(function (keyValue) {
         const [key, value] = keyValue.split(equal);
-        processParameter(filterName, filterData, key, value);
+        processUrlParameter(filterName, filterData, key, value);
       });
 
       useParams = false;
@@ -415,7 +415,7 @@ function main_filter() {
   };
 
   const filterData = filterInitialization(filterForm);
-  const cardsData = getCardData(
+  const cardsData = getCardsData(
     cardsContainer,
     filterData,
     dataExtractionMapping
