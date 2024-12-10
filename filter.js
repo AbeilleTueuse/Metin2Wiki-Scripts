@@ -396,7 +396,7 @@ function filterWithUrl(filterName, filterData) {
     const URLparams = new URLSearchParams(search);
 
     for (const [key, value] of URLparams.entries()) {
-      processParameter(filterName, filterData, key, value);
+      processUrlParameter(filterName, filterData, key, value);
     }
   }
 }
