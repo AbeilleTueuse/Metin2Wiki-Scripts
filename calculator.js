@@ -355,7 +355,6 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
 }
 
 function filterUpgrade(
-  selectedRace,
   weaponUpgrade,
   weaponVnum,
   randomAttackValue,
@@ -367,7 +366,7 @@ function filterUpgrade(
   if (weapon.isSerpent) {
     showElement(randomAttackValue);
 
-    if (selectedRace === "sura" || selectedRace === "shaman") {
+    if (weapon.maxMagicAttackValue) {
       showElement(randomMagicAttackValue);
     }
   } else {
@@ -486,7 +485,6 @@ function filterForm(characters, battle) {
           weaponElement.value
         );
         filterUpgrade(
-          selectedRace,
           characterCreation.weaponUpgrade,
           weaponElement.value,
           characters.randomAttackValue,
@@ -512,7 +510,6 @@ function filterForm(characters, battle) {
           characterCreation.weapon.value
         );
         filterUpgrade(
-          characterCreation.race.value,
           characterCreation.weaponUpgrade,
           target.value,
           characters.randomAttackValue,
@@ -933,7 +930,6 @@ function updateForm(
 
   handleWeaponDisplay(characters.weaponDisplay, newWeapon, weaponElement.value);
   filterUpgrade(
-    selectedRace,
     characterCreation.weaponUpgrade,
     weaponElement.value,
     characters.randomAttackValue,
@@ -1519,7 +1515,7 @@ function addButtonsToCards(
   removeButton,
   characters
 ) {
-  var cardToEdit = iframeDoc.getElementById("list-to-filter").children;
+  var cardToEdit = iframeDoc.getElementById("cards-container").children;
   var addedMonsters = Object.keys(characters.savedMonsters);
 
   for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
