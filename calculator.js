@@ -1035,8 +1035,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
+          pseudo +
+          " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -1525,7 +1525,6 @@ function addButtonsToCards(
     cardName = cardName.replace(/\s/g, " ")
 
     if (!nameToVnum.hasOwnProperty(cardName)) {
-      console.log(cardName);
       continue;
     }
 
@@ -2782,7 +2781,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2836,7 +2835,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-                1.1,
+              1.1,
               1
             );
           };
@@ -2846,7 +2845,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2969,8 +2968,8 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk +
-                (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
-                  skillPower,
+              (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
+              skillPower,
               1
             );
           };
@@ -2983,8 +2982,8 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
             return floorMultiplication(
               (atk +
                 (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
-                  skillPower) *
-                1.2,
+                skillPower) *
+              1.2,
               1
             );
           };
@@ -3009,9 +3008,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-                2 * lv +
-                2 * int +
-                (2 * atk + 4 * str + 14 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (2 * atk + 4 * str + 14 * int) * skillPower,
               1
             );
           };
@@ -3023,9 +3022,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk +
-                2 * lv +
-                2 * int +
-                (1.5 * atk + str + 12 * int) * skillPower,
+              2 * lv +
+              2 * int +
+              (1.5 * atk + str + 12 * int) * skillPower,
               1
             );
           };
@@ -3036,9 +3035,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (10 * int + 7 * mav + variation) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (10 * int + 7 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3062,9 +3061,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                5 * lv +
-                2 * int +
-                (13 * int + 6 * mav + variation) * attackFactor * skillPower,
+              5 * lv +
+              2 * int +
+              (13 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3088,9 +3087,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               30 +
-                2 * lv +
-                2 * int +
-                (7 * int + 6 * mav + variation) * attackFactor * skillPower,
+              2 * lv +
+              2 * int +
+              (7 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3111,10 +3110,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-                  attackFactor *
-                  skillPower,
+              6 * lv +
+              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3125,10 +3124,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
-                  attackFactor *
-                  skillPower,
+              6 * lv +
+              (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3142,8 +3141,8 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                5 * lv +
-                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+              5 * lv +
+              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
               1
             );
           };
@@ -3155,10 +3154,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (16 * int + 6 * dex + 6 * mav + 120) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (16 * int + 6 * dex + 6 * mav + 120) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3171,10 +3170,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-                3 * lv +
-                (20 * int + 3 * str + 10 * mav + 100) *
-                  attackFactor *
-                  skillPower,
+              3 * lv +
+              (20 * int + 3 * str + 10 * mav + 100) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3186,10 +3185,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               120 +
-                6 * lv +
-                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
-                  attackFactor *
-                  skillPower,
+              6 * lv +
+              (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3203,10 +3202,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               60 +
-                5 * lv +
-                (8 * int + 2 * dex + 8 * mav + variation) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * dex + 8 * mav + variation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3219,10 +3218,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-                4 * lv +
-                (13 * int + 2 * str + 10 * mav + variation) *
-                  attackFactor *
-                  skillPower,
+              4 * lv +
+              (13 * int + 2 * str + 10 * mav + variation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3236,10 +3235,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               50 +
-                5 * lv +
-                (8 * int + 2 * str + 8 * mav + variation) *
-                  attackFactor *
-                  skillPower,
+              5 * lv +
+              (8 * int + 2 * str + 8 * mav + variation) *
+              attackFactor *
+              skillPower,
               1
             );
           };
@@ -3298,7 +3297,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               1.8 * atk +
-                (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
+              (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
               1
             );
           };
@@ -3377,8 +3376,8 @@ function calcMagicAttackValueAugmentation(
     return Math.max(
       1,
       0.0025056 *
-        magicAttackValueBonus ** 0.602338 *
-        magicAttackValueWeapon ** 1.20476
+      magicAttackValueBonus ** 0.602338 *
+      magicAttackValueWeapon ** 1.20476
     );
   }
   return 0;
