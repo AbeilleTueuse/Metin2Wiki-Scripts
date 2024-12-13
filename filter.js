@@ -6,7 +6,11 @@ function removeAccent(str) {
 }
 
 function toNormalForm(str) {
-  return removeAccent(str).replace(/[^a-zA-Z0-9 ]/g, "");
+  return removeAccent(str)
+    .replace(/-/g, " ")
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function editCardData(cardsData) {

@@ -1522,7 +1522,10 @@ function addButtonsToCards(
     var card = cardToEdit[cardIndex];
     var cardName = card.querySelector("[data-name]").firstChild.title;
 
+    cardName = cardName.replace(/\s/g, " ")
+
     if (!nameToVnum.hasOwnProperty(cardName)) {
+      console.log(cardName);
       continue;
     }
 
