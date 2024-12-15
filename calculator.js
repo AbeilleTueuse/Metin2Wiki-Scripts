@@ -366,7 +366,7 @@ function filterUpgrade(
   if (weapon.isSerpent) {
     showElement(randomAttackValue);
 
-    if (weapon.maxMagicAttackValue) {
+    if (weapon.isMagic) {
       showElement(randomMagicAttackValue);
     }
   } else {
@@ -374,9 +374,7 @@ function filterUpgrade(
     hideElement(randomMagicAttackValue);
   }
 
-  var upgradeNumber = weapon.upgrades.length;
-
-  if (upgradeNumber <= 1) {
+  if (weapon.maxUpgrade < 1) {
     hideElement(weaponUpgrade.parentElement);
   } else {
     showElement(weaponUpgrade.parentElement);
@@ -384,7 +382,7 @@ function filterUpgrade(
 
   weaponUpgrade.innerHTML = "";
 
-  for (var upgrade = 0; upgrade < upgradeNumber; upgrade++) {
+  for (var upgrade = 0; upgrade <= weapon.maxUpgrade; upgrade++) {
     var option = document.createElement("option");
     option.value = upgrade;
     option.textContent = "+" + upgrade;
@@ -1035,8 +1033,8 @@ function handleClickOnCharacter(
       case "delete":
         var result = confirm(
           "Voulez-vous vraiment supprimer définitivement le personnage " +
-          pseudo +
-          " ?"
+            pseudo +
+            " ?"
         );
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
@@ -1522,7 +1520,7 @@ function addButtonsToCards(
     var card = cardToEdit[cardIndex];
     var cardName = card.querySelector("[data-name]").firstChild.title;
 
-    cardName = cardName.replace(/\s/g, " ")
+    cardName = cardName.replace(/\s/g, " ");
 
     if (!nameToVnum.hasOwnProperty(cardName)) {
       continue;
@@ -1751,8 +1749,8 @@ function isRiding(character) {
   return isChecked(character.isRiding);
 }
 
-function isBow(weapon) {
-  return weapon.type === 2;
+function isBow(weaponType) {
+  return weaponType === 2;
 }
 
 function calcAttackFactor(attacker, victim) {
@@ -1771,26 +1769,14 @@ function calcAttackFactor(attacker, victim) {
 
 function calcMainAttackValue(attacker) {
   var leadership = 0;
-  var rawWeaponAttackValue = 0;
+  var weaponGrowth = 0;
 
   if (isPC(attacker)) {
-    var weaponUpgrades = attacker.weapon.upgrades;
-    var maxUpgrade = weaponUpgrades.length - 1;
-
-    if (attacker.hasOwnProperty("weaponUpgrade")) {
-      rawWeaponAttackValue =
-        weaponUpgrades[Math.min(attacker.weaponUpgrade, maxUpgrade)];
-
-      // rare bug when weaponUpgrade is deleted
-    } else {
-      console.log("Warming: weaponUpgrade is missing.");
-      rawWeaponAttackValue = weaponUpgrades[maxUpgrade];
-    }
-
+    weaponGrowth = attacker.weapon.growth;
     leadership = attacker.leadership;
   }
 
-  return 2 * (attacker.level + rawWeaponAttackValue) + leadership;
+  return 2 * (attacker.level + weaponGrowth) + leadership;
 }
 
 function calcStatAttackValue(character) {
@@ -1818,20 +1804,16 @@ function calcSecondaryAttackValue(attacker) {
   var minAttackValueSlash = 0;
   var maxAttackValueSlash = 0;
 
-  var attackerWeapon = attacker.weapon;
-
   if (isPC(attacker)) {
-    if (attackerWeapon.isSerpent) {
-      var rawAttackValue = attackerWeapon.upgrades[attacker.weaponUpgrade];
+    var { type, isSerpent, minAttackValue, maxAttackValue, growth } =
+      attacker.weapon;
 
-      minAttackValue = attacker.minAttackValueRandom - rawAttackValue;
-      maxAttackValue = attacker.maxAttackValueRandom - rawAttackValue;
+    if (isSerpent) {
+      minAttackValue = attacker.minAttackValueRandom - growth;
+      maxAttackValue = attacker.maxAttackValueRandom - growth;
 
       minAttackValue = Math.max(0, minAttackValue);
       maxAttackValue = Math.max(minAttackValue, maxAttackValue);
-    } else {
-      minAttackValue = attackerWeapon.minAttackValue;
-      maxAttackValue = attackerWeapon.maxAttackValue;
     }
 
     minAttackValueSlash = Math.min(
@@ -1845,7 +1827,7 @@ function calcSecondaryAttackValue(attacker) {
 
     attackValueOther += attacker.attackValue;
 
-    if (isBow(attackerWeapon) && !isPolymorph(attacker)) {
+    if (isBow(type) && !isPolymorph(attacker)) {
       attackValueOther += 25;
     }
   } else {
@@ -1879,30 +1861,19 @@ function calcSecondaryAttackValue(attacker) {
 }
 
 function calcMagicAttackValue(attacker) {
-  var minMagicAttackValue = 0;
-  var maxMagicAttackValue = 0;
-
   var minMagicAttackValueSlash = 0;
   var maxMagicAttackValueSlash = 0;
 
-  var attackerWeapon = attacker.weapon;
+  var { isSerpent, minMagicAttackValue, maxMagicAttackValue, growth } = attacker.weapon;
 
-  if (attackerWeapon.isSerpent) {
+  if (isSerpent) {
     minMagicAttackValue = attacker.minMagicAttackValueRandom;
     maxMagicAttackValue = attacker.maxMagicAttackValueRandom;
 
     maxMagicAttackValue = Math.max(minMagicAttackValue, maxMagicAttackValue);
   } else {
-    var rawWeaponAttackValue = attackerWeapon.upgrades[attacker.weaponUpgrade];
-
-    if (!rawWeaponAttackValue) {
-      rawWeaponAttackValue = 0;
-    }
-
-    minMagicAttackValue =
-      attackerWeapon.minMagicAttackValue + rawWeaponAttackValue;
-    maxMagicAttackValue =
-      attackerWeapon.maxMagicAttackValue + rawWeaponAttackValue;
+    minMagicAttackValue += growth;
+    maxMagicAttackValue += growth;
   }
 
   minMagicAttackValueSlash = Math.min(
@@ -2290,6 +2261,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
     } else {
       attacker.weapon = createWeapon(0);
     }
+
+    attacker.weapon.getValues(attacker.weaponUpgrade);
 
     attackValueMeleeMagic =
       attacker.attackValuePercent + Math.min(100, attacker.attackMeleeMagic);
@@ -2781,7 +2754,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2835,7 +2808,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
-              1.1,
+                1.1,
               1
             );
           };
@@ -2845,7 +2818,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               3 * atk +
-              (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
+                (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
               1
             );
           };
@@ -2968,8 +2941,8 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk +
-              (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
-              skillPower,
+                (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
+                  skillPower,
               1
             );
           };
@@ -2982,8 +2955,8 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
             return floorMultiplication(
               (atk +
                 (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
-                skillPower) *
-              1.2,
+                  skillPower) *
+                1.2,
               1
             );
           };
@@ -3008,9 +2981,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               atk +
-              2 * lv +
-              2 * int +
-              (2 * atk + 4 * str + 14 * int) * skillPower,
+                2 * lv +
+                2 * int +
+                (2 * atk + 4 * str + 14 * int) * skillPower,
               1
             );
           };
@@ -3022,9 +2995,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk +
-              2 * lv +
-              2 * int +
-              (1.5 * atk + str + 12 * int) * skillPower,
+                2 * lv +
+                2 * int +
+                (1.5 * atk + str + 12 * int) * skillPower,
               1
             );
           };
@@ -3035,9 +3008,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              5 * lv +
-              2 * int +
-              (10 * int + 7 * mav + variation) * attackFactor * skillPower,
+                5 * lv +
+                2 * int +
+                (10 * int + 7 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3061,9 +3034,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              5 * lv +
-              2 * int +
-              (13 * int + 6 * mav + variation) * attackFactor * skillPower,
+                5 * lv +
+                2 * int +
+                (13 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3087,9 +3060,9 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               30 +
-              2 * lv +
-              2 * int +
-              (7 * int + 6 * mav + variation) * attackFactor * skillPower,
+                2 * lv +
+                2 * int +
+                (7 * int + 6 * mav + variation) * attackFactor * skillPower,
               1
             );
           };
@@ -3110,10 +3083,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 29 * int + 9 * mav) *
-              attackFactor *
-              skillPower,
+                6 * lv +
+                (5 * vit + 5 * dex + 29 * int + 9 * mav) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3124,10 +3097,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
-              attackFactor *
-              skillPower,
+                6 * lv +
+                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3141,8 +3114,8 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-              5 * lv +
-              (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
+                5 * lv +
+                (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
               1
             );
           };
@@ -3154,10 +3127,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               60 +
-              5 * lv +
-              (16 * int + 6 * dex + 6 * mav + 120) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (16 * int + 6 * dex + 6 * mav + 120) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3170,10 +3143,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav) {
             return floorMultiplication(
               70 +
-              3 * lv +
-              (20 * int + 3 * str + 10 * mav + 100) *
-              attackFactor *
-              skillPower,
+                3 * lv +
+                (20 * int + 3 * str + 10 * mav + 100) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3185,10 +3158,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               120 +
-              6 * lv +
-              (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
-              attackFactor *
-              skillPower,
+                6 * lv +
+                (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3202,10 +3175,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               60 +
-              5 * lv +
-              (8 * int + 2 * dex + 8 * mav + variation) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (8 * int + 2 * dex + 8 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3218,10 +3191,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               40 +
-              4 * lv +
-              (13 * int + 2 * str + 10 * mav + variation) *
-              attackFactor *
-              skillPower,
+                4 * lv +
+                (13 * int + 2 * str + 10 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3235,10 +3208,10 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (mav, variation) {
             return floorMultiplication(
               50 +
-              5 * lv +
-              (8 * int + 2 * str + 8 * mav + variation) *
-              attackFactor *
-              skillPower,
+                5 * lv +
+                (8 * int + 2 * str + 8 * mav + variation) *
+                  attackFactor *
+                  skillPower,
               1
             );
           };
@@ -3297,7 +3270,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               1.8 * atk +
-              (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
+                (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
               1
             );
           };
@@ -3376,8 +3349,8 @@ function calcMagicAttackValueAugmentation(
     return Math.max(
       1,
       0.0025056 *
-      magicAttackValueBonus ** 0.602338 *
-      magicAttackValueWeapon ** 1.20476
+        magicAttackValueBonus ** 0.602338 *
+        magicAttackValueWeapon ** 1.20476
     );
   }
   return 0;
@@ -3882,20 +3855,45 @@ function changeMonsterValues(monster, instance, attacker) {
   }
 }
 
-function createWeapon(weaponVnum) {
-  var weapon = weaponData[weaponVnum];
-  var weaponName = weapon[0];
-  var serpentVnums = [360, 380, 1210, 2230, 3250, 5200, 6150, 7330] 
+function createWeapon(vnum) {
+  var weapon = copyObject(weaponData[vnum]);
+  var serpentVnums = [360, 380, 1210, 2230, 3250, 5200, 6150, 7330];
+  var weaponValues = weapon[1];
+  var isSerpent = isValueInArray(Number(vnum), serpentVnums);
+  var isSpecial = Array.isArray(weaponValues[0]);
+  var isMagic;
+
+  if (isSpecial) {
+    isMagic = weaponValues[0][1] > 0;
+  } else {
+    isMagic = weaponValues[1] > 0;
+  }
 
   return {
-    name: weaponName,
-    type: weapon[1],
-    minAttackValue: weapon[2][2],
-    maxAttackValue: weapon[2][3],
-    minMagicAttackValue: weapon[2][0],
-    maxMagicAttackValue: weapon[2][1],
-    upgrades: weapon[3],
-    isSerpent: isValueInArray(Number(weaponVnum), serpentVnums),
+    type: weapon[0],
+    maxUpgrade: weapon[2].length - 1,
+    isSerpent: isSerpent,
+    isMagic: isMagic,
+    getValues: function (upgrade) {
+      var currentWeaponValues = weaponValues;
+
+      if (upgrade === undefined) {
+        // rare bug when weaponUpgrade is deleted
+        console.warn("WeaponUpgrade is missing.");
+        upgrade = this.maxUpgrade;
+      }
+      upgrade = Math.min(upgrade, this.maxUpgrade);
+
+      if (isSpecial) {
+        currentWeaponValues = weaponValues[upgrade];
+      }
+
+      this.minAttackValue = currentWeaponValues[2];
+      this.maxAttackValue = currentWeaponValues[3];
+      this.minMagicAttackValue = currentWeaponValues[0];
+      this.maxMagicAttackValue = currentWeaponValues[1];
+      this.growth = weapon[2][upgrade];
+    },
   };
 }
 
@@ -5047,7 +5045,7 @@ function loadStyle(src) {
 
 (function () {
   var javascriptSource =
-    "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
+    "/index.php?title=Utilisateur:Ankhseram/test.js&action=raw&ctype=text/javascript";
   var cssSource =
     "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
   var chartSource = "https://cdn.jsdelivr.net/npm/chart.js";
