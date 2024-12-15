@@ -331,11 +331,11 @@ function getSelectedWeapon(weaponCategory) {
 }
 
 function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
-  var newImage = newWeapon.nextElementSibling.cloneNode();
+  var newImage = newWeapon.nextElementSibling;
   var newText = document.createElement("span");
   var oldImage = weaponDisplay.firstChild;
   var oldText = oldImage.nextElementSibling;
-  var weaponName = createWeapon(weaponVnum).name;
+  var weaponName = newImage.nextElementSibling.dataset.o;
 
   if (weaponVnum == 0) {
     newText.textContent = " " + weaponName + " ";
@@ -350,7 +350,7 @@ function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
     newText.appendChild(document.createTextNode(" "));
   }
 
-  weaponDisplay.replaceChild(newImage, oldImage);
+  weaponDisplay.replaceChild(newImage.cloneNode(), oldImage);
   weaponDisplay.replaceChild(newText, oldText);
 }
 
@@ -3885,6 +3885,7 @@ function changeMonsterValues(monster, instance, attacker) {
 function createWeapon(weaponVnum) {
   var weapon = weaponData[weaponVnum];
   var weaponName = weapon[0];
+  var serpentVnums = [360, 380, 1210, 2230, 3250, 5200, 6150, 7330] 
 
   return {
     name: weaponName,
@@ -3894,7 +3895,7 @@ function createWeapon(weaponVnum) {
     minMagicAttackValue: weapon[2][0],
     maxMagicAttackValue: weapon[2][1],
     upgrades: weapon[3],
-    isSerpent: isValueInArray("serpent", weaponName.toLowerCase()),
+    isSerpent: isValueInArray(Number(weaponVnum), serpentVnums),
   };
 }
 
