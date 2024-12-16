@@ -306,7 +306,7 @@ function filterWeapon(
   var allowedWeapons = allowedWeaponsPerRace[selectedRace];
 
   if (!selectValueIsChanged) {
-    var weaponType = weaponData[weaponElement.value][1];
+    var weaponType = createWeapon(weaponElement.value).type;
 
     if (!isValueInArray(weaponType, allowedWeapons)) {
       weaponElement.value = 0;
