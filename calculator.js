@@ -513,6 +513,10 @@ function filterForm(characters, battle) {
           characters.randomAttackValue,
           characters.randomMagicAttackValue
         );
+        handleBonusVariationUpdate(
+          characterCreation,
+          characters.bonusVariation
+        );
         break;
       case "isPolymorph":
         filterCheckbox(
