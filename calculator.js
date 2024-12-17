@@ -1810,7 +1810,10 @@ function calcSecondaryAttackValue(attacker) {
 
     if (isSerpent) {
       minAttackValue = Math.max(0, attacker.minAttackValueRandom - growth);
-      maxAttackValue = Math.max(minAttackValue, attacker.maxAttackValueRandom - growth);
+      maxAttackValue = Math.max(
+        minAttackValue,
+        attacker.maxAttackValueRandom - growth
+      );
     }
 
     minAttackValueSlash = Math.min(
@@ -1861,11 +1864,15 @@ function calcMagicAttackValue(attacker) {
   var minMagicAttackValueSlash = 0;
   var maxMagicAttackValueSlash = 0;
 
-  var { isSerpent, minMagicAttackValue, maxMagicAttackValue, growth } = attacker.weapon;
+  var { isSerpent, minMagicAttackValue, maxMagicAttackValue, growth } =
+    attacker.weapon;
 
   if (isSerpent) {
     minMagicAttackValue = Math.max(0, attacker.minMagicAttackValueRandom);
-    maxMagicAttackValue = Math.max(minMagicAttackValue, attacker.maxMagicAttackValueRandom);
+    maxMagicAttackValue = Math.max(
+      minMagicAttackValue,
+      attacker.maxMagicAttackValueRandom
+    );
   } else {
     minMagicAttackValue += growth;
     maxMagicAttackValue += growth;
