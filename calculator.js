@@ -1560,6 +1560,7 @@ function getMonsterImage(addButton) {
 
 function handleiFrame(category, iframe, nameToVnum, characters, battle) {
   var [addButton, removeButton] = characters.monsterButtonTemplates.children;
+  var loadingAnimation = iframe.previousElementSibling;
 
   iframe.src = mw.util.getUrl(category);
 
@@ -1581,6 +1582,9 @@ function handleiFrame(category, iframe, nameToVnum, characters, battle) {
       removeButton,
       characters
     );
+
+    hideElement(loadingAnimation);
+    showElement(iframe);
 
     iframeDoc.addEventListener("click", function (event) {
       var target = event.target;
