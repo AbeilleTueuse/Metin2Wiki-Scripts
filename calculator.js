@@ -330,7 +330,9 @@ function getSelectedWeapon(weaponCategory) {
   return weaponCategory.querySelector("input[type='radio']:checked");
 }
 
-function handleWeaponDisplay(weaponDisplay, newWeapon, weaponVnum) {
+function handleWeaponDisplay(weaponCategory, weaponDisplay, weaponVnum, newWeapon) {
+  var newWeapon = newWeapon || getSelectedWeapon(weaponCategory);
+
   var newImage = newWeapon.nextElementSibling;
   var newText = document.createElement("span");
   var oldImage = weaponDisplay.firstChild;
@@ -359,9 +361,9 @@ function filterUpgrade(
   weaponVnum,
   randomAttackValue,
   randomMagicAttackValue,
-  currentUpgrade
 ) {
   var weapon = createWeapon(weaponVnum);
+  var currentUpgrade = Number(weaponUpgrade.value);
 
   if (weapon.isSerpent) {
     showElement(randomAttackValue);
@@ -381,18 +383,23 @@ function filterUpgrade(
   }
 
   weaponUpgrade.innerHTML = "";
+  var lastOption;
 
   for (var upgrade = 0; upgrade <= weapon.maxUpgrade; upgrade++) {
     var option = document.createElement("option");
     option.value = upgrade;
     option.textContent = "+" + upgrade;
     weaponUpgrade.appendChild(option);
+
+    if (upgrade === currentUpgrade) {
+      option.selected = true;
+    }
+
+    lastOption = option;
   }
-  if (currentUpgrade === undefined) {
-    option.selected = true;
-  } else {
-    weaponUpgrade.value = currentUpgrade;
-    currentUpgrade = undefined;
+
+  if ((currentUpgrade > weapon.maxUpgrade || !currentUpgrade) && lastOption) {
+    lastOption.selected = true;
   }
 }
 
@@ -475,18 +482,16 @@ function filterForm(characters, battle) {
           characters.weaponCategory,
           allowedWeaponsPerRace
         );
-
-        var newWeapon = getSelectedWeapon(characters.weaponCategory);
         handleWeaponDisplay(
+          characters.weaponCategory,
           characters.weaponDisplay,
-          newWeapon,
           weaponElement.value
         );
         filterUpgrade(
           characterCreation.weaponUpgrade,
           weaponElement.value,
           characters.randomAttackValue,
-          characters.randomMagicAttackValue
+          characters.randomMagicAttackValue,
         );
         filterSkills(classChoice.value, characters.skillElementsToFilter);
 
@@ -502,10 +507,13 @@ function filterForm(characters, battle) {
         }
         break;
       case "weapon":
+        var weaponElement = characterCreation.weapon;
+
         handleWeaponDisplay(
+          characters.weaponCategory,
           characters.weaponDisplay,
-          target,
-          characterCreation.weapon.value
+          weaponElement.value,
+          target
         );
         filterUpgrade(
           characterCreation.weaponUpgrade,
@@ -923,16 +931,12 @@ function updateForm(
     battle.constants.allowedWeaponsPerRace,
     true
   );
-
-  var newWeapon = getSelectedWeapon(characters.weaponCategory);
-
-  handleWeaponDisplay(characters.weaponDisplay, newWeapon, weaponElement.value);
+  handleWeaponDisplay(characters.weaponCategory, characters.weaponDisplay, weaponElement.value);
   filterUpgrade(
     characterCreation.weaponUpgrade,
     weaponElement.value,
     characters.randomAttackValue,
     characters.randomMagicAttackValue,
-    formData.weaponUpgrade
   );
   filterCheckbox(
     characterCreation.isPolymorph,
@@ -5054,7 +5058,7 @@ function loadStyle(src) {
 
 (function () {
   var javascriptSource =
-    "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
+    "/index.php?title=Utilisateur:Ankhseram/test.js&action=raw&ctype=text/javascript";
   var cssSource =
     "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
   var chartSource = "https://cdn.jsdelivr.net/npm/chart.js";
