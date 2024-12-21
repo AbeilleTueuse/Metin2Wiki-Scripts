@@ -161,6 +161,10 @@ function filterInitialization(filterForm) {
     range: {},
     checkbox: {},
     reverse: false,
+    filterCounter: {
+      count: 0,
+      span: document.getElementById("filter-counter"),
+    }
   };
   const filters = filterForm.querySelectorAll("[data-filter]");
 
@@ -217,7 +221,7 @@ function isObjectValuesInFilters(parameters, filter, rangeFilter, filterName) {
 }
 
 function filterCards(cardsContainer, filterData, cardsData) {
-  const { filters, checkbox } = filterData;
+  const { filters, checkbox, filterCounter } = filterData;
   const { filter, rangeFilter, filterName } = filters;
 
   if (filterData.reverse) {
@@ -249,14 +253,16 @@ function filterCards(cardsContainer, filterData, cardsData) {
   }
 
   displayCounterValue(checkbox);
+  updateFilterCounter(filterCounter);
 }
 
-function handleCheckbox(target, filter) {
+function handleCheckbox(target, filter, filterCounter) {
   const { filter: category, value } = target.dataset;
 
   if (target.checked) {
     filter[category] = filter[category] || [];
     filter[category].push(value);
+    filterCounter.count += 1;
   } else {
     const index = filter[category].indexOf(value);
     if (index !== -1) {
@@ -265,10 +271,11 @@ function handleCheckbox(target, filter) {
     if (!filter[category].length) {
       delete filter[category];
     }
+    filterCounter.count -= 1;
   }
 }
 
-function handleNumberType(target, rangeFilter, range) {
+function handleNumberType(target, rangeFilter, range, filterCounter) {
   const { filter: category, value: extremum } = target.dataset;
   const currentValue = Number(target.value);
   const initialRange = range[category].init;
@@ -281,17 +288,27 @@ function handleNumberType(target, rangeFilter, range) {
       max: initialRange.max,
     };
     rangeFilter[category][extremum] = currentValue;
+    filterCounter.count += 1;
   }
   if (
     rangeFilter[category].max === initialRange.max &&
     rangeFilter[category].min === initialRange.min
   ) {
     delete rangeFilter[category];
+    filterCounter.count -= 1;
+  }
+}
+
+function updateFilterCounter(filterCounter) {
+  if (filterCounter.count) {
+    filterCounter.span.textContent = `(${filterCounter.count})`;
+  } else {
+    filterCounter.span.textContent = "";
   }
 }
 
 function handleFormEvents(cardsContainer, filterForm, filterData, cardsData) {
-  const { filters, range } = filterData;
+  const { filters, range, filterCounter } = filterData;
   let debounceTimer;
 
   filterForm.addEventListener("submit", function (event) {
@@ -316,9 +333,9 @@ function handleFormEvents(cardsContainer, filterForm, filterData, cardsData) {
     if (filterByName) {
       filters.filterName = toNormalForm(target.value);
     } else if (targetType === "checkbox") {
-      handleCheckbox(target, filters.filter);
+      handleCheckbox(target, filters.filter, filterCounter);
     } else if (targetType === "number") {
-      handleNumberType(target, filters.rangeFilter, range);
+      handleNumberType(target, filters.rangeFilter, range, filterCounter);
     }
 
     filterCards(cardsContainer, filterData, cardsData);
@@ -326,7 +343,7 @@ function handleFormEvents(cardsContainer, filterForm, filterData, cardsData) {
 }
 
 function processUrlParameter(filterName, filterData, key, value) {
-  const { filters } = filterData;
+  const { filters, filterCounter } = filterData;
 
   if (key === "name") {
     filterName.value = toNormalForm(value);
@@ -339,6 +356,7 @@ function processUrlParameter(filterName, filterData, key, value) {
     checkboxElement.checked = true;
     filters.filter[key] = filters.filter[key] || [];
     filters.filter[key].push(value);
+    filterCounter.count += 1;
   } else if (key === "reverse") {
     if (value === "1") {
       filterData.reverse = true;
@@ -368,6 +386,7 @@ function processUrlParameter(filterName, filterData, key, value) {
           max: rangeData.init.max,
         };
         rangeFilter[splitKey][extremum] = value;
+        filterCounter.count += 1;
       }
     }
   }
