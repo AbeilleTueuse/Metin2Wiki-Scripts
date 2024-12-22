@@ -158,6 +158,25 @@ table.sticky-header-column th:first-child {
   padding: 0 5px;
   background: none;
   background-color: black;
+  color: white;
+  white-space: nowrap;
+}
+
+.monster-card > :first-child a {
+  color: white;
+}
+
+.monster-card > :nth-child(2) {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.monster-card > :nth-child(3) {
+  background: rgba(0, 0, 0, 0.1);
+  display: grid;
+  justify-content: center;
+  align-items: start;
 }
 
 button.brown {
