@@ -1,0 +1,740 @@
+/* Le CSS placé ici sera chargé sur toutes les pages */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/*
+  body {
+    background-image: url('https://fr-wiki.metin2.gameforge.com/images/b/bf/Fondhalloween.png');
+  }
+  */
+
+body {
+  background-image: url("https://fr-wiki.metin2.gameforge.com/images/1/15/Fond2015.jpg");
+}
+
+#mw-content ul {
+  margin-bottom: 0.3em;
+}
+
+#mw-content ol {
+  list-style: none;
+  counter-reset: custom-counter;
+  margin: 0.3em 0 0.3em 1.6em;
+  padding: 0;
+}
+
+ol li {
+  padding: 0;
+  counter-increment: custom-counter;
+}
+
+ol li::marker {
+  content: counter(custom-counter) ".  ";
+  font-weight: bold;
+}
+
+td,
+th {
+  padding: 2px;
+}
+
+.map span.mw-collapsible-toggle {
+  padding-right: 10px;
+}
+
+table.map a.mw-collapsible-text,
+.prettytable > span.mw-collapsible-toggle,
+.prettytable > span.mw-collapsible-toggle > a {
+  color: #ffffff;
+}
+
+.boxesheaderbackground,
+.cadre > div:first-child {
+  background: repeat
+    url("https://fr-wiki.metin2.gameforge.com/images/a/a7/Boxheaderbrown.png");
+}
+
+.cadre {
+  border: 1px solid #2f1d1f;
+  border-radius: 15px 0;
+  width: 100%;
+  box-shadow: 3px 3px 9px 0px #544e41;
+}
+
+.cadre > div:first-child {
+  text-align: center;
+  color: white;
+  line-height: 25px;
+  overflow: hidden;
+  border-top-left-radius: 15px;
+}
+
+.fondfenetre,
+.sous-titre,
+table.pretty-table th {
+  background: url("https://fr-wiki.metin2.gameforge.com/images/8/89/Fondfenetre.png")
+    repeat;
+  color: white;
+}
+
+table.pretty-table td {
+  padding: 5px 10px;
+}
+
+table.pretty-table th {
+  padding: 2px 10px;
+  font-weight: normal;
+  font-size: 1.1em;
+}
+
+table.pretty-table tbody > *:nth-child(2n + 1) > td {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+table.pretty-table tr:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+table.pretty-table tr:first-child > th:first-child {
+  border-radius: 8px 0 0 0;
+  overflow: hidden;
+}
+
+table.pretty-table caption {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.fondfenetre a,
+.fondfenetre span,
+table.pretty-table th a,
+table.pretty-table th span {
+  color: white;
+}
+
+table.sticky-header-row thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+table.sticky-header-column th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 20;
+}
+
+.sous-titre {
+  max-width: 180px;
+  border: 1px solid black;
+  border-radius: 8px;
+  color: white;
+}
+
+.modeleAnnonce {
+  border-image: url("https://fr-wiki.metin2.gameforge.com/images/f/fb/Modeleannonce.png")
+    17 35 3 fill / auto / 0 repeat;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+}
+
+.monster-card {
+  border: 1px black solid;
+  padding: 5px;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+
+.monster-card > :first-child {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  line-height: 25px;
+  padding: 0 5px;
+  background: none;
+  background-color: black;
+}
+
+button.brown {
+  background: #651e10;
+}
+
+button.brown-transparent {
+  background: #651e10cc;
+}
+
+button.brown:hover,
+button.brown:focus {
+  background: #551a0e;
+}
+
+button.red {
+  background: #ef4444;
+}
+
+button.red:hover,
+button.red:focus {
+  background: #b91c1c;
+}
+
+button:active {
+  opacity: 0.8;
+}
+
+.button {
+  border: 2px solid grey;
+  padding: 0 12px;
+  line-height: 25px;
+  border-radius: 16px;
+  background: rgba(234, 234, 234);
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: transparent;
+}
+
+.modal {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.1);
+  transition: visibility 0s linear 0.25s, opacity 0.25s 0s, transform 0.25s;
+}
+
+.close-button {
+  transition: color 0.2s linear, background-color 0.2s linear;
+}
+
+.close-button:hover {
+  background-color: red;
+  color: #ffffff;
+}
+
+.show-modal {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  transition: visibility 0s linear 0s, opacity 0.25s 0s, transform 0.25s;
+}
+
+.cacheOrdi,
+.gen-active {
+  display: block;
+}
+
+.texte-long,
+.texte-long-2 {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.texte-long:hover,
+.texte-long-2:hover {
+  white-space: normal;
+}
+
+.shop-img img {
+  height: auto;
+  width: auto;
+  max-height: 130px;
+  max-width: 130px;
+}
+
+#mw-content .soulignement > a:link {
+  text-decoration: none;
+}
+
+.popContenu {
+  display: inline-block;
+  transition: all 0.4s ease;
+}
+
+.popInfo:hover .popContenu {
+  opacity: 1 !important;
+  transition: all 0.4s ease;
+}
+
+.cadreFenetre {
+  border: solid;
+  border-image: url("https://fr-wiki.metin2.gameforge.com/images/1/11/Cadrefenetre.png")
+    11 fill / auto / 0 repeat;
+  padding: 10px;
+  backdrop-filter: blur(4px);
+}
+
+.tabber-active.button {
+  background: rgba(75, 85, 95);
+  color: white;
+  border: 2px solid rgba(75, 85, 95);
+}
+
+ul.subpage {
+  display: flex;
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  background: rgba(81, 36, 16, 0.3);
+  overflow: hidden;
+  line-height: 30px;
+  white-space: nowrap;
+}
+
+.subpage a {
+  padding-left: 20px;
+  background: #512410;
+  display: inline-block;
+  line-height: 30px;
+  position: relative;
+  color: #f1de8e;
+  cursor: pointer;
+}
+
+.subpage a:before,
+.subpage a:after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  right: 0;
+  padding: 1px 0;
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-left: 14px solid white;
+  transform: translate(14px);
+  z-index: 1;
+}
+
+.subpage a:after {
+  border-left: 14px solid #512410;
+  transform: translate(13px);
+  z-index: 2;
+}
+
+.subpage > li:last-child {
+  padding-left: 20px;
+}
+
+ul.subpage > li:first-child {
+  flex-shrink: 0;
+}
+
+ul.subpage > li:first-child > a {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+}
+
+ul.subpage > li > a:hover {
+  background: #9d5b37;
+}
+
+ul.subpage > li > a:hover:after {
+  border-left-color: #9d5b37;
+}
+
+.image-sizing img,
+.image-sizing-200 img,
+.image-sizing-none img {
+  height: auto;
+  width: auto;
+  max-height: 300px;
+  max-width: 100%;
+}
+
+.image-sizing-200 img {
+  max-height: 200px;
+}
+
+.image-sizing-none img {
+  max-height: none;
+}
+
+div.ul-res ul {
+  margin: 0;
+  list-style: none;
+}
+
+.tab-glob {
+  display: flex;
+  flex-direction: row;
+  margin: 10px 0;
+  column-gap: 2px;
+  align-items: flex-start;
+}
+
+.tab-glob > :first-child {
+  display: grid;
+  grid-template-columns: max-content;
+  row-gap: 2px;
+}
+
+.tab-glob > :first-child > * {
+  border: 1px black solid;
+}
+
+.tab-glob > :first-child > *:not(.fondfenetre) {
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tab-glob > :nth-child(2) {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tab-glob > :nth-child(2) > :first-child {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(75px, 1fr));
+  gap: 2px;
+}
+
+.tab-glob > :nth-child(2) > :first-child > * {
+  border: 1px black solid;
+}
+
+.tab-glob > :nth-child(2) > :first-child > :not(.fondfenetre) {
+  display: flex;
+}
+
+.tab-glob > :nth-child(2) > :first-child > :not(.fondfenetre) > * {
+  margin: auto;
+}
+
+.list-equip {
+  padding: 5px;
+  border: 1px solid #2f1d1f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.list-equip > :first-child {
+  width: 100%;
+  line-height: 25px;
+}
+
+.list-equip > :first-child > * {
+  padding: 0 5px;
+}
+
+.fabrication {
+  position: relative;
+}
+
+.fabrication > * {
+  position: absolute;
+  top: -188px;
+}
+
+.fabrication > .bottom-fab,
+.fabrication > .bottom-fab ~ * {
+  top: -58px;
+}
+
+.fabrication > * > *:nth-child(2) {
+  position: relative;
+}
+
+.fabrication > * > *:nth-child(2) > * {
+  position: absolute;
+  top: -18px;
+}
+
+.fabrication > * > *:nth-child(n + 3) {
+  position: absolute;
+  top: 100px;
+}
+
+.info-boutique ul {
+  list-style-image: none;
+}
+
+.info-boutique p:last-child {
+  margin-bottom: 0;
+}
+
+kbd {
+  background-color: #eee;
+  border-radius: 3px;
+  border: 1px solid #b4b4b4;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 20%), 0 2px 0 0 rgb(255 255 255 / 70%) inset;
+  color: #333;
+  display: inline-block;
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+  white-space: nowrap;
+}
+
+.top-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  cursor: pointer;
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(
+    180deg,
+    rgba(124, 200, 65, 1) 0%,
+    rgba(113, 161, 85, 1) 50%,
+    rgba(64, 117, 39, 1) 50%,
+    rgba(46, 97, 31, 1) 100%
+  );
+  border: 1px solid #d0af52;
+  box-shadow: 1px 1px 2px #000, inset 1px 1px #090200, inset -1px -1px #090200;
+  transform: translateY(100px);
+  transition: all 0.5s ease;
+}
+
+.top-button:after {
+  content: "";
+  height: 32px;
+  width: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23fffacb' height='32' viewBox='0 -960 960 960' width='32'%3E%3Cpath d='m296-345-56-56 240-240 240 240-56 56-184-184-184 184Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+}
+
+.show-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ul-row ul {
+  display: flex;
+  column-gap: 30px;
+  flex-wrap: wrap;
+  overflow: hidden;
+  margin: 0;
+  list-style-image: none;
+}
+
+.flex {
+  display: flex;
+}
+
+#catlinks {
+  margin-top: 10px;
+}
+
+.improved-collapsible > .mw-collapsible-toggle {
+  grid-area: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  float: initial;
+  z-index: 1;
+  padding-right: 5px;
+}
+
+.improved-collapsible .mw-collapsible-toggle:before {
+  content: "";
+}
+
+.improved-collapsible .mw-collapsible-text {
+  display: none;
+}
+
+.improved-collapsible .mw-collapsible-toggle:after {
+  width: 32px;
+  height: 32px;
+  content: "";
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23000000' height='32' viewBox='0 -960 960 960' width='32'%3E%3Cpath d='M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  transition: transform 0.2s ease-in-out;
+}
+
+.improved-collapsible .mw-collapsible-toggle-expanded:after {
+  transform: rotate(-180deg);
+}
+
+.tooltip-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 -960 960 960' width='24'%3E%3Cpath d='M443-285h75v-234h-75v234Zm36.895-311Q496-596 507-606.895q11-10.894 11-27Q518-650 507.105-661q-10.894-11-27-11Q464-672 453-661.105q-11 10.894-11 27Q442-618 452.895-607q10.894 11 27 11ZM480-90q-80.907 0-152.065-30.763-71.159-30.763-123.797-83.5Q151.5-257 120.75-328.087 90-399.175 90-480q0-80.907 30.763-152.065 30.763-71.159 83.5-123.797Q257-808.5 328.087-839.25 399.175-870 480-870q80.907 0 152.065 30.763 71.159 30.763 123.797 83.5Q808.5-703 839.25-631.913 870-560.825 870-480q0 80.907-30.763 152.065-30.763 71.159-83.5 123.797Q703-151.5 631.913-120.75 560.825-90 480-90Zm0-75q131.5 0 223.25-91.75T795-480q0-131.5-91.75-223.25T480-795q-131.5 0-223.25 91.75T165-480q0 131.5 91.75 223.25T480-165Zm0-315Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+}
+
+.tooltip-info {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 290px;
+  width: max-content;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.tooltip-info:after {
+  content: "";
+  border: 8px solid transparent;
+  border-top-color: inherit;
+  position: absolute;
+  left: calc(50% - 8px);
+  top: 100%;
+  z-index: 50;
+}
+
+.tooltip-icon:hover > .tooltip-info {
+  opacity: 1;
+  visibility: visible;
+}
+
+input,
+input[type="checkbox"],
+select {
+  border: 3px #d0e0e3 solid;
+}
+
+input[type="checkbox"] {
+  background-color: white;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #19bd94;
+  border: none;
+  position: relative;
+}
+
+input[type="checkbox"]:checked:after {
+  content: "";
+  position: absolute;
+  background: transparent;
+  left: 20%;
+  top: 20%;
+  width: 45%;
+  height: 25%;
+  transform: rotate(-45deg);
+  border: 0.18em white solid;
+  border-top: none;
+  border-right: none;
+}
+
+.cacheTel,
+.tabber-container > :last-child > :not(.tabber-active),
+.tabber-noactive {
+  display: none;
+}
+
+@keyframes pnj-square {
+  from {
+    background-color: #f80000;
+  }
+  to {
+    background-color: white;
+  }
+}
+
+@keyframes pnj-circle {
+  from {
+    border-color: #984c48;
+  }
+  to {
+    border-color: white;
+  }
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 0.1;
+  }
+}
+
+@keyframes loading {
+  0% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .texte-long {
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .grid2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .grid3 {
+    grid-template-columns: repeat(3, auto) !important;
+  }
+
+  .container {
+    flex-direction: column;
+  }
+
+  .cacheTel,
+  .subpage > li:nth-last-child(2) > a {
+    display: block;
+  }
+
+  .top-button {
+    background: rgba(0, 0, 0, 0.7);
+    color: #999;
+    border: none;
+    box-shadow: none;
+  }
+
+  .top-button::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' height='24' viewBox='0 -960 960 960' width='24'%3E%3Cpath d='M440-80v-647L256-544l-56-56 280-280 280 280-56 57-184-184v647h-80Z'/%3E%3C/svg%3E");
+    height: 24px;
+    width: 24px;
+  }
+
+  .tooltip-icon {
+    position: static;
+  }
+
+  .tooltip-info {
+    position: fixed;
+    left: 20px;
+    right: 20px;
+    bottom: 50px;
+    max-width: none;
+    width: auto;
+    transform: none;
+    height: max-content;
+  }
+
+  .subpage > li > a,
+  .cacheOrdi,
+  .tooltip-info:after {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 340px) {
+  #mw-content {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+@media screen and (min-width: 851px) {
+  html {
+    scroll-padding-top: 3.325em;
+  }
+}
