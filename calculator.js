@@ -326,8 +326,14 @@ function filterWeapon(
   }
 }
 
-function getSelectedWeapon(weaponCategory) {
-  return weaponCategory.querySelector("input[type='radio']:checked");
+function changePolymorphValues(characterCreation, monsterVnum, monsterImage) {
+  var { polymorphMonster, polymorphMonsterImage } = characterCreation;
+  var changeEvent = new Event("change", { bubbles: true });
+
+  polymorphMonster.value = monsterVnum;
+  polymorphMonsterImage.value = monsterImage;
+
+  polymorphMonster.dispatchEvent(changeEvent);
 }
 
 function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
@@ -347,6 +353,10 @@ function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
   newText.appendChild(document.createTextNode(" "));
 
   polymorphDisplay.replaceChild(newText, oldText);
+}
+
+function getSelectedWeapon(weaponCategory) {
+  return weaponCategory.querySelector("input[type='radio']:checked");
 }
 
 function handleWeaponDisplay(
@@ -552,11 +562,6 @@ function filterForm(characters, battle) {
         break;
       case "isPolymorph":
         filterCheckbox(target, characters.polymorphCreation);
-        handlePolymorphDisplay(
-          characters.polymorphDisplay,
-          characterCreation.polymorphMonster.value,
-          characterCreation.polymorphMonsterImage.value
-        );
         if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
         }
@@ -903,6 +908,7 @@ function deleteMonster(characters, battle, monsterVnum, monsterElement) {
   }
 
   battle.battleForm.reset();
+
   delete characters.savedMonsters[monsterVnum];
 
   updateSavedMonsters(characters.savedMonsters);
@@ -1278,6 +1284,8 @@ function getTargetContent(targetParent, targetName, isSkill) {
     targetContent = targetParent.textContent;
   } else if (targetName === "weaponUpgrade") {
     targetContent = targetParent.children[1].textContent;
+  } else if (targetName === "level") {
+    targetContent = targetParent.textContent.replace("Lv", "").trim();
   } else if (isSkill) {
     var container = targetParent.children[1];
 
@@ -1480,29 +1488,8 @@ function characterManagement(characters, battle) {
   });
 }
 
-function removeFromIframe(iframe, monsterVnum, addButton) {
-  var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-  var removeButton = iframeDoc.querySelector(
-    ".handle-monster[data-monster-id='" + monsterVnum + "']"
-  );
-
-  if (removeButton) {
-    replaceMonsterButton(removeButton, addButton, monsterVnum);
-    return true;
-  }
-
-  return false;
-}
-
-function addMonsterElement(characters, battle, monsterVnum) {
-  var {
-    monsteriFrame,
-    stoneiFrame,
-    monsterTemplate,
-    monstersContainer,
-    monsterButtonTemplates,
-  } = characters;
-  var addButton = monsterButtonTemplates.children[0];
+function addMonsterElement(characters, battle, monsterVnum, iframeInfo) {
+  var { monsterTemplate, monstersContainer } = characters;
   var monsterElement = monsterTemplate.cloneNode(true);
 
   var spanInput = monsterElement.querySelector("span.input");
@@ -1522,44 +1509,43 @@ function addMonsterElement(characters, battle, monsterVnum) {
   monstersContainer.appendChild(monsterElement);
 
   deleteSvg.addEventListener("click", function () {
+    var monster = characters.savedMonsters[monsterVnum];
+    iframeInfo[monster.category].shouldBeUpdated = true;
+
     deleteMonster(characters, battle, monsterVnum, monsterElement);
-    var isRemoved = removeFromIframe(monsteriFrame, monsterVnum, addButton);
-    if (!isRemoved) {
-      removeFromIframe(stoneiFrame, monsterVnum, addButton);
-    }
   });
 }
 
-function addNewMonster(characters, battle, monsterVnum, monsterImage) {
+function addNewMonster(
+  characters,
+  battle,
+  monsterVnum,
+  monsterImage,
+  iframeInfo,
+  category
+) {
   if (isValueInArray(monsterVnum, Object.keys(characters.savedMonsters)))
     return;
 
-  characters.savedMonsters[monsterVnum] = { image: monsterImage };
-  addMonsterElement(characters, battle, monsterVnum);
+  characters.savedMonsters[monsterVnum] = {
+    image: monsterImage,
+    category: category,
+  };
+  addMonsterElement(characters, battle, monsterVnum, iframeInfo);
   updateSavedMonsters(characters.savedMonsters);
   addBattleChoice(battle, monsterVnum, true);
 }
 
-function replaceMonsterButton(currentButton, newButton, monsterVnum) {
-  var newButtonClone = newButton.cloneNode(true);
-  newButtonClone.dataset.monsterId = monsterVnum;
-  currentButton.replaceWith(newButtonClone);
-}
-
-function addButtonsToCards(
-  iframeDoc,
-  nameToVnum,
-  addButton,
-  removeButton,
-  characters,
-  isPolymorph
-) {
+function addButtonsToCards(characters, iframeDoc, iframeInfo, category) {
+  var buttonTemplates = characters.monsterButtonTemplates.children[0];
   var cardToEdit = iframeDoc.getElementById("cards-container").children;
-  var addedMonsters = Object.keys(characters.savedMonsters);
+  var { nameToVnum } = iframeInfo;
+  var vnumToButtons = iframeInfo[category].vnumToButtons;
 
   for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
     var card = cardToEdit[cardIndex];
     var cardName = card.querySelector("[data-name]").firstChild.title;
+    var buttonTemplatesClone = buttonTemplates.cloneNode(true);
 
     cardName = cardName.replace(/\s/g, " ");
 
@@ -1568,20 +1554,45 @@ function addButtonsToCards(
     }
 
     var monsterVnum = nameToVnum[cardName];
-    var buttonClone;
 
-    if (isValueInArray(monsterVnum, addedMonsters) && !isPolymorph) {
-      buttonClone = removeButton.cloneNode(true);
-    } else {
-      buttonClone = addButton.cloneNode(true);
-    }
-    buttonClone.dataset.monsterId = monsterVnum;
-    card.lastElementChild.appendChild(buttonClone);
+    buttonTemplatesClone.dataset.monsterId = monsterVnum;
+    card.lastElementChild.appendChild(buttonTemplatesClone);
+    vnumToButtons[monsterVnum] = buttonTemplatesClone.children;
   }
 }
 
-function getMonsterImage(addButton) {
-  var elder = addButton.parentElement.firstElementChild;
+function updateiFrameButtons(characters, iframeInfo, category) {
+  var addedMonsters = Object.keys(characters.savedMonsters);
+  var { currentiFrameIsMonster } = iframeInfo;
+  var vnumToButtons = iframeInfo[category].vnumToButtons;
+  var isPolymorphModal = category === "monster" && !currentiFrameIsMonster
+
+  for (var monsterVnum in vnumToButtons) {
+    var [addButton, deleteButton, selectButton] = vnumToButtons[monsterVnum];
+
+    if (isPolymorphModal) {
+      hideElement(addButton);
+      hideElement(deleteButton);
+      showElement(selectButton);
+      continue;
+    }
+
+    if (isValueInArray(monsterVnum, addedMonsters)) {
+      hideElement(addButton);
+      showElement(deleteButton);
+      hideElement(selectButton);
+    } else {
+      showElement(addButton);
+      hideElement(deleteButton);
+      hideElement(selectButton);
+    }
+  }
+
+  iframeInfo.lastiFrameIsMonster = currentiFrameIsMonster;
+}
+
+function getMonsterImage(buttonsContainer) {
+  var elder = buttonsContainer.parentElement.firstElementChild;
   var image = elder.querySelector("img");
 
   if (image) {
@@ -1591,11 +1602,13 @@ function getMonsterImage(addButton) {
   return "";
 }
 
-function handleiFrame(category, iframe, nameToVnum, characters, battle, isPolymorph) {
-  var [addButton, removeButton] = characters.monsterButtonTemplates.children;
-  var loadingAnimation = iframe.previousElementSibling;
+function handleiFrame(iframeInfo, category) {
+  var { characters, battle } = iframeInfo;
+  var iframeInfoCategory = iframeInfo[category];
+  var { iframe, pageName, vnumToButtons } = iframeInfoCategory;
+  var loadingAnimation = iframeInfoCategory.iframe.previousElementSibling;
 
-  iframe.src = mw.util.getUrl(category);
+  iframe.src = mw.util.getUrl(pageName);
 
   iframe.addEventListener("load", function () {
     var iframeDoc = this.contentDocument || this.contentWindow.document;
@@ -1608,14 +1621,10 @@ function handleiFrame(category, iframe, nameToVnum, characters, battle, isPolymo
     iframeBody.style.background = "transparent";
     iframeBody.style.paddingRight = "10px";
 
-    addButtonsToCards(
-      iframeDoc,
-      nameToVnum,
-      addButton,
-      removeButton,
-      characters,
-      isPolymorph
-    );
+    addButtonsToCards(characters, iframeDoc, iframeInfo, category);
+    updateiFrameButtons(characters, iframeInfo, category);
+
+    iframeInfoCategory.loadIsFinished = true;
 
     hideElement(loadingAnimation);
     showElement(iframe);
@@ -1625,24 +1634,47 @@ function handleiFrame(category, iframe, nameToVnum, characters, battle, isPolymo
     function handleButtonClick(event) {
       var target = event.target;
       var link = target.closest("a");
-      var currentButton = target.closest(".handle-monster");
+      var buttonsContainer = target.closest(".handle-monster");
 
       if (link) {
         event.preventDefault();
         window.open(link.href, "_blank");
-      } else if (currentButton) {
-        var { monsterId: monsterVnum, action } = currentButton.dataset;
-        var newButton;
+      } else if (buttonsContainer) {
+        var { monsterId: monsterVnum } = buttonsContainer.dataset;
 
-        if (action === "add") {
-          var monsterImage = getMonsterImage(currentButton);
-          addNewMonster(characters, battle, monsterVnum, monsterImage);
-          newButton = removeButton;
-        } else if (action === "remove") {
-          deleteMonster(characters, battle, monsterVnum);
-          newButton = addButton;
+        // polymorph iframe
+        if (category === "monster" && !iframeInfo.currentiFrameIsMonster) {
+          var monsterImage = getMonsterImage(buttonsContainer);
+          changePolymorphValues(characters.characterCreation, monsterVnum, monsterImage);
+          handlePolymorphDisplay(
+            characters.polymorphDisplay,
+            monsterVnum,
+            monsterImage
+          );
+          var changeEvent = new Event("change", { bubbles: true });
+          iframe.dispatchEvent(changeEvent);
+        } else {
+          var addedMonsters = Object.keys(characters.savedMonsters);
+          var [addButton, deleteButton] = vnumToButtons[monsterVnum];
+
+          if (isValueInArray(monsterVnum, addedMonsters)) {
+            deleteMonster(characters, battle, monsterVnum);
+            showElement(addButton);
+            hideElement(deleteButton);
+          } else {
+            var monsterImage = getMonsterImage(buttonsContainer);
+            addNewMonster(
+              characters,
+              battle,
+              monsterVnum,
+              monsterImage,
+              iframeInfo,
+              category
+            );
+            hideElement(addButton);
+            showElement(deleteButton);
+          }
         }
-        replaceMonsterButton(currentButton, newButton, monsterVnum);
       }
     }
   });
@@ -1661,38 +1693,75 @@ function getNameToVnumMapping() {
 
 function monsterManagement(characters, battle) {
   var { monsteriFrame, stoneiFrame } = characters;
-  var nameToVnum = getNameToVnumMapping();
   var monsterVnums = Object.keys(monsterData);
 
-  var iframeLoaded = { monster: false, stone: false, polymorph: false };
+  var iframeInfo = {
+    lastiFrameIsMonster: false,
+    currentiFrameIsMonster: false,
+    characters: characters,
+    battle: battle,
+    nameToVnum: getNameToVnumMapping(),
+    monster: {
+      isLoaded: false,
+      loadIsFinished: false,
+      shouldBeUpdated: false,
+      vnumToButtons: {},
+      pageName: "Monstres",
+      iframe: monsteriFrame,
+    },
+    stone: {
+      isLoaded: false,
+      loadIsFinished: false,
+      shouldBeUpdated: false,
+      vnumToButtons: {},
+      pageName: "Pierres Metin",
+      iframe: stoneiFrame,
+    },
+  };
 
   document.addEventListener("modalOpen", function (event) {
     var modalName = event.detail.name;
 
-    if (modalName === "monster") {
-      var isPolymorph = event.target.id !== "add-new-monster";
-
-      if (!iframeLoaded.monster) {
-        handleiFrame("Monstres", monsteriFrame, nameToVnum, characters, battle, isPolymorph);
-        iframeLoaded.monster = true;
-      }
-    } else if (modalName === "stone" && !iframeLoaded.stone) {
-      handleiFrame(
-        "Pierres Metin",
-        stoneiFrame,
-        nameToVnum,
-        characters,
-        battle
-      );
-      iframeLoaded.stone = true;
+    if (modalName === "monster" || modalName === "stone") {
+      handleModal(event.target, modalName);
     }
   });
+
+  function handleModal(target, modalName) {
+    var iframeInfoCategory = iframeInfo[modalName];
+
+    if (modalName === "monster") {
+      var isMonsteriFrame = target.id === "add-new-monster";
+      iframeInfo.currentiFrameIsMonster = isMonsteriFrame;
+
+      if (
+        iframeInfoCategory.loadIsFinished &&
+        ((isMonsteriFrame && !iframeInfo.lastiFrameIsMonster) ||
+          (!isMonsteriFrame && iframeInfo.lastiFrameIsMonster))
+      ) {
+        iframeInfoCategory.shouldBeUpdated = true;
+      }
+    }
+
+    if (!iframeInfoCategory.isLoaded) {
+      handleiFrame(iframeInfo, modalName);
+      iframeInfoCategory.isLoaded = true;
+    }
+
+    if (
+      iframeInfoCategory.loadIsFinished &&
+      iframeInfoCategory.shouldBeUpdated
+    ) {
+      updateiFrameButtons(characters, iframeInfo, modalName);
+      iframeInfoCategory.shouldBeUpdated = false;
+    }
+  }
 
   Object.keys(characters.savedMonsters)
     .slice()
     .forEach(function (monsterVnum) {
       if (isValueInArray(monsterVnum, monsterVnums)) {
-        addMonsterElement(characters, battle, monsterVnum);
+        addMonsterElement(characters, battle, monsterVnum, iframeInfo);
       } else {
         deleteMonster(characters, battle, monsterVnum);
       }
@@ -2133,7 +2202,7 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
   if (isPC(attacker) && isPolymorph(attacker)) {
     var polymorphPowerPct =
       getPolymorphPower(attacker.polymorphPoint, polymorphPowerTable) / 100;
-    var polymorphMonster = createMonster(attacker.polymorphMonster);
+    var polymorphMonster = createMonster(attacker.polymorphMonster, null, true);
 
     var polymorphStr = floorMultiplication(
       polymorphPowerPct,
@@ -3960,7 +4029,7 @@ function createWeapon(vnum) {
   };
 }
 
-function createMonster(monsterVnum, attacker) {
+function createMonster(monsterVnum, attacker, polymorphMonster) {
   var monsterAttributes = monsterData[monsterVnum];
 
   var monster = {
@@ -4009,8 +4078,9 @@ function createMonster(monsterVnum, attacker) {
   // if (attacker && monster.instance === 0) {
   //   changeMonsterValues(monster, "SungMahiTower", attacker);
   // }
-
-  changeMonsterValues(monster);
+  if (!polymorphMonster) {
+    changeMonsterValues(monster);
+  }
 
   monster.defense = monster.rawDefense + monster.level + monster.vit;
 
@@ -4123,7 +4193,7 @@ function reduceChartPointsListener(battle) {
 
     setTimeout(function () {
       reduceChartPoints.disabled = false;
-    }, 1000); 
+    }, 1000);
   });
 
   reduceChartPointsContainer.addEventListener("pointerup", function (event) {
