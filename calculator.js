@@ -337,22 +337,19 @@ function changePolymorphValues(characterCreation, monsterVnum, monsterImage) {
 }
 
 function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
-  var newText = document.createElement("span");
+  var newLink = document.createElement("a");
   var oldImage = polymorphDisplay.firstChild;
-  var oldText = oldImage.nextElementSibling;
+  var oldLink = oldImage.nextElementSibling;
   var monsterName = getMonsterName(monsterVnum);
-  var monsterLink = document.createElement("a");
 
   oldImage.src = monsterSrc;
-  monsterLink.href = mw.util.getUrl(monsterName);
-  monsterLink.title = monsterName;
-  monsterLink.textContent = monsterName;
+  oldImage.alt = monsterSrc.split('/').pop();
+  oldImage.removeAttribute('srcset');
+  newLink.href = mw.util.getUrl(monsterName);
+  newLink.title = monsterName;
+  newLink.textContent = monsterName;
 
-  newText.appendChild(document.createTextNode(" "));
-  newText.appendChild(monsterLink);
-  newText.appendChild(document.createTextNode(" "));
-
-  polymorphDisplay.replaceChild(newText, oldText);
+  polymorphDisplay.replaceChild(newLink, oldLink);
 }
 
 function getSelectedWeapon(weaponCategory) {
@@ -640,10 +637,15 @@ function getSavedMonsters() {
   var filteredMonsters = {};
 
   for (var vnum in savedMonsters) {
-    if (String(Number(vnum)) === vnum) {
+    if (
+      String(Number(vnum)) === vnum &&
+      savedMonsters[vnum].hasOwnProperty("category")
+    ) {
       filteredMonsters[vnum] = savedMonsters[vnum];
     }
   }
+
+  updateSavedMonsters(filteredMonsters);
 
   return filteredMonsters;
 }
@@ -1565,7 +1567,7 @@ function updateiFrameButtons(characters, iframeInfo, category) {
   var addedMonsters = Object.keys(characters.savedMonsters);
   var { currentiFrameIsMonster } = iframeInfo;
   var vnumToButtons = iframeInfo[category].vnumToButtons;
-  var isPolymorphModal = category === "monster" && !currentiFrameIsMonster
+  var isPolymorphModal = category === "monster" && !currentiFrameIsMonster;
 
   for (var monsterVnum in vnumToButtons) {
     var [addButton, deleteButton, selectButton] = vnumToButtons[monsterVnum];
@@ -1645,7 +1647,11 @@ function handleiFrame(iframeInfo, category) {
         // polymorph iframe
         if (category === "monster" && !iframeInfo.currentiFrameIsMonster) {
           var monsterImage = getMonsterImage(buttonsContainer);
-          changePolymorphValues(characters.characterCreation, monsterVnum, monsterImage);
+          changePolymorphValues(
+            characters.characterCreation,
+            monsterVnum,
+            monsterImage
+          );
           handlePolymorphDisplay(
             characters.polymorphDisplay,
             monsterVnum,
