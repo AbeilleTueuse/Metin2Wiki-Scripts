@@ -720,6 +720,37 @@ function characterCreationListener(characters, battle) {
     }
   });
 
+  characterCreation.addEventListener("invalid", function (event) {
+    var target = event.target;
+
+    if (!target.checkVisibility()) {
+      var tabberContainer = target.closest(".tabber-container");
+      var collapsible = target.closest(".improved-collapsible");
+
+      if (tabberContainer) {
+        var [buttonsContainer, tabsContainer] = tabberContainer.children;
+        var buttons = buttonsContainer.children;
+        var tabs = tabsContainer.children;
+
+        for (var index = 0; index < tabs.length; index++) {
+          var tab = tabs[index];
+          if (tab.contains(target) && !tab.checkVisibility()) {
+            buttons[index].click();
+            break;
+          }
+        }
+      }
+
+      if (collapsible) {
+        var span = collapsible.firstElementChild;
+        
+        if (!span.classList.contains("mw-collapsible-toggle-expanded")) {
+          span.click();
+        }
+      }
+    }
+  }, true);
+
   document.addEventListener("keydown", function (event) {
     if (event.ctrlKey && event.key === "s") {
       event.preventDefault();
