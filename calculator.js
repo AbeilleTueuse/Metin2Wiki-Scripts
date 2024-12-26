@@ -4481,7 +4481,7 @@ function isPseudoSaved(characters, pseudo) {
 }
 
 function useBonusVariationMode(character, variation) {
-  isChecked(character.useBonusVariation) &&
+  return isChecked(character.useBonusVariation) &&
   character.hasOwnProperty(variation) &&
   character.bonusVariationMinValue < character.bonusVariationMaxValue
 }
