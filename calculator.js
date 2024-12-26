@@ -559,6 +559,11 @@ function filterForm(characters, battle) {
           characters.randomMagicAttackValue
         );
         filterSkills(classChoice.value, characters.skillElementsToFilter);
+        handleBonusVariationUpdate(
+          characterCreation,
+          characters.bonusVariation,
+          true
+        );
 
         if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
@@ -566,6 +571,11 @@ function filterForm(characters, battle) {
         break;
       case "class":
         filterSkills(target.value, characters.skillElementsToFilter);
+        handleBonusVariationUpdate(
+          characterCreation,
+          characters.bonusVariation,
+          true
+        );
 
         if (characterCreation.name.value === battle.attackerSelection.value) {
           battle.resetAttackType = true;
@@ -1056,7 +1066,10 @@ function updateForm(
   filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
   filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
   filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
-  filterCheckbox(characterCreation.useBonusVariation, characters.bonusVariation.container);
+  filterCheckbox(
+    characterCreation.useBonusVariation,
+    characters.bonusVariation.container
+  );
   filterSkills(classChoice.value, characters.skillElementsToFilter);
   handleBonusVariationUpdate(characterCreation, characters.bonusVariation);
 }
@@ -1329,23 +1342,48 @@ function resetBonusVariation(bonusVariation) {
   function resetInput(input) {
     input.removeAttribute("min");
     input.removeAttribute("max");
+    input.defaultValue = 0;
     input.value = input.defaultValue;
   }
-  var { minValue, maxValue, checkbox, container, disabledText, selectedText } = bonusVariation;
+  var { minValue, maxValue, checkbox, container, disabledText, selectedText } =
+    bonusVariation;
 
   resetInput(minValue);
   resetInput(maxValue);
-  hideElement(container);
   showElement(disabledText);
   hideElement(selectedText);
+  hideElement(container);
   checkbox.checked = false;
 }
 
-function handleBonusVariationUpdate(characterCreation, bonusVariation) {
+function handleBonusVariationUpdate(
+  characterCreation,
+  bonusVariation,
+  resetSkill
+) {
   var selectedBonus = characterCreation.bonusVariation.value;
+  var displayName = characterCreation.bonusVariationName.value;
 
-  if (characterCreation.hasOwnProperty(selectedBonus) && selectedBonus != 0) {
-    handleBonusVariation(characterCreation[selectedBonus], characterCreation.bonusVariationName, bonusVariation);
+  if (
+    resetSkill &&
+    (selectedBonus.startsWith("attackSkill") ||
+      selectedBonus.startsWith("horseSkill") ||
+      selectedBonus.startsWith("skillBonus"))
+  ) {
+    resetBonusVariation(bonusVariation);
+    return;
+  }
+
+  if (
+    characterCreation.hasOwnProperty(selectedBonus) &&
+    selectedBonus != 0 &&
+    displayName != 0
+  ) {
+    handleBonusVariation(
+      characterCreation[selectedBonus],
+      bonusVariation,
+      displayName
+    );
   } else {
     resetBonusVariation(bonusVariation);
   }
@@ -1363,7 +1401,7 @@ function getTargetContent(targetParent, targetName, isSkill) {
   } else if (isSkill) {
     var container = targetParent.children[1];
 
-    for (var index = 1; index < container.children.length; index++) {
+    for (var index = 0; index < container.children.length; index++) {
       var element = container.children[index];
 
       if (element.checkVisibility()) {
@@ -1383,8 +1421,16 @@ function getTargetContent(targetParent, targetName, isSkill) {
   return targetContent;
 }
 
-function handleBonusVariation(target, displayName, bonusVariation, isSelectedByUser) {
-  var { minValue, maxValue, checkbox, container, disabledText, selectedText, displaySpan } = bonusVariation;
+function handleBonusVariation(target, bonusVariation, displayName) {
+  var {
+    minValue,
+    maxValue,
+    checkbox,
+    container,
+    disabledText,
+    selectedText,
+    displaySpan,
+  } = bonusVariation;
 
   var {
     min: targetMin,
@@ -1400,7 +1446,6 @@ function handleBonusVariation(target, displayName, bonusVariation, isSelectedByU
   targetValue = Number(targetValue);
 
   var isSkill = tagName === "SELECT";
-  var targetContent = getTargetContent(targetParent, targetName, isSkill);
 
   if (isSkill) {
     var options = target.options;
@@ -1411,36 +1456,38 @@ function handleBonusVariation(target, displayName, bonusVariation, isSelectedByU
 
   minValue.min = targetMin;
   minValue.max = targetMax;
+  minValue.defaultValue = targetMin;
 
   maxValue.min = targetMin;
   maxValue.max = targetMax;
+  maxValue.defaultValue = targetMin;
 
   hideElement(disabledText);
   showElement(selectedText);
 
-  displaySpan.textContent = targetContent;
+  if (displayName) {
+    minValue.value = Math.min(Math.max(minValue.value, targetMin), targetMax);
+    maxValue.value = Math.max(Math.min(maxValue.value, targetMax), targetMin);
 
-  if (isSelectedByUser) {
+    displaySpan.textContent = displayName;
+  } else {
     var { input, inputName, tabButton } = bonusVariation;
+    var targetContent = getTargetContent(targetParent, targetName, isSkill);
 
     input.value = targetName;
     inputName.value = targetContent;
+    displaySpan.textContent = targetContent;
 
     minValue.value = Math.max(targetValue - 10, targetMin);
     maxValue.value = Math.min(targetValue + 10, targetMax);
 
-    checkbox.checked = true;
     showElement(container);
+    checkbox.checked = true;
 
     tabButton.click();
     tabButton.scrollIntoView(true);
 
     input.dispatchEvent(new Event("change", { bubbles: true }));
-  } else {
-    minValue.value = Math.min(Math.max(minValue.value, targetMin), targetMax);
-    maxValue.value = Math.max(Math.min(maxValue.value, targetMax), targetMin);
-
-    displaySpan.textContent = displayName.value;
   }
 }
 
@@ -1517,7 +1564,7 @@ function characterManagement(characters, battle) {
       return;
     }
 
-    handleBonusVariation(target, characterCreation.bonusVariationName, bonusVariation, true);
+    handleBonusVariation(target, bonusVariation, null);
   }
 
   characterCreation.addEventListener("click", function (event) {
@@ -4433,6 +4480,12 @@ function isPseudoSaved(characters, pseudo) {
   return characters.savedCharacters.hasOwnProperty(pseudo);
 }
 
+function useBonusVariationMode(character, variation) {
+  isChecked(character.useBonusVariation) &&
+  character.hasOwnProperty(variation) &&
+  character.bonusVariationMinValue < character.bonusVariationMaxValue
+}
+
 function createBattle(characters, battle) {
   battle.battleForm.addEventListener("submit", function (event) {
     event.preventDefault();
@@ -4467,11 +4520,7 @@ function createBattle(characters, battle) {
       var victim = createMonster(victimName, attacker);
     }
 
-    if (
-      isChecked(attacker.useBonusVariation) &&
-      attacker.hasOwnProperty(attackerVariation) &&
-      attacker.bonusVariationMinValue < attacker.bonusVariationMaxValue
-    ) {
+    if (useBonusVariationMode(attacker, attackerVariation)) {
       damagesWithVariation(
         attacker,
         victim,
@@ -4480,11 +4529,7 @@ function createBattle(characters, battle) {
         attacker,
         attackerVariation
       );
-    } else if (
-      isChecked(victim.useBonusVariation) &&
-      victim.hasOwnProperty(victimVariation) &&
-      victim.bonusVariationMinValue < victim.bonusVariationMaxValue
-    ) {
+    } else if (useBonusVariationMode(victim, victimVariation)) {
       damagesWithVariation(
         attacker,
         victim,
