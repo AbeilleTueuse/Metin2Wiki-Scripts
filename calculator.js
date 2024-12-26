@@ -42,6 +42,40 @@ function addKeyValue(object, key, value) {
   }
 }
 
+function openTargetTab(target) {
+  var tabberContainer = target.closest(".tabber-container");
+
+  if (!tabberContainer) {
+    return;
+  }
+
+  var [buttonsContainer, tabsContainer] = tabberContainer.children;
+  var buttons = buttonsContainer.children;
+  var tabs = tabsContainer.children;
+
+  for (var index = 0; index < tabs.length; index++) {
+    var tab = tabs[index];
+    if (tab.contains(target) && !tab.checkVisibility()) {
+      buttons[index].click();
+      break;
+    }
+  }
+}
+
+function openTargetCollapsible(target) {
+  var collapsible = target.closest(".improved-collapsible");
+
+  if (!collapsible) {
+    return;
+  }
+
+  var span = collapsible.firstElementChild;
+
+  if (!span.classList.contains("mw-collapsible-toggle-expanded")) {
+    span.click();
+  }
+}
+
 function editTableResultRow(row, valuesToDisplay, numberFormat) {
   row.innerHTML = "";
   for (var index = 0; index < valuesToDisplay.length; index++) {
@@ -343,8 +377,8 @@ function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
   var monsterName = getMonsterName(monsterVnum);
 
   oldImage.src = monsterSrc;
-  oldImage.alt = monsterSrc.split('/').pop();
-  oldImage.removeAttribute('srcset');
+  oldImage.alt = monsterSrc.split("/").pop();
+  oldImage.removeAttribute("srcset");
   newLink.href = mw.util.getUrl(monsterName);
   newLink.title = monsterName;
   newLink.textContent = monsterName;
@@ -575,6 +609,9 @@ function filterForm(characters, battle) {
       case "isMarried":
         filterCheckbox(target, characters.marriageCreation);
         break;
+      case "useBonusVariation":
+        filterCheckbox(target, characters.bonusVariation.container);
+        break;
     }
 
     if (
@@ -710,7 +747,12 @@ function saveButtonOrange(saveButton) {
 function characterCreationListener(characters, battle) {
   var { characterCreation, saveButton, weaponCategory } = characters;
 
-  characterCreation.addEventListener("submit", function (event) {
+  characterCreation.addEventListener("submit", handleSubmitForm);
+  characterCreation.addEventListener("invalid", handleInvalidInput, true);
+  document.addEventListener("keydown", handleSaveShortcut);
+  weaponCategory.addEventListener("mouseover", handleTooltipOverflow);
+
+  function handleSubmitForm(event) {
     event.preventDefault();
 
     if (characters.unsavedChanges) {
@@ -718,47 +760,37 @@ function characterCreationListener(characters, battle) {
       saveButtonGreen(saveButton);
       characters.unsavedChanges = false;
     }
-  });
+  }
 
-  characterCreation.addEventListener("invalid", function (event) {
+  function handleInvalidInput(event) {
     var target = event.target;
 
-    if (!target.checkVisibility()) {
-      var tabberContainer = target.closest(".tabber-container");
-      var collapsible = target.closest(".improved-collapsible");
-
-      if (tabberContainer) {
-        var [buttonsContainer, tabsContainer] = tabberContainer.children;
-        var buttons = buttonsContainer.children;
-        var tabs = tabsContainer.children;
-
-        for (var index = 0; index < tabs.length; index++) {
-          var tab = tabs[index];
-          if (tab.contains(target) && !tab.checkVisibility()) {
-            buttons[index].click();
-            break;
-          }
-        }
-      }
-
-      if (collapsible) {
-        var span = collapsible.firstElementChild;
-        
-        if (!span.classList.contains("mw-collapsible-toggle-expanded")) {
-          span.click();
-        }
-      }
+    if (target.checkVisibility()) {
+      return;
     }
-  }, true);
 
-  document.addEventListener("keydown", function (event) {
+    var autoCorrectInput = target.closest(".auto-correct-input");
+
+    if (
+      autoCorrectInput &&
+      autoCorrectInput.classList.contains("tabber-noactive")
+    ) {
+      target.value = target.defaultValue;
+      return;
+    }
+
+    openTargetTab(target);
+    openTargetCollapsible(target);
+  }
+
+  function handleSaveShortcut(event) {
     if (event.ctrlKey && event.key === "s") {
       event.preventDefault();
       saveButton.click();
     }
-  });
+  }
 
-  weaponCategory.addEventListener("mouseover", function (event) {
+  function handleTooltipOverflow(event) {
     label = event.target.closest("label");
 
     if (label) {
@@ -775,7 +807,7 @@ function characterCreationListener(characters, battle) {
         }
       }
     }
-  });
+  }
 }
 
 function downloadData(content, type, filename) {
@@ -1024,6 +1056,7 @@ function updateForm(
   filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
   filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
   filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
+  filterCheckbox(characterCreation.useBonusVariation, characters.bonusVariation.container);
   filterSkills(classChoice.value, characters.skillElementsToFilter);
   handleBonusVariationUpdate(characterCreation, characters.bonusVariation);
 }
@@ -1292,21 +1325,29 @@ function handleFocus() {
   });
 }
 
+function resetBonusVariation(bonusVariation) {
+  function resetInput(input) {
+    input.removeAttribute("min");
+    input.removeAttribute("max");
+    input.value = input.defaultValue;
+  }
+  var { minValue, maxValue, checkbox, container, disabledText, selectedText } = bonusVariation;
+
+  resetInput(minValue);
+  resetInput(maxValue);
+  hideElement(container);
+  showElement(disabledText);
+  hideElement(selectedText);
+  checkbox.checked = false;
+}
+
 function handleBonusVariationUpdate(characterCreation, bonusVariation) {
   var selectedBonus = characterCreation.bonusVariation.value;
 
-  if (characterCreation.hasOwnProperty(selectedBonus)) {
-    handleBonusVariation(characterCreation[selectedBonus], bonusVariation);
+  if (characterCreation.hasOwnProperty(selectedBonus) && selectedBonus != 0) {
+    handleBonusVariation(characterCreation[selectedBonus], characterCreation.bonusVariationName, bonusVariation);
   } else {
-    var { minValue, maxValue } = bonusVariation;
-
-    minValue.removeAttribute("min");
-    minValue.removeAttribute("max");
-
-    maxValue.removeAttribute("min");
-    maxValue.removeAttribute("max");
-
-    hideElement(bonusVariation.container);
+    resetBonusVariation(bonusVariation);
   }
 }
 
@@ -1342,9 +1383,8 @@ function getTargetContent(targetParent, targetName, isSkill) {
   return targetContent;
 }
 
-function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
-  var { activation, inputDisplay, minValue, maxValue, container } =
-    bonusVariation;
+function handleBonusVariation(target, displayName, bonusVariation, isSelectedByUser) {
+  var { minValue, maxValue, checkbox, container, disabledText, selectedText, displaySpan } = bonusVariation;
 
   var {
     min: targetMin,
@@ -1360,13 +1400,7 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   targetValue = Number(targetValue);
 
   var isSkill = tagName === "SELECT";
-
-  if (container.contains(target) || targetName == 0) {
-    if (!isSelectedByUser) {
-      hideElement(container);
-    }
-    return;
-  }
+  var targetContent = getTargetContent(targetParent, targetName, isSkill);
 
   if (isSkill) {
     var options = target.options;
@@ -1381,35 +1415,33 @@ function handleBonusVariation(target, bonusVariation, isSelectedByUser) {
   maxValue.min = targetMin;
   maxValue.max = targetMax;
 
-  if (isSelectedByUser) {
-    var { input, tab } = bonusVariation;
+  hideElement(disabledText);
+  showElement(selectedText);
 
-    inputDisplay.value = getTargetContent(targetParent, targetName, isSkill);
+  displaySpan.textContent = targetContent;
+
+  if (isSelectedByUser) {
+    var { input, inputName, tabButton } = bonusVariation;
 
     input.value = targetName;
+    inputName.value = targetContent;
+
     minValue.value = Math.max(targetValue - 10, targetMin);
     maxValue.value = Math.min(targetValue + 10, targetMax);
 
-    activation.checked = true;
+    checkbox.checked = true;
+    showElement(container);
 
-    tab.click();
-    tab.scrollIntoView(true);
+    tabButton.click();
+    tabButton.scrollIntoView(true);
 
     input.dispatchEvent(new Event("change", { bubbles: true }));
   } else {
-    if (minValue.value < targetMin) {
-      minValue.value = targetMin;
-      minValue.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    minValue.value = Math.min(Math.max(minValue.value, targetMin), targetMax);
+    maxValue.value = Math.max(Math.min(maxValue.value, targetMax), targetMin);
 
-    if (maxValue.value > targetMax) {
-      maxValue.value = targetMax;
-      maxValue.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    displaySpan.textContent = displayName.value;
   }
-
-  inputDisplay.style.width = inputDisplay.value.length * 0.55 + "em";
-  showElement(container);
 }
 
 function characterManagement(characters, battle) {
@@ -1470,7 +1502,7 @@ function characterManagement(characters, battle) {
     characters.unsavedChanges = true;
   });
 
-  function handleLongPress(target) {
+  function handleLongPress(target, characterCreation) {
     if (target.tagName !== "INPUT" && target.tagName !== "SELECT") {
       target = target.querySelector("input");
     }
@@ -1479,17 +1511,18 @@ function characterManagement(characters, battle) {
       !target ||
       (target.type !== "number" &&
         !target.classList.contains("skill-select") &&
-        target.name !== "weaponUpgrade")
+        target.name !== "weaponUpgrade") ||
+      target.classList.contains("disabled-variation")
     ) {
       return;
     }
 
-    handleBonusVariation(target, bonusVariation, true);
+    handleBonusVariation(target, characterCreation.bonusVariationName, bonusVariation, true);
   }
 
   characterCreation.addEventListener("click", function (event) {
     if (event.shiftKey || event.ctrlKey) {
-      handleLongPress(event.target);
+      handleLongPress(event.target, characterCreation);
     }
   });
 
@@ -1497,7 +1530,7 @@ function characterManagement(characters, battle) {
 
   characterCreation.addEventListener("touchstart", function (event) {
     longPressTimer = setTimeout(function () {
-      handleLongPress(event.target);
+      handleLongPress(event.target, characterCreation);
     }, 800);
   });
 
@@ -3968,8 +4001,8 @@ function damagesWithVariation(
   showElement(battle.bonusVariationResultContainer);
 
   if (
-    isChecked(attacker.bonusVariationActivation) &&
-    isChecked(victim.bonusVariationActivation)
+    isChecked(attacker.useBonusVariation) &&
+    isChecked(victim.useBonusVariation)
   ) {
     showElement(battle.errorInformation["attacker-victim-variation"]);
   } else {
@@ -4435,7 +4468,7 @@ function createBattle(characters, battle) {
     }
 
     if (
-      isChecked(attacker.bonusVariationActivation) &&
+      isChecked(attacker.useBonusVariation) &&
       attacker.hasOwnProperty(attackerVariation) &&
       attacker.bonusVariationMinValue < attacker.bonusVariationMaxValue
     ) {
@@ -4448,7 +4481,7 @@ function createBattle(characters, battle) {
         attackerVariation
       );
     } else if (
-      isChecked(victim.bonusVariationActivation) &&
+      isChecked(victim.useBonusVariation) &&
       victim.hasOwnProperty(victimVariation) &&
       victim.bonusVariationMinValue < victim.bonusVariationMaxValue
     ) {
@@ -5114,17 +5147,18 @@ function createDamageCalculatorInformation(chartSource) {
     blessingCreation: document.getElementById("blessing-creation"),
     marriageCreation: document.getElementById("marriage-creation"),
     bonusVariation: {
-      tab: document.getElementById("Variation"),
-      activation: document.getElementById("bonus-variation-activation"),
+      tabButton: document.getElementById("Variation"),
+      checkbox: document.getElementById("use-bonus-variation"),
       input: document.getElementById("bonus-variation"),
-      inputDisplay: document.getElementById("bonus-variation-display"),
-      container: document.getElementById("bonus-variation-range"),
+      inputName: document.getElementById("bonus-variation-name"),
+      container: document.getElementById("bonus-variation-creation"),
       minValue: document.getElementById("bonus-variation-min-value"),
       maxValue: document.getElementById("bonus-variation-max-value"),
+      disabledText: document.getElementById("bonus-variation-disabled"),
+      selectedText: document.getElementById("bonus-variation-selected"),
+      displaySpan: document.getElementById("bonus-variation-display"),
     },
   };
-
-  characters.bonusVariation.inputDisplay.setAttribute("readonly", "");
 
   for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
     characters.savedCharacters[pseudo] = character;
