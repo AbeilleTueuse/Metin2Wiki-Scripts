@@ -1893,6 +1893,52 @@ function monsterManagement(characters, battle) {
     });
 }
 
+function setupDropdowns(battle) {
+  var { form, buttons } = battle.battleChoice;
+  var lastInvalidTime = 0;
+
+  buttons.forEach(function (button) {
+    var dropdown = button.nextElementSibling;
+
+    button.addEventListener("click", handleClick);
+    document.addEventListener("mousedown", handleMouseDown);
+    dropdown.addEventListener("change", handleChange);
+
+    function handleClick() {
+      toggleElement(dropdown);
+    }
+
+    function handleMouseDown() {
+      if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+        hideElement(dropdown);
+      }
+    }
+
+    function handleChange() {
+      hideElement(dropdown);
+    }
+  });
+
+  form.addEventListener("invalid", handleInvalidInput, true);
+
+  function handleInvalidInput(event) {
+    var currentTime = Date.now();
+
+    if (currentTime - lastInvalidTime < 100) {
+      return;
+    }
+
+    lastInvalidTime = currentTime;
+
+    var target = event.target;
+    var dropdownContainer = target.closest(".dropdown-container");
+
+    if (dropdownContainer) {
+      showElement(dropdownContainer);
+    }
+  }
+}
+
 function removeBattleElement(battle, name, category) {
   var elements = battle.battleChoice[category].elements;
 
@@ -1929,51 +1975,58 @@ function addBattleElement(
   category,
   isMonster
 ) {
-  var {
-    battleChoice,
-    battleChoice: { template },
-  } = battle;
+  var battleChoice = battle.battleChoice;
+  var template = battleChoice.template;
   var battleChoiceCategory = battleChoice[category];
-  var { elements, characters, monsters, stones } = battleChoiceCategory;
   var templateClone = template.cloneNode(true);
   var label = templateClone.firstElementChild;
   var [input, image, span] = label.children;
   var imageSrc;
+  var name;
   var id;
 
   if (isMonster) {
-    if (characterOrMonster.category === "stone") {
-      if (category === "attacker") {
-        return;
-      }
-      image.setAttribute("data-file-width", "200");
-      image.setAttribute("data-file-height", "200");
-      imageSrc = characterOrMonster.image;
-      span.textContent = getMonsterName(pseudoOrVnum);
-      stones.appendChild(templateClone);
-      id = category + "-monster-" + pseudoOrVnum;
-    } else {
-      image.setAttribute("data-file-width", "200");
-      image.setAttribute("data-file-height", "200");
-      imageSrc = characterOrMonster.image;
-      span.textContent = getMonsterName(pseudoOrVnum);
-      monsters.appendChild(templateClone);
-      id = category + "-monster-" + pseudoOrVnum;
+    var isStone = characterOrMonster.category === "stone";
+
+    if (isStone && category === "attacker") {
+      return;
     }
+
+    image.setAttribute("data-file-width", "200");
+    image.setAttribute("data-file-height", "200");
+    imageSrc = characterOrMonster.image;
+    name = getMonsterName(pseudoOrVnum);
+
+    if (isStone) {
+      battleChoiceCategory.stones.appendChild(templateClone);
+    } else {
+      battleChoiceCategory.monsters.appendChild(templateClone);
+    }
+
+    id = category + "-monster-" + pseudoOrVnum;
   } else {
     label.classList.add("notranslate");
     imageSrc = battle.mapping.raceToImage[characterOrMonster.race];
-    span.textContent = pseudoOrVnum;
-    characters.appendChild(templateClone);
+    name = pseudoOrVnum;
+    battleChoiceCategory.characters.appendChild(templateClone);
     id = category + "-character-" + pseudoOrVnum;
   }
+
   label.setAttribute("for", id);
   input.id = id;
   input.name = category;
   input.value = pseudoOrVnum;
+
   handleImageFromWiki(image, imageSrc);
   image.removeAttribute("srcset");
-  elements[pseudoOrVnum] = { container: templateClone, image: image };
+
+  span.textContent = name;
+
+  battleChoiceCategory.elements[pseudoOrVnum] = {
+    container: templateClone,
+    image: image,
+    name: name,
+  };
 }
 
 function addBattleChoice(
@@ -4561,9 +4614,20 @@ function useBonusVariationMode(character, variation) {
 }
 
 function createBattle(characters, battle) {
-  var battleForm = battle.battleChoice.form;
+  var battleChoice = battle.battleChoice;
 
-  battleForm.addEventListener("submit", handleBattleFormSubmit);
+  battleChoice.form.addEventListener("change", handleBattleFormChange);
+  battleChoice.form.addEventListener("submit", handleBattleFormSubmit);
+
+  function handleBattleFormChange(event) {
+    var target = event.target;
+
+    if (target.type === "radio") {
+      category = target.name;
+      battleChoice[category].button.textContent =
+        battleChoice[category].elements[target.value].name;
+    }
+  }
 
   function handleBattleFormSubmit(event) {
     event.preventDefault();
@@ -5304,6 +5368,7 @@ function createDamageCalculatorInformation(chartSource) {
   var battle = {
     savedFights: getSavedFights(),
     battleChoice: {
+      buttons: document.querySelectorAll(".dropdown-trigger"),
       resetAttackType: false,
       form: document.getElementById("create-battle"),
       template: document.getElementById("battle-selection-template")
@@ -5312,12 +5377,14 @@ function createDamageCalculatorInformation(chartSource) {
         characters: document.getElementById("attacker-selection-characters"),
         monsters: document.getElementById("attacker-selection-monsters"),
         elements: {},
+        button: document.getElementById("attacker-trigger"),
       },
       victim: {
         characters: document.getElementById("victim-selection-characters"),
         monsters: document.getElementById("victim-selection-monsters"),
         stones: document.getElementById("victim-selection-stones"),
         elements: {},
+        button: document.getElementById("victim-trigger"),
       },
     },
     attackTypeSelection: document.getElementById("attack-type-selection"),
@@ -5417,6 +5484,7 @@ function loadStyle(src) {
     characterManagement(characters, battle);
     monsterManagement(characters, battle);
 
+    setupDropdowns(battle);
     updateBattleChoice(characters, battle);
     createBattle(characters, battle);
   }
