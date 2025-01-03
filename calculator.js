@@ -2484,7 +2484,7 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
 function computeHorse(attacker) {
   attacker.horseAttackValue = 0;
 
-  if (isPC(attacker) && isRiding(attacker)) {
+  if (isPC(attacker) && isRiding(attacker) && !isPolymorph(attacker)) {
     var horseConstant = 30;
 
     if (attacker.class === "weaponary") {
