@@ -1554,7 +1554,7 @@ function characterManagement(characters, battle) {
     characters.unsavedChanges = true;
   });
 
-  function handleLongPress(target, characterCreation) {
+  function handleLongPress(target) {
     if (target.tagName !== "INPUT" && target.tagName !== "SELECT") {
       target = target.querySelector("input");
     }
@@ -1574,7 +1574,7 @@ function characterManagement(characters, battle) {
 
   characterCreation.addEventListener("click", function (event) {
     if (event.shiftKey || event.ctrlKey) {
-      handleLongPress(event.target, characterCreation);
+      handleLongPress(event.target);
     }
   });
 
@@ -1582,7 +1582,7 @@ function characterManagement(characters, battle) {
 
   characterCreation.addEventListener("touchstart", function (event) {
     longPressTimer = setTimeout(function () {
-      handleLongPress(event.target, characterCreation);
+      handleLongPress(event.target);
     }, 800);
   });
 
@@ -3790,7 +3790,7 @@ function calcPhysicalDamages(battleValues) {
 
       var minPiercingDamages =
         damagesWithPrimaryBonuses -
-        bonusValues.defenseBoost +
+        bonusValues.defenseBoost -
         bonusValues.defenseMarriage;
 
       if (minPiercingDamages <= 2) {
