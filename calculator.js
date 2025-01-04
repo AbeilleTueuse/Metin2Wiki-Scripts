@@ -2433,8 +2433,6 @@ function calcSkillDamageWithSecondaryBonuses(
 }
 
 function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
-  attacker.statAttackValue = 0;
-
   attacker.polymorphDex = attacker.dex;
   victim.polymorphDex = victim.dex;
 
@@ -2476,8 +2474,6 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
     } else {
       attacker.statAttackValue = 2 * (polymorphStr + attacker.str);
     }
-  } else {
-    attacker.statAttackValue = calcStatAttackValue(attacker);
   }
 }
 
@@ -2616,6 +2612,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var sungmaStrMalus = 0;
   var whiteDragonElixir = 0;
   var steelDragonElixir = 0;
+
+  attacker.statAttackValue = calcStatAttackValue(attacker);
 
   computePolymorphPoint(attacker, victim, constants.polymorphPowerTable);
   computeHorse(attacker);
