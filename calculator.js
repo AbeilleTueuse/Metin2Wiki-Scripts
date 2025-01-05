@@ -10,6 +10,13 @@ function isValueInArray(value, array) {
   return array.indexOf(value) !== -1;
 }
 
+function splitFirst(value, delimiter) {
+  var parts = value.split(delimiter);
+  var first = parts[0];
+  var rest = parts.slice(1).join(delimiter);
+  return [first, rest];
+}
+
 function copyObject(object) {
   var copy = {};
   for (var key in object) {
@@ -370,6 +377,12 @@ function changePolymorphValues(characterCreation, monsterVnum, monsterImage) {
   polymorphMonster.dispatchEvent(changeEvent);
 }
 
+function resetImageFromWiki(image) {
+  image.removeAttribute("srcset");
+  image.removeAttribute("data-file-width");
+  image.removeAttribute("data-file-height");
+}
+
 function handleImageFromWiki(image, newSrc) {
   image.src = newSrc;
   image.alt = newSrc.split("/").pop();
@@ -381,8 +394,8 @@ function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
   var oldLink = oldImage.nextElementSibling;
   var monsterName = getMonsterName(monsterVnum);
 
+  resetImageFromWiki(oldImage);
   handleImageFromWiki(oldImage, monsterSrc);
-  oldImage.removeAttribute("srcset");
 
   newLink.href = mw.util.getUrl(monsterName);
   newLink.title = monsterName;
@@ -1984,6 +1997,7 @@ function addBattleElement(
   var imageSrc;
   var name;
   var id;
+  var value;
 
   if (isMonster) {
     var isStone = characterOrMonster.category === "stone";
@@ -1992,8 +2006,6 @@ function addBattleElement(
       return;
     }
 
-    image.setAttribute("data-file-width", "200");
-    image.setAttribute("data-file-height", "200");
     imageSrc = characterOrMonster.image;
     name = getMonsterName(pseudoOrVnum);
 
@@ -2003,26 +2015,26 @@ function addBattleElement(
       battleChoiceCategory.monsters.appendChild(templateClone);
     }
 
-    id = category + "-monster-" + pseudoOrVnum;
+    value = "monster-" + pseudoOrVnum;
+    id = category + "-" + value;
   } else {
     label.classList.add("notranslate");
     imageSrc = battle.mapping.raceToImage[characterOrMonster.race];
     name = pseudoOrVnum;
     battleChoiceCategory.characters.appendChild(templateClone);
-    id = category + "-character-" + pseudoOrVnum;
+    value = "character-" + pseudoOrVnum;
+    id = category + "-" + value;
   }
 
   label.setAttribute("for", id);
+  input.value = value;
   input.id = id;
   input.name = category;
-  input.value = pseudoOrVnum;
-
-  handleImageFromWiki(image, imageSrc);
-  image.removeAttribute("srcset");
-
   span.textContent = name;
 
-  battleChoiceCategory.elements[pseudoOrVnum] = {
+  handleImageFromWiki(image, imageSrc);
+
+  battleChoiceCategory.elements[value] = {
     container: templateClone,
     image: image,
     name: name,
@@ -2052,14 +2064,19 @@ function addBattleChoice(
 }
 
 function updateBattleChoiceImage(battle, pseudo, newRace) {
-  var { elements } = battle.battleChoice.attacker;
-  var image = elements[pseudo].image;
   var imageSrc = battle.mapping.raceToImage[newRace];
+  var { attacker, victim } = battle.battleChoice;
 
-  handleImageFromWiki(image, imageSrc);
+  handleImageFromWiki(attacker.elements[pseudo].image, imageSrc);
+  handleImageFromWiki(victim.elements[pseudo].image, imageSrc);
 }
 
 function updateBattleChoice(characters, battle) {
+  var templateImage = battle.battleChoice.template.querySelector("img");
+
+  resetImageFromWiki(templateImage);
+  setupDropdowns(battle);
+
   for (var [pseudo, character] of Object.entries(characters.savedCharacters)) {
     addBattleChoice(battle, pseudo, character);
   }
@@ -2067,6 +2084,16 @@ function updateBattleChoice(characters, battle) {
   for (var [vnum, monster] of Object.entries(characters.savedMonsters)) {
     addBattleChoice(battle, vnum, monster, true);
   }
+}
+
+function updateBattleChoiceButton(battleChoice, category, pseudoOrVnum) {
+  var battleChoiceCategory = battleChoice[category];
+  var { button, elements } = battleChoiceCategory;
+  var [buttonImage, buttonSpan] = button.children;
+  var { name, image } = elements[pseudoOrVnum];
+
+  buttonSpan.textContent = name;
+  handleImageFromWiki(buttonImage, image.src);
 }
 
 function isPC(character) {
@@ -4270,6 +4297,7 @@ function createWeapon(vnum) {
 }
 
 function createMonster(monsterVnum, attacker, polymorphMonster) {
+  console.log(monsterVnum);
   var monsterAttributes = monsterData[monsterVnum];
 
   var monster = {
@@ -4599,8 +4627,10 @@ function displayFightInfo(
   battle.displayTime.textContent = displayTime;
 }
 
-function isPseudoSaved(characters, pseudo) {
-  return characters.savedCharacters.hasOwnProperty(pseudo);
+function parseCategoryData(data) {
+  [category, nameOrVnum] = splitFirst(data, "-");
+
+  return [category === "character", nameOrVnum];
 }
 
 function useBonusVariationMode(character, variation) {
@@ -4613,17 +4643,16 @@ function useBonusVariationMode(character, variation) {
 
 function createBattle(characters, battle) {
   var battleChoice = battle.battleChoice;
+  var battleForm = battleChoice.form;
 
-  battleChoice.form.addEventListener("change", handleBattleFormChange);
-  battleChoice.form.addEventListener("submit", handleBattleFormSubmit);
+  battleForm.addEventListener("change", handleBattleFormChange);
+  battleForm.addEventListener("submit", handleBattleFormSubmit);
 
   function handleBattleFormChange(event) {
     var target = event.target;
 
     if (target.type === "radio") {
-      category = target.name;
-      battleChoice[category].button.textContent =
-        battleChoice[category].elements[target.value].name;
+      updateBattleChoiceButton(battleChoice, target.name, target.value);
     }
   }
 
@@ -4636,28 +4665,32 @@ function createBattle(characters, battle) {
     }
 
     var battleInfo = new FormData(event.target);
-    var attackerName = battleInfo.get("attacker");
+    var attackerData = battleInfo.get("attacker");
     var attackType = battleInfo.get("attackTypeSelection");
-    var victimName = battleInfo.get("victim");
+    var victimData = battleInfo.get("victim");
     var attackerVariation;
     var victimVariation;
 
-    if (!attackerName && !attackType && !victimName) {
+    if (!attackerData && !attackType && !victimData) {
       return;
     }
 
-    if (isPseudoSaved(characters, attackerName)) {
-      var attacker = copyObject(characters.savedCharacters[attackerName]);
+    var [attackerIsPlayer, attackerNameOrVnum] =
+      parseCategoryData(attackerData);
+    var [victimIsPlayer, victimNameOrVnum] = parseCategoryData(victimData);
+
+    if (attackerIsPlayer) {
+      var attacker = copyObject(characters.savedCharacters[attackerNameOrVnum]);
       attackerVariation = attacker.bonusVariation;
     } else {
-      var attacker = createMonster(attackerName);
+      var attacker = createMonster(attackerNameOrVnum);
     }
 
-    if (isPseudoSaved(characters, victimName)) {
-      var victim = copyObject(characters.savedCharacters[victimName]);
+    if (victimIsPlayer) {
+      var victim = copyObject(characters.savedCharacters[victimNameOrVnum]);
       victimVariation = victim.bonusVariation;
     } else {
-      var victim = createMonster(victimName, attacker);
+      var victim = createMonster(victimNameOrVnum, attacker);
     }
 
     if (useBonusVariationMode(attacker, attackerVariation)) {
@@ -5282,10 +5315,12 @@ function attackSelectonListener(
   attackTypeSelection
 ) {
   attackerSelection.addEventListener("change", function (event) {
-    var attackerName = event.target.value;
+    var [isAttackerPlayer, attackerNameOrVnum] = parseCategoryData(
+      event.target.value
+    );
 
-    if (isPseudoSaved(characters, attackerName)) {
-      var attacker = characters.savedCharacters[attackerName];
+    if (isAttackerPlayer) {
+      var attacker = characters.savedCharacters[attackerNameOrVnum];
       filterAttackTypeSelection(attacker, attackTypeSelection);
     } else {
       filterAttackTypeSelectionMonster(attackTypeSelection);
@@ -5482,7 +5517,6 @@ function loadStyle(src) {
     characterManagement(characters, battle);
     monsterManagement(characters, battle);
 
-    setupDropdowns(battle);
     updateBattleChoice(characters, battle);
     createBattle(characters, battle);
   }
