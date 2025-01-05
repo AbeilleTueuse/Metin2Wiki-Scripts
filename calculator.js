@@ -1996,8 +1996,6 @@ function addBattleElement(
   var [input, image, span] = label.children;
   var imageSrc;
   var name;
-  var id;
-  var value;
 
   if (isMonster) {
     var isStone = characterOrMonster.category === "stone";
@@ -2006,25 +2004,25 @@ function addBattleElement(
       return;
     }
 
+    type = "monster";
     imageSrc = characterOrMonster.image;
     name = getMonsterName(pseudoOrVnum);
 
     if (isStone) {
-      battleChoiceCategory.stones.appendChild(templateClone);
+      battleChoiceCategory.stonesContainer.appendChild(templateClone);
     } else {
-      battleChoiceCategory.monsters.appendChild(templateClone);
+      battleChoiceCategory.monstersContainer.appendChild(templateClone);
     }
-
-    value = "monster-" + pseudoOrVnum;
-    id = category + "-" + value;
   } else {
-    label.classList.add("notranslate");
+    type = "character";
     imageSrc = battle.mapping.raceToImage[characterOrMonster.race];
     name = pseudoOrVnum;
-    battleChoiceCategory.characters.appendChild(templateClone);
-    value = "character-" + pseudoOrVnum;
-    id = category + "-" + value;
+    battleChoiceCategory.charactersContainer.appendChild(templateClone);
+    label.classList.add("notranslate");
   }
+
+  var value = type + "-" + pseudoOrVnum;
+  var id = category + "-" + value;
 
   label.setAttribute("for", id);
   input.value = value;
@@ -2034,7 +2032,7 @@ function addBattleElement(
 
   handleImageFromWiki(image, imageSrc);
 
-  battleChoiceCategory.elements[value] = {
+  battleChoiceCategory.elements[type][pseudoOrVnum] = {
     container: templateClone,
     image: image,
     name: name,
@@ -2067,8 +2065,30 @@ function updateBattleChoiceImage(battle, pseudo, newRace) {
   var imageSrc = battle.mapping.raceToImage[newRace];
   var { attacker, victim } = battle.battleChoice;
 
-  handleImageFromWiki(attacker.elements[pseudo].image, imageSrc);
-  handleImageFromWiki(victim.elements[pseudo].image, imageSrc);
+  handleImageFromWiki(attacker.elements.character[pseudo].image, imageSrc);
+  handleImageFromWiki(victim.elements.character[pseudo].image, imageSrc);
+
+  if (attacker.selected) {
+    var { nameOrVnum: selectedAttackerPseudo, isCharacter: attackerIsPlayer } =
+      parseTypeAndName(attacker.selected);
+
+    if (selectedAttackerPseudo === pseudo && attackerIsPlayer) {
+      updateBattleChoiceButton(
+        battle.battleChoice,
+        "attacker",
+        attacker.selected
+      );
+    }
+  }
+
+  if (victim.selected) {
+    var { nameOrVnum: selectedVictimPseudo, isCharacter: victimIsPlayer } =
+      parseTypeAndName(victim.selected);
+
+    if (selectedVictimPseudo === pseudo && victimIsPlayer) {
+      updateBattleChoiceButton(battle.battleChoice, "victim", victim.selected);
+    }
+  }
 }
 
 function updateBattleChoice(characters, battle) {
@@ -2086,14 +2106,16 @@ function updateBattleChoice(characters, battle) {
   }
 }
 
-function updateBattleChoiceButton(battleChoice, category, pseudoOrVnum) {
+function updateBattleChoiceButton(battleChoice, category, data) {
   var battleChoiceCategory = battleChoice[category];
   var { button, elements } = battleChoiceCategory;
   var [buttonImage, buttonSpan] = button.children;
-  var { name, image } = elements[pseudoOrVnum];
+  var { type, nameOrVnum } = parseTypeAndName(data);
+  var { name, image } = elements[type][nameOrVnum];
 
   buttonSpan.textContent = name;
   handleImageFromWiki(buttonImage, image.src);
+  battleChoiceCategory.selected = data;
 }
 
 function isPC(character) {
@@ -4627,10 +4649,14 @@ function displayFightInfo(
   battle.displayTime.textContent = displayTime;
 }
 
-function parseCategoryData(data) {
-  [category, nameOrVnum] = splitFirst(data, "-");
+function parseTypeAndName(data) {
+  [type, nameOrVnum] = splitFirst(data, "-");
 
-  return [category === "character", nameOrVnum];
+  return {
+    type: type,
+    nameOrVnum: nameOrVnum,
+    isCharacter: type === "character",
+  };
 }
 
 function useBonusVariationMode(character, variation) {
@@ -4675,9 +4701,10 @@ function createBattle(characters, battle) {
       return;
     }
 
-    var [attackerIsPlayer, attackerNameOrVnum] =
-      parseCategoryData(attackerData);
-    var [victimIsPlayer, victimNameOrVnum] = parseCategoryData(victimData);
+    var { nameOrVnum: attackerNameOrVnum, isCharacter: attackerIsPlayer } =
+      parseTypeAndName(attackerData);
+    var { nameOrVnum: victimNameOrVnum, isCharacter: victimIsPlayer } =
+      parseTypeAndName(victimData);
 
     if (attackerIsPlayer) {
       var attacker = copyObject(characters.savedCharacters[attackerNameOrVnum]);
@@ -5315,9 +5342,8 @@ function attackSelectonListener(
   attackTypeSelection
 ) {
   attackerSelection.addEventListener("change", function (event) {
-    var [isAttackerPlayer, attackerNameOrVnum] = parseCategoryData(
-      event.target.value
-    );
+    var { nameOrVnum: attackerNameOrVnum, isCharacter: isAttackerPlayer } =
+      parseTypeAndName(event.target.value);
 
     if (isAttackerPlayer) {
       var attacker = characters.savedCharacters[attackerNameOrVnum];
@@ -5407,17 +5433,31 @@ function createDamageCalculatorInformation(chartSource) {
       template: document.getElementById("battle-selection-template")
         .children[0],
       attacker: {
-        characters: document.getElementById("attacker-selection-characters"),
-        monsters: document.getElementById("attacker-selection-monsters"),
-        elements: {},
+        charactersContainer: document.getElementById(
+          "attacker-selection-characters"
+        ),
+        monstersContainer: document.getElementById(
+          "attacker-selection-monsters"
+        ),
+        elements: {
+          character: {},
+          monster: {},
+        },
         button: document.getElementById("attacker-trigger"),
+        selected: null,
       },
       victim: {
-        characters: document.getElementById("victim-selection-characters"),
-        monsters: document.getElementById("victim-selection-monsters"),
-        stones: document.getElementById("victim-selection-stones"),
-        elements: {},
+        charactersContainer: document.getElementById(
+          "victim-selection-characters"
+        ),
+        monstersContainer: document.getElementById("victim-selection-monsters"),
+        stonesContainer: document.getElementById("victim-selection-stones"),
+        elements: {
+          character: {},
+          monster: {},
+        },
         button: document.getElementById("victim-trigger"),
+        selected: null,
       },
     },
     attackTypeSelection: document.getElementById("attack-type-selection"),
