@@ -976,7 +976,7 @@ function deleteCharacter(characters, pseudo, element, battle) {
   element.remove();
 
   updateSavedCharacters(characters.savedCharacters);
-  removeBattleChoice(battle, pseudo);
+  removeBattleChoice(battle, pseudo, "character");
 
   if (
     !Object.keys(characters.savedCharacters).length ||
@@ -1005,7 +1005,7 @@ function deleteMonster(characters, battle, monsterVnum, monsterElement) {
   delete characters.savedMonsters[monsterVnum];
 
   updateSavedMonsters(characters.savedMonsters);
-  removeBattleChoice(battle, monsterVnum);
+  removeBattleChoice(battle, monsterVnum, "monster");
 }
 
 function handleStyle(characters, selectedElement) {
@@ -1952,18 +1952,33 @@ function setupDropdowns(battle) {
   }
 }
 
-function removeBattleElement(battle, name, category) {
-  var elements = battle.battleChoice[category].elements;
+function removeBattleElement(battleChoice, nameOrVnum, category, type) {
+  var elements = battleChoice[category].elements[type];
 
-  if (elements.hasOwnProperty(name)) {
-    elements[name].container.remove();
-    delete elements[name];
+  if (elements.hasOwnProperty(nameOrVnum)) {
+    elements[nameOrVnum].container.remove();
+    delete elements[nameOrVnum];
   }
 }
 
-function removeBattleChoice(battle, name) {
-  removeBattleElement(battle, name, "attacker");
-  removeBattleElement(battle, name, "victim");
+function removeBattleChoice(battle, nameOrVnum, type) {
+  var battleChoice = battle.battleChoice;
+
+  ["attacker", "victim"].forEach(function (category) {
+    var selected = battleChoice[category].selected;
+
+    if (selected) {
+      var { type: selectedType, nameOrVnum: selectedNameOrVnum } =
+        parseTypeAndName(selected);
+
+      if (nameOrVnum === selectedNameOrVnum && type === selectedType) {
+        resetBattleChoiceButton(battleChoice, category, selected);
+        battleChoice[category].selected = null;
+      }
+    }
+
+    removeBattleElement(battleChoice, nameOrVnum, category, type);
+  });
 
   // var battleSelects = [battle.attackerSelection, battle.victimSelection];
 
@@ -2063,32 +2078,23 @@ function addBattleChoice(
 
 function updateBattleChoiceImage(battle, pseudo, newRace) {
   var imageSrc = battle.mapping.raceToImage[newRace];
-  var { attacker, victim } = battle.battleChoice;
+  var battleChoice = battle.battleChoice;
 
-  handleImageFromWiki(attacker.elements.character[pseudo].image, imageSrc);
-  handleImageFromWiki(victim.elements.character[pseudo].image, imageSrc);
+  ["attacker", "victim"].forEach(function (category) {
+    handleImageFromWiki(
+      battleChoice[category].elements.character[pseudo].image,
+      imageSrc
+    );
+    var selected = battleChoice[category].selected;
 
-  if (attacker.selected) {
-    var { nameOrVnum: selectedAttackerPseudo, isCharacter: attackerIsPlayer } =
-      parseTypeAndName(attacker.selected);
+    if (selected) {
+      var { nameOrVnum, isCharacter } = parseTypeAndName(selected);
 
-    if (selectedAttackerPseudo === pseudo && attackerIsPlayer) {
-      updateBattleChoiceButton(
-        battle.battleChoice,
-        "attacker",
-        attacker.selected
-      );
+      if (nameOrVnum === pseudo && isCharacter) {
+        updateBattleChoiceButton(battleChoice, category, selected);
+      }
     }
-  }
-
-  if (victim.selected) {
-    var { nameOrVnum: selectedVictimPseudo, isCharacter: victimIsPlayer } =
-      parseTypeAndName(victim.selected);
-
-    if (selectedVictimPseudo === pseudo && victimIsPlayer) {
-      updateBattleChoiceButton(battle.battleChoice, "victim", victim.selected);
-    }
-  }
+  });
 }
 
 function updateBattleChoice(characters, battle) {
@@ -2116,6 +2122,10 @@ function updateBattleChoiceButton(battleChoice, category, data) {
   buttonSpan.textContent = name;
   handleImageFromWiki(buttonImage, image.src);
   battleChoiceCategory.selected = data;
+}
+
+function resetBattleChoiceButton(battleChoice, category, data) {
+  console.log("hey");
 }
 
 function isPC(character) {
