@@ -989,15 +989,13 @@ function deleteCharacter(characters, pseudo, element, battle) {
   }
 }
 
-function deleteMonster(characters, battle, monsterVnum, monsterElement) {
-  var monsterElement =
-    monsterElement ||
-    characters.monstersContainer.querySelector(
-      "[data-monster-id='" + monsterVnum + "']"
-    );
+function deleteMonster(characters, battle, monsterVnum) {
+  var monsterElements = characters.monsterElements;
+  var monsterType = characters.savedMonsters[monsterVnum].category;
 
-  if (monsterElement) {
-    monsterElement.remove();
+  if (monsterElements.hasOwnProperty(monsterVnum)) {
+    monsterElements[monsterVnum].remove();
+    delete monsterElements[monsterVnum];
   }
 
   battle.battleChoice.form.reset();
@@ -1005,7 +1003,7 @@ function deleteMonster(characters, battle, monsterVnum, monsterElement) {
   delete characters.savedMonsters[monsterVnum];
 
   updateSavedMonsters(characters.savedMonsters);
-  removeBattleChoice(battle, monsterVnum, "monster");
+  removeBattleChoice(battle, monsterVnum, monsterType);
 }
 
 function handleStyle(characters, selectedElement) {
@@ -1622,28 +1620,24 @@ function characterManagement(characters, battle) {
 function addMonsterElement(characters, battle, monsterVnum, iframeInfo) {
   var { monsterTemplate, monstersContainer } = characters;
   var monsterElement = monsterTemplate.cloneNode(true);
-
   var spanInput = monsterElement.querySelector("span.input");
   var deleteSvg = monsterElement.querySelector("svg");
   var monsterName = getMonsterName(monsterVnum);
-
   var link = document.createElement("a");
+
   link.href = mw.util.getUrl(monsterName);
   link.title = monsterName;
   link.textContent = monsterName;
-
-  spanInput.appendChild(link);
-
   monsterElement.setAttribute("tabindex", "0");
-  monsterElement.setAttribute("data-monster-id", monsterVnum);
-
+  spanInput.appendChild(link);
   monstersContainer.appendChild(monsterElement);
+  characters.monsterElements[monsterVnum] = monsterElement;
 
   deleteSvg.addEventListener("click", function () {
     var monster = characters.savedMonsters[monsterVnum];
     iframeInfo[monster.category].shouldBeUpdated = true;
 
-    deleteMonster(characters, battle, monsterVnum, monsterElement);
+    deleteMonster(characters, battle, monsterVnum);
   });
 }
 
@@ -1953,11 +1947,12 @@ function setupDropdowns(battle) {
 }
 
 function removeBattleElement(battleChoice, nameOrVnum, category, type) {
-  var elements = battleChoice[category].elements[type];
+  var elements = battleChoice[category][type].elements;
 
   if (elements.hasOwnProperty(nameOrVnum)) {
     elements[nameOrVnum].container.remove();
     delete elements[nameOrVnum];
+    battleChoice[category][type].count--;
   }
 }
 
@@ -1965,6 +1960,9 @@ function removeBattleChoice(battle, nameOrVnum, type) {
   var battleChoice = battle.battleChoice;
 
   ["attacker", "victim"].forEach(function (category) {
+    if (category === "attacker" && type === "stone") {
+      return;
+    }
     var selected = battleChoice[category].selected;
 
     if (selected) {
@@ -1979,6 +1977,7 @@ function removeBattleChoice(battle, nameOrVnum, type) {
 
     removeBattleElement(battleChoice, nameOrVnum, category, type);
   });
+  updateBattleChoiceText(battle.battleChoice);
 
   // var battleSelects = [battle.attackerSelection, battle.victimSelection];
 
@@ -2011,33 +2010,26 @@ function addBattleElement(
   var [input, image, span] = label.children;
   var imageSrc;
   var name;
+  var type;
 
   if (isMonster) {
-    var isStone = characterOrMonster.category === "stone";
+    type = characterOrMonster.category;
 
-    if (isStone && category === "attacker") {
+    if (type === "stone" && category === "attacker") {
       return;
     }
-
-    type = "monster";
     imageSrc = characterOrMonster.image;
     name = getMonsterName(pseudoOrVnum);
-
-    if (isStone) {
-      battleChoiceCategory.stonesContainer.appendChild(templateClone);
-    } else {
-      battleChoiceCategory.monstersContainer.appendChild(templateClone);
-    }
   } else {
     type = "character";
     imageSrc = battle.mapping.raceToImage[characterOrMonster.race];
     name = pseudoOrVnum;
-    battleChoiceCategory.charactersContainer.appendChild(templateClone);
     label.classList.add("notranslate");
   }
 
   var value = type + "-" + pseudoOrVnum;
   var id = category + "-" + value;
+  var currentBattleChoice = battleChoiceCategory[type];
 
   label.setAttribute("for", id);
   input.value = value;
@@ -2047,7 +2039,9 @@ function addBattleElement(
 
   handleImageFromWiki(image, imageSrc);
 
-  battleChoiceCategory.elements[type][pseudoOrVnum] = {
+  currentBattleChoice.container.appendChild(templateClone);
+  currentBattleChoice.count++;
+  currentBattleChoice.elements[pseudoOrVnum] = {
     container: templateClone,
     image: image,
     name: name,
@@ -2074,6 +2068,7 @@ function addBattleChoice(
     "victim",
     isMonster
   );
+  updateBattleChoiceText(battle.battleChoice);
 }
 
 function updateBattleChoiceImage(battle, pseudo, newRace) {
@@ -2082,7 +2077,7 @@ function updateBattleChoiceImage(battle, pseudo, newRace) {
 
   ["attacker", "victim"].forEach(function (category) {
     handleImageFromWiki(
-      battleChoice[category].elements.character[pseudo].image,
+      battleChoice[category].character.elements[pseudo].image,
       imageSrc
     );
     var selected = battleChoice[category].selected;
@@ -2094,6 +2089,21 @@ function updateBattleChoiceImage(battle, pseudo, newRace) {
         updateBattleChoiceButton(battleChoice, category, selected);
       }
     }
+  });
+}
+
+function updateBattleChoiceText(battleChoice) {
+  ["attacker", "victim"].forEach(function (category) {
+    ["character", "monster"].forEach(function (type) {
+      var { count, container } = battleChoice[category][type];
+      if (count === 0) {
+        hideElement(container);
+        showElement(container.nextElementSibling);
+      } else {
+        showElement(container);
+        hideElement(container.nextElementSibling);
+      }
+    });
   });
 }
 
@@ -2110,14 +2120,16 @@ function updateBattleChoice(characters, battle) {
   for (var [vnum, monster] of Object.entries(characters.savedMonsters)) {
     addBattleChoice(battle, vnum, monster, true);
   }
+
+  updateBattleChoiceText(battle.battleChoice);
 }
 
 function updateBattleChoiceButton(battleChoice, category, data) {
   var battleChoiceCategory = battleChoice[category];
-  var { button, elements } = battleChoiceCategory;
+  var { button } = battleChoiceCategory;
   var [buttonImage, buttonSpan] = button.children;
   var { type, nameOrVnum } = parseTypeAndName(data);
-  var { name, image } = elements[type][nameOrVnum];
+  var { name, image } = battleChoiceCategory[type].elements[nameOrVnum];
 
   buttonSpan.textContent = name;
   handleImageFromWiki(buttonImage, image.src);
@@ -4329,7 +4341,6 @@ function createWeapon(vnum) {
 }
 
 function createMonster(monsterVnum, attacker, polymorphMonster) {
-  console.log(monsterVnum);
   var monsterAttributes = monsterData[monsterVnum];
 
   var monster = {
@@ -5384,6 +5395,7 @@ function createDamageCalculatorInformation(chartSource) {
     savedCharacters: {},
     currentCharacter: null,
     savedMonsters: getSavedMonsters(),
+    monsterElements: {},
     characterCreation: document.getElementById("character-creation"),
     addNewCharacterButton: document.getElementById("add-new-character"),
     dropZone: document.getElementById("character-drop-zone"),
@@ -5443,28 +5455,34 @@ function createDamageCalculatorInformation(chartSource) {
       template: document.getElementById("battle-selection-template")
         .children[0],
       attacker: {
-        charactersContainer: document.getElementById(
-          "attacker-selection-characters"
-        ),
-        monstersContainer: document.getElementById(
-          "attacker-selection-monsters"
-        ),
-        elements: {
-          character: {},
-          monster: {},
+        character: {
+          count: 0,
+          container: document.getElementById("attacker-selection-characters"),
+          elements: {},
+        },
+        monster: {
+          count: 0,
+          container: document.getElementById("attacker-selection-monsters"),
+          elements: {},
         },
         button: document.getElementById("attacker-trigger"),
         selected: null,
       },
       victim: {
-        charactersContainer: document.getElementById(
-          "victim-selection-characters"
-        ),
-        monstersContainer: document.getElementById("victim-selection-monsters"),
-        stonesContainer: document.getElementById("victim-selection-stones"),
-        elements: {
-          character: {},
-          monster: {},
+        character: {
+          count: 0,
+          container: document.getElementById("victim-selection-characters"),
+          elements: {},
+        },
+        monster: {
+          count: 0,
+          container: document.getElementById("victim-selection-monsters"),
+          elements: {},
+        },
+        stone: {
+          count: 0,
+          container: document.getElementById("victim-selection-stones"),
+          elements: {},
         },
         button: document.getElementById("victim-trigger"),
         selected: null,
