@@ -389,19 +389,25 @@ function handleImageFromWiki(image, newSrc) {
 }
 
 function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
-  var newLink = document.createElement("a");
   var oldImage = polymorphDisplay.firstChild;
   var oldLink = oldImage.nextElementSibling;
   var monsterName = getMonsterName(monsterVnum);
+  var newLink = createWikiLink(monsterName);
 
   resetImageFromWiki(oldImage);
   handleImageFromWiki(oldImage, monsterSrc);
 
-  newLink.href = mw.util.getUrl(monsterName);
-  newLink.title = monsterName;
-  newLink.textContent = monsterName;
-
   polymorphDisplay.replaceChild(newLink, oldLink);
+}
+
+function createWikiLink(pageName) {
+  var wikiLink = document.createElement("a");
+
+  wikiLink.href = mw.util.getUrl(pageName);
+  wikiLink.title = pageName;
+  wikiLink.textContent = pageName;
+
+  return wikiLink;
 }
 
 function getSelectedWeapon(weaponCategory) {
@@ -423,16 +429,10 @@ function handleWeaponDisplay(
   var weaponName = newImage.nextElementSibling.dataset.o;
 
   if (weaponVnum == 0) {
-    newText.textContent = " " + weaponName + " ";
+    newText.textContent = weaponName;
   } else {
-    var weaponLink = document.createElement("a");
-    weaponLink.href = mw.util.getUrl(weaponName);
-    weaponLink.title = weaponName;
-    weaponLink.textContent = weaponName;
-
-    newText.appendChild(document.createTextNode(" "));
+    var weaponLink = createWikiLink(weaponName);
     newText.appendChild(weaponLink);
-    newText.appendChild(document.createTextNode(" "));
   }
 
   weaponDisplay.replaceChild(newImage.cloneNode(), oldImage);
@@ -1623,11 +1623,8 @@ function addMonsterElement(characters, battle, monsterVnum, iframeInfo) {
   var spanInput = monsterElement.querySelector("span.input");
   var deleteSvg = monsterElement.querySelector("svg");
   var monsterName = getMonsterName(monsterVnum);
-  var link = document.createElement("a");
-
-  link.href = mw.util.getUrl(monsterName);
-  link.title = monsterName;
-  link.textContent = monsterName;
+  var link = createWikiLink(monsterName);
+  
   monsterElement.setAttribute("tabindex", "0");
   spanInput.appendChild(link);
   monstersContainer.appendChild(monsterElement);
