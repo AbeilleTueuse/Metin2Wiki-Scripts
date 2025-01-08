@@ -1976,23 +1976,8 @@ function removeBattleChoice(battle, nameOrVnum, type) {
     }
 
     removeBattleElement(battleChoice, nameOrVnum, category, type);
+    updateBattleChoiceText(battle.battleChoice, category, type);
   });
-  updateBattleChoiceText(battle.battleChoice);
-
-  // var battleSelects = [battle.attackerSelection, battle.victimSelection];
-
-  // battleSelects.forEach(function (battleSelect) {
-  //   for (
-  //     var optionIndex = 0;
-  //     optionIndex < battleSelect.options.length;
-  //     optionIndex++
-  //   ) {
-  //     if (battleSelect.options[optionIndex].value === name) {
-  //       battleSelect.remove(optionIndex);
-  //       break;
-  //     }
-  //   }
-  // });
 }
 
 function addBattleElement(
@@ -2046,6 +2031,8 @@ function addBattleElement(
     image: image,
     name: name,
   };
+
+  updateBattleChoiceText(battle.battleChoice, category, type);
 }
 
 function addBattleChoice(
@@ -2068,7 +2055,6 @@ function addBattleChoice(
     "victim",
     isMonster
   );
-  updateBattleChoiceText(battle.battleChoice);
 }
 
 function updateBattleChoiceImage(battle, pseudo, newRace) {
@@ -2092,19 +2078,17 @@ function updateBattleChoiceImage(battle, pseudo, newRace) {
   });
 }
 
-function updateBattleChoiceText(battleChoice) {
-  ["attacker", "victim"].forEach(function (category) {
-    ["character", "monster"].forEach(function (type) {
-      var { count, container } = battleChoice[category][type];
-      if (count === 0) {
-        hideElement(container);
-        showElement(container.nextElementSibling);
-      } else {
-        showElement(container);
-        hideElement(container.nextElementSibling);
-      }
-    });
-  });
+function updateBattleChoiceText(battleChoice, category, type) {
+  var { count, container } = battleChoice[category][type];
+  var parentContainer = container.parentElement;
+
+  if (count === 0) {
+    hideElement(parentContainer);
+    showElement(parentContainer.nextElementSibling);
+  } else if (count === 1) {
+    showElement(parentContainer);
+    hideElement(parentContainer.nextElementSibling);
+  }
 }
 
 function updateBattleChoice(characters, battle) {
@@ -2120,8 +2104,6 @@ function updateBattleChoice(characters, battle) {
   for (var [vnum, monster] of Object.entries(characters.savedMonsters)) {
     addBattleChoice(battle, vnum, monster, true);
   }
-
-  updateBattleChoiceText(battle.battleChoice);
 }
 
 function updateBattleChoiceButton(battleChoice, category, data) {
