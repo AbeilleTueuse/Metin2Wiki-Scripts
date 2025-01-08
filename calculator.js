@@ -2964,7 +2964,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
     rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
-    damageBonusCoeff: damageBonus,
+    damageBonusCoeff: Math.min(20, damageBonus),
     empireMalusCoeff: 10 - empireMalus,
     sungMaStrBonusCoeff: 10000 + sungMaStrBonus,
     sungmaStrMalusCoeff: sungmaStrMalus,
