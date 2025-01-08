@@ -621,7 +621,7 @@ function filterForm(characters, battle) {
         battleChoice.resetAttackType = true;
         break;
       case "lowRank":
-        filterCheckbox(target, characterCreation.playerRank.parentElement);
+        filterCheckbox(target, characters.rankSelection);
         break;
       case "isBlessed":
         filterCheckbox(target, characters.blessingCreation);
@@ -1077,7 +1077,7 @@ function updateForm(
   filterCheckbox(characterCreation.isPolymorph, characters.polymorphCreation);
   filterCheckbox(
     characterCreation.lowRank,
-    characterCreation.playerRank.parentElement
+    characters.rankSelection
   );
   filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
   filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
@@ -2549,7 +2549,7 @@ function getRankBonus(attacker) {
     return 0;
   }
 
-  switch (attacker.playerRank) {
+  switch (attacker.rank) {
     case "aggressive":
       return 1;
     case "fraudulent":
@@ -5398,6 +5398,7 @@ function createDamageCalculatorInformation(chartSource) {
     polymorphDisplay: document.getElementById("polymorph-display"),
     polymorphCreation: document.getElementById("polymorph-creation"),
     yoharaCreation: document.getElementById("yohara-creation"),
+    rankSelection: document.getElementById("rank-selection"),
     blessingCreation: document.getElementById("blessing-creation"),
     marriageCreation: document.getElementById("marriage-creation"),
     bonusVariation: {
