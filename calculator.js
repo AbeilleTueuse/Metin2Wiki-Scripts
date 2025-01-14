@@ -504,54 +504,57 @@ function filterSkills(selectedClass, skillElementsToFilter) {
   }
 }
 
-function filterAttackTypeSelection(attacker, attackTypeSelection) {
+function filterAttackTypeSelectionCharacter(attacker, attackType) {
   var attackerClass = attacker.class;
-  var selectedOption =
-    attackTypeSelection.options[attackTypeSelection.selectedIndex];
   var attackerIsNotPolymorph = !isPolymorph(attacker);
+  var { elements: attackTypeElements } = attackType;
 
-  for (var index = 2; index < attackTypeSelection.options.length; index++) {
-    var option = attackTypeSelection.options[index];
-    var optionClass = option.dataset.class;
-    var optionValue = option.value;
+  for (var index = 1; index < attackTypeElements.length; index++) {
+    var { container, input, inputClass, inputValue } = attackTypeElements[index];
 
     if (
       attackerIsNotPolymorph &&
-      attacker[optionValue] &&
-      (attackerClass === optionClass ||
-        (optionValue.startsWith("horseSkill") &&
+      attacker[inputValue] &&
+      (attackerClass === inputClass ||
+        (inputValue.startsWith("horseSkill") &&
           isRiding(attacker) &&
-          (!optionClass || isValueInArray(attackerClass, optionClass))))
+          (!inputClass || isValueInArray(attackerClass, inputClass))))
     ) {
-      showElement(option);
+      showElement(container);
     } else {
-      hideElement(option);
+      hideElement(container);
 
-      if (selectedOption === option) {
-        attackTypeSelection.selectedIndex = 0;
+      if (attackType.selected === input) {
+        input.checked = false;
+        attackType.selected = null;
       }
     }
   }
 }
 
-function filterAttackTypeSelectionMonster(attackTypeSelection) {
-  for (var index = 2; index < attackTypeSelection.options.length; index++) {
-    hideElement(attackTypeSelection.options[index]);
+function filterAttackTypeSelectionMonster(attackType) {
+  var attackTypeElements = attackType.elements;
+
+  for (var index = 1; index < attackTypeElements.length; index++) {
+    hideElement(attackTypeElements[index].container);
   }
 
-  if (attackTypeSelection.selectedIndex !== 1) {
-    attackTypeSelection.selectedIndex = 0;
-  }
+  // if (attackTypeSelection.selectedIndex !== 1) {
+  //   attackTypeSelection.selectedIndex = 0;
+  // }
 }
 
 function filterForm(characters, battle) {
-  var characterCreation = characters.characterCreation;
+  var { saveButton, characterCreation } = characters;
   var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace;
   var battleChoice = battle.battleChoice;
 
   characterCreation.addEventListener("change", function (event) {
     var target = event.target;
     var targetName = target.name;
+
+    saveButtonOrange(saveButton);
+    characters.unsavedChanges = true;
 
     switch (targetName) {
       case "race":
@@ -747,7 +750,7 @@ function saveCharacter(
   }
 
   var characterPseudo = characterDataObject.name;
-  var { battleChoice, attackTypeSelection } = battle;
+  var { battleChoice } = battle;
 
   savedCharacters[characterPseudo] = characterDataObject;
   updateSavedCharacters(savedCharacters);
@@ -759,7 +762,10 @@ function saveCharacter(
   }
 
   if (battleChoice.resetAttackType) {
-    filterAttackTypeSelection(characterDataObject, attackTypeSelection);
+    filterAttackTypeSelectionCharacter(
+      characterDataObject,
+      battleChoice.attackType
+    );
     battleChoice.resetAttackType = false;
   }
 }
@@ -1075,10 +1081,7 @@ function updateForm(
     characters.randomMagicAttackValue
   );
   filterCheckbox(characterCreation.isPolymorph, characters.polymorphCreation);
-  filterCheckbox(
-    characterCreation.lowRank,
-    characters.rankSelection
-  );
+  filterCheckbox(characterCreation.lowRank, characters.rankSelection);
   filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
   filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
   filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
@@ -1560,11 +1563,6 @@ function characterManagement(characters, battle) {
     battle
   );
 
-  characterCreation.addEventListener("change", function () {
-    saveButtonOrange(saveButton);
-    characters.unsavedChanges = true;
-  });
-
   function handleLongPress(target) {
     if (target.tagName !== "INPUT" && target.tagName !== "SELECT") {
       target = target.querySelector("input");
@@ -1624,7 +1622,7 @@ function addMonsterElement(characters, battle, monsterVnum, iframeInfo) {
   var deleteSvg = monsterElement.querySelector("svg");
   var monsterName = getMonsterName(monsterVnum);
   var link = createWikiLink(monsterName);
-  
+
   monsterElement.setAttribute("tabindex", "0");
   spanInput.appendChild(link);
   monstersContainer.appendChild(monsterElement);
@@ -4606,7 +4604,8 @@ function displayFightResults(
   var valuesToDisplay = [
     attackerName,
     victimName,
-    attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
+    //attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
+    "none",
     meanDamages,
     minDamages,
     maxDamages,
@@ -4677,8 +4676,20 @@ function createBattle(characters, battle) {
   function handleBattleFormChange(event) {
     var target = event.target;
 
-    if (target.type === "radio") {
+    if (target.type !== "radio") {
+      return;
+    }
+
+    var targetName = target.name;
+
+    if (targetName === "attackType") {
+      battleChoice.attackType.selected = target;
+    } else {
       updateBattleChoiceButton(battleChoice, target.name, target.value);
+
+      if (targetName === "attacker") {
+        filterAttackTypeSelection(characters, battleChoice);
+      }
     }
   }
 
@@ -4692,7 +4703,7 @@ function createBattle(characters, battle) {
 
     var battleInfo = new FormData(event.target);
     var attackerData = battleInfo.get("attacker");
-    var attackType = battleInfo.get("attackTypeSelection");
+    var attackType = battleInfo.get("attackType");
     var victimData = battleInfo.get("victim");
     var attackerVariation;
     var victimVariation;
@@ -5336,22 +5347,16 @@ function initBonusVariationChart(battle) {
   battle.bonusVariationChart = chart;
 }
 
-function attackSelectonListener(
-  characters,
-  attackerSelection,
-  attackTypeSelection
-) {
-  attackerSelection.addEventListener("change", function (event) {
-    var { nameOrVnum: attackerNameOrVnum, isCharacter: isAttackerPlayer } =
-      parseTypeAndName(event.target.value);
+function filterAttackTypeSelection(characters, battleChoice) {
+  var { nameOrVnum: attackerNameOrVnum, isCharacter: isAttackerPlayer } =
+    parseTypeAndName(event.target.value);
 
-    if (isAttackerPlayer) {
-      var attacker = characters.savedCharacters[attackerNameOrVnum];
-      filterAttackTypeSelection(attacker, attackTypeSelection);
-    } else {
-      filterAttackTypeSelectionMonster(attackTypeSelection);
-    }
-  });
+  if (isAttackerPlayer) {
+    var attacker = characters.savedCharacters[attackerNameOrVnum];
+    filterAttackTypeSelectionCharacter(attacker, battleChoice.attackType);
+  } else {
+    filterAttackTypeSelectionMonster(battleChoice.attackType);
+  }
 }
 
 function getTranslation(translation) {
@@ -5366,6 +5371,27 @@ function getTranslation(translation) {
   }
 
   return translation[langToUse];
+}
+
+function addBattleData(battle) {
+  var errorElements = document.querySelectorAll("[data-error]");
+  var { elements: attackTypeElements, container: attackTypeContainer } =
+    battle.battleChoice.attackType;
+
+  for (var index = 0; index < errorElements.length; index++) {
+    var errorElement = errorElements[index];
+    battle.errorInformation[errorElement.dataset.error] = errorElement;
+  }
+
+  for (var attackTypeChild of attackTypeContainer.children) {
+    var input = attackTypeChild.querySelector("input");
+    attackTypeElements.push({
+      container: attackTypeChild,
+      input: input,
+      inputClass: input.dataset.class,
+      inputValue: input.value,
+    });
+  }
 }
 
 function createDamageCalculatorInformation(chartSource) {
@@ -5413,17 +5439,15 @@ function createDamageCalculatorInformation(chartSource) {
       selectedText: document.getElementById("bonus-variation-selected"),
       displaySpan: document.getElementById("bonus-variation-display"),
     },
+    skillElementsToFilter: document.querySelectorAll(
+      "#skill-container [data-class]"
+    ),
   };
 
   for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
     characters.savedCharacters[pseudo] = character;
   }
 
-  var skillContainer = document.getElementById("skill-container");
-  characters.skillElementsToFilter =
-    skillContainer.querySelectorAll("[data-class]");
-
-  var mapping = createMapping();
   var constants = createConstants();
 
   var battle = {
@@ -5446,6 +5470,7 @@ function createDamageCalculatorInformation(chartSource) {
           elements: {},
         },
         button: document.getElementById("attacker-trigger"),
+        container: document.getElementById("attacker-selection"),
         selected: null,
       },
       victim: {
@@ -5467,9 +5492,12 @@ function createDamageCalculatorInformation(chartSource) {
         button: document.getElementById("victim-trigger"),
         selected: null,
       },
+      attackType: {
+        container: document.getElementById("attack-type-selection"),
+        elements: [],
+        selected: null,
+      },
     },
-    attackTypeSelection: document.getElementById("attack-type-selection"),
-    victimSelection: document.getElementById("victim-selection"),
     damagesWeightedByType: {},
     scatterDataByType: {},
     damagesByBonus: [],
@@ -5514,16 +5542,12 @@ function createDamageCalculatorInformation(chartSource) {
         maximumFractionDigits: 3,
       }),
     },
-    mapping: mapping,
+    mapping: createMapping(),
     constants: constants,
     translation: getTranslation(constants.translation),
   };
 
-  // attackSelectonListener(
-  //   characters,
-  //   battle.attackerSelection,
-  //   battle.attackTypeSelection
-  // );
+  addBattleData(battle);
   initResultTableHistory(battle);
   addScript(chartSource, function () {
     initDamagesChart(battle);
@@ -5531,13 +5555,6 @@ function createDamageCalculatorInformation(chartSource) {
   });
   reduceChartPointsListener(battle);
   downloadRawDataListener(battle);
-
-  var errorElements = document.querySelectorAll("[data-error]");
-
-  for (var index = 0; index < errorElements.length; index++) {
-    var errorElement = errorElements[index];
-    battle.errorInformation[errorElement.dataset.error] = errorElement;
-  }
 
   return [characters, battle];
 }
