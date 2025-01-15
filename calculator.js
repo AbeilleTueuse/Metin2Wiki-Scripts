@@ -41,6 +41,10 @@ function truncateNumber(number, precision) {
   return Math.floor(number * 10 ** precision) / 10 ** precision;
 }
 
+function newChangeEvent() {
+  return new Event("change", { bubbles: true });
+}
+
 function addKeyValue(object, key, value) {
   if (object.hasOwnProperty(key)) {
     object[key] += value;
@@ -369,12 +373,11 @@ function filterWeapon(
 
 function changePolymorphValues(characterCreation, monsterVnum, monsterImage) {
   var { polymorphMonster, polymorphMonsterImage } = characterCreation;
-  var changeEvent = new Event("change", { bubbles: true });
 
   polymorphMonster.value = monsterVnum;
   polymorphMonsterImage.value = monsterImage;
 
-  polymorphMonster.dispatchEvent(changeEvent);
+  polymorphMonster.dispatchEvent(newChangeEvent());
 }
 
 function resetImageFromWiki(image) {
@@ -504,13 +507,15 @@ function filterSkills(selectedClass, skillElementsToFilter) {
   }
 }
 
-function hideAttackType(container, input, defaultInput, attackType) {
+function hideAttackType(container, input, attackType) {
   hideElement(container);
 
   if (input.checked) {
+    var defaultInput = attackType.defaultInput;
+
     input.checked = false;
     defaultInput.checked = true;
-    attackType.selectedText = "default";
+    defaultInput.dispatchEvent(newChangeEvent());
   }
 }
 
@@ -520,7 +525,8 @@ function filterAttackTypeSelectionCharacter(attacker, attackType) {
   var { elements: attackTypeElements } = attackType;
 
   for (var index = 1; index < attackTypeElements.length; index++) {
-    var { container, input, inputClass, inputValue } = attackTypeElements[index];
+    var { container, input, inputClass, inputValue } =
+      attackTypeElements[index];
 
     if (
       attackerIsNotPolymorph &&
@@ -532,7 +538,7 @@ function filterAttackTypeSelectionCharacter(attacker, attackType) {
     ) {
       showElement(container);
     } else {
-      hideAttackType(container, input, attackTypeElements[0].input, attackType);
+      hideAttackType(container, input, attackType);
     }
   }
 }
@@ -542,7 +548,7 @@ function filterAttackTypeSelectionMonster(attackType) {
 
   for (var index = 1; index < attackTypeElements.length; index++) {
     var { container, input } = attackTypeElements[index];
-    hideAttackType(container, input, attackTypeElements[0].input, attackType);
+    hideAttackType(container, input, attackType);
   }
 }
 
@@ -1508,7 +1514,7 @@ function handleBonusVariation(target, bonusVariation, displayName) {
     tabButton.click();
     tabButton.scrollIntoView(true);
 
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.dispatchEvent(newChangeEvent());
   }
 }
 
@@ -1780,8 +1786,7 @@ function handleiFrame(iframeInfo, category) {
             monsterVnum,
             monsterImage
           );
-          var changeEvent = new Event("change", { bubbles: true });
-          iframe.dispatchEvent(changeEvent);
+          iframe.dispatchEvent(newChangeEvent());
         } else {
           var addedMonsters = Object.keys(characters.savedMonsters);
           var [addButton, deleteButton] = vnumToButtons[monsterVnum];
@@ -4675,14 +4680,16 @@ function createBattle(characters, battle) {
   battleForm.addEventListener("submit", handleBattleFormSubmit);
 
   function handleBattleFormChange(event) {
-    var { name: targetName, value: targetValue, type: targetType } = event.target;
+    var target = event.target;
+    var { name: targetName, value: targetValue, type: targetType } = target;
 
     if (targetType !== "radio") {
       return;
     }
 
     if (targetName === "attackType") {
-      battleChoice.attackType.selectedText = "chocolat";
+      battleChoice.attackType.selectedText =
+        target.previousElementSibling.dataset.o;
     } else {
       updateBattleChoiceButton(battleChoice, targetName, targetValue);
 
@@ -5384,6 +5391,7 @@ function addBattleData(battle) {
 
   for (var attackTypeChild of attackTypeContainer.children) {
     var input = attackTypeChild.querySelector("input");
+    
     attackTypeElements.push({
       container: attackTypeChild,
       input: input,
@@ -5494,6 +5502,7 @@ function createDamageCalculatorInformation(chartSource) {
       attackType: {
         container: document.getElementById("attack-type-selection"),
         elements: [],
+        defaultInput: document.getElementById("physical-attack"),
         selectedText: "",
       },
     },
