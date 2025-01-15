@@ -504,6 +504,15 @@ function filterSkills(selectedClass, skillElementsToFilter) {
   }
 }
 
+function hideAttackType(container, input, defaultInput) {
+  hideElement(container);
+
+  if (input.checked) {
+    input.checked = false;
+    defaultInput.checked = true;
+  }
+}
+
 function filterAttackTypeSelectionCharacter(attacker, attackType) {
   var attackerClass = attacker.class;
   var attackerIsNotPolymorph = !isPolymorph(attacker);
@@ -522,12 +531,7 @@ function filterAttackTypeSelectionCharacter(attacker, attackType) {
     ) {
       showElement(container);
     } else {
-      hideElement(container);
-
-      if (attackType.selected === input) {
-        input.checked = false;
-        attackType.selected = null;
-      }
+      hideAttackType(container, input, attackTypeElements[0].input);
     }
   }
 }
@@ -536,12 +540,9 @@ function filterAttackTypeSelectionMonster(attackType) {
   var attackTypeElements = attackType.elements;
 
   for (var index = 1; index < attackTypeElements.length; index++) {
-    hideElement(attackTypeElements[index].container);
+    var { container, input } = attackTypeElements[index];
+    hideAttackType(container, input, attackTypeElements[0].input);
   }
-
-  // if (attackTypeSelection.selectedIndex !== 1) {
-  //   attackTypeSelection.selectedIndex = 0;
-  // }
 }
 
 function filterForm(characters, battle) {
@@ -4674,21 +4675,13 @@ function createBattle(characters, battle) {
   battleForm.addEventListener("submit", handleBattleFormSubmit);
 
   function handleBattleFormChange(event) {
-    var target = event.target;
+    var { name: targetName, value: targetValue, type: targetType } = event.target;
 
-    if (target.type !== "radio") {
-      return;
-    }
-
-    var targetName = target.name;
-
-    if (targetName === "attackType") {
-      battleChoice.attackType.selected = target;
-    } else {
-      updateBattleChoiceButton(battleChoice, target.name, target.value);
+    if (targetType === "radio" && targetName !== "attackType") {
+      updateBattleChoiceButton(battleChoice, targetName, targetValue);
 
       if (targetName === "attacker") {
-        filterAttackTypeSelection(characters, battleChoice);
+        filterAttackTypeSelection(characters, battleChoice, targetValue);
       }
     }
   }
@@ -5347,9 +5340,9 @@ function initBonusVariationChart(battle) {
   battle.bonusVariationChart = chart;
 }
 
-function filterAttackTypeSelection(characters, battleChoice) {
+function filterAttackTypeSelection(characters, battleChoice, targetValue) {
   var { nameOrVnum: attackerNameOrVnum, isCharacter: isAttackerPlayer } =
-    parseTypeAndName(event.target.value);
+    parseTypeAndName(targetValue);
 
   if (isAttackerPlayer) {
     var attacker = characters.savedCharacters[attackerNameOrVnum];
@@ -5495,7 +5488,6 @@ function createDamageCalculatorInformation(chartSource) {
       attackType: {
         container: document.getElementById("attack-type-selection"),
         elements: [],
-        selected: null,
       },
     },
     damagesWeightedByType: {},
