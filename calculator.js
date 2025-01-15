@@ -504,12 +504,14 @@ function filterSkills(selectedClass, skillElementsToFilter) {
   }
 }
 
-function hideAttackType(container, input, defaultInput) {
+function hideAttackType(container, input, defaultInput, attackType) {
   hideElement(container);
 
   if (input.checked) {
     input.checked = false;
     defaultInput.checked = true;
+    attackType.selectedText = "default";
+    console.log(attackType.selectedText);
   }
 }
 
@@ -531,7 +533,7 @@ function filterAttackTypeSelectionCharacter(attacker, attackType) {
     ) {
       showElement(container);
     } else {
-      hideAttackType(container, input, attackTypeElements[0].input);
+      hideAttackType(container, input, attackTypeElements[0].input, attackType);
     }
   }
 }
@@ -541,7 +543,7 @@ function filterAttackTypeSelectionMonster(attackType) {
 
   for (var index = 1; index < attackTypeElements.length; index++) {
     var { container, input } = attackTypeElements[index];
-    hideAttackType(container, input, attackTypeElements[0].input);
+    hideAttackType(container, input, attackTypeElements[0].input, attackType);
   }
 }
 
@@ -4605,8 +4607,7 @@ function displayFightResults(
   var valuesToDisplay = [
     attackerName,
     victimName,
-    //attackTypeSelection.options[attackTypeSelection.selectedIndex].textContent,
-    "none",
+    battle.battleChoice.attackType.selectedText,
     meanDamages,
     minDamages,
     maxDamages,
@@ -4677,7 +4678,13 @@ function createBattle(characters, battle) {
   function handleBattleFormChange(event) {
     var { name: targetName, value: targetValue, type: targetType } = event.target;
 
-    if (targetType === "radio" && targetName !== "attackType") {
+    if (targetType !== "radio") {
+      return;
+    }
+
+    if (targetName === "attackType") {
+      battleChoice.attackType.selectedText = "chocolat";
+    } else {
       updateBattleChoiceButton(battleChoice, targetName, targetValue);
 
       if (targetName === "attacker") {
@@ -5488,6 +5495,7 @@ function createDamageCalculatorInformation(chartSource) {
       attackType: {
         container: document.getElementById("attack-type-selection"),
         elements: [],
+        selectedText: "",
       },
     },
     damagesWeightedByType: {},
