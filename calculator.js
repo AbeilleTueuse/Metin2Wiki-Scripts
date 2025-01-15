@@ -511,7 +511,6 @@ function hideAttackType(container, input, defaultInput, attackType) {
     input.checked = false;
     defaultInput.checked = true;
     attackType.selectedText = "default";
-    console.log(attackType.selectedText);
   }
 }
 
