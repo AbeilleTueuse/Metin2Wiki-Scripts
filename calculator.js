@@ -3924,9 +3924,10 @@ function calcPhysicalSkillDamages(battleValues) {
       ) {
         if (damagesWithPrimaryBonuses <= 2) {
           for (var damages = 1; damages <= 5; damages++) {
-            damages *= bonusValues.useDamages;
-
-            var damagesWithFormula = skillFormula(damages, variation);
+            var damagesWithFormula = skillFormula(
+              damages * bonusValues.useDamages,
+              variation
+            );
 
             damagesWithFormula = Math.floor(
               (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
@@ -3942,10 +3943,8 @@ function calcPhysicalSkillDamages(battleValues) {
             addKeyValue(damagesWeighted, finalDamages, weight / 5);
           }
         } else {
-          damagesWithPrimaryBonuses *= bonusValues.useDamages;
-
           var damagesWithFormula = skillFormula(
-            damagesWithPrimaryBonuses,
+            damagesWithPrimaryBonuses * bonusValues.useDamages,
             variation
           );
 
