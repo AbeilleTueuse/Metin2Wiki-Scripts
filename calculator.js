@@ -627,6 +627,9 @@ function filterForm(characters, battle) {
           characters.bonusVariation
         );
         break;
+      case "isRiding":
+        battleChoice.resetAttackType = true;
+        break;
       case "isPolymorph":
         filterCheckbox(target, characters.polymorphCreation);
         battleChoice.resetAttackType = true;
