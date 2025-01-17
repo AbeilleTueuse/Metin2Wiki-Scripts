@@ -2111,8 +2111,16 @@ function updateBattleChoiceButton(battleChoice, category, data) {
   var { type, nameOrVnum } = parseTypeAndName(data);
   var { name, image } = battleChoiceCategory[type].elements[nameOrVnum];
 
+  if (buttonImage.tagName !== "IMG") {
+    var newImage = document.createElement("img");
+    newImage.width = buttonImage.getAttribute("width");
+    newImage.height = buttonImage.getAttribute("height");
+    buttonImage.replaceWith(newImage);
+    buttonImage = newImage;
+  }
+
   buttonSpan.textContent = name;
-  handleImageFromWiki(buttonImage, image.src);
+  buttonImage.src = image.src;
   battleChoiceCategory.selected = data;
 }
 
