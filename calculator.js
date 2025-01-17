@@ -450,6 +450,7 @@ function filterUpgrade(
 ) {
   var weapon = createWeapon(weaponVnum);
   var currentUpgrade = Number(weaponUpgrade.value);
+  var weaponUpgradeChildren = weaponUpgrade.children;
 
   if (weapon.isSerpent) {
     showElement(randomAttackValue);
@@ -468,24 +469,16 @@ function filterUpgrade(
     showElement(weaponUpgrade.parentElement);
   }
 
-  weaponUpgrade.innerHTML = "";
-  var lastOption;
-
   for (var upgrade = 0; upgrade <= weapon.maxUpgrade; upgrade++) {
-    var option = document.createElement("option");
-    option.value = upgrade;
-    option.textContent = "+" + upgrade;
-    weaponUpgrade.appendChild(option);
-
-    if (upgrade === currentUpgrade) {
-      option.selected = true;
-    }
-
-    lastOption = option;
+    showElement(weaponUpgradeChildren[upgrade]);
   }
 
-  if ((currentUpgrade > weapon.maxUpgrade || !currentUpgrade) && lastOption) {
-    lastOption.selected = true;
+  for (var upgrade = weapon.maxUpgrade + 1; upgrade < weaponUpgradeChildren.length; upgrade++) {
+    hideElement(weaponUpgradeChildren[upgrade]);
+  }
+
+  if (currentUpgrade > weapon.maxUpgrade) {
+    weaponUpgrade.value = weapon.maxUpgrade;
   }
 }
 
