@@ -4177,6 +4177,7 @@ function damagesWithoutVariation(
   );
 
   hideElement(battle.bonusVariationResultContainer);
+  showElement(battle.fightResultTitle);
   showElement(battle.fightResultContainer);
 }
 
@@ -4248,6 +4249,7 @@ function damagesWithVariation(
   battle.simulationTime.textContent = simulationTime;
 
   hideElement(battle.fightResultContainer);
+  showElement(battle.fightResultTitle);
   showElement(battle.bonusVariationResultContainer);
 
   if (
@@ -5561,6 +5563,7 @@ function createDamageCalculatorInformation(chartSource) {
     deleteFightTemplate: document.getElementById("delete-fight-template")
       .children[0],
     errorInformation: {},
+    fightResultTitle: document.getElementById("fight-result-title"),
     fightResultContainer: document.getElementById("fight-result-container"),
     downLoadRawData: document.getElementById("download-raw-data"),
     downLoadRawDataVariation: document.getElementById(
