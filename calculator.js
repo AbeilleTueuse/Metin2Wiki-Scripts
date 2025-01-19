@@ -17,6 +17,14 @@ function splitFirst(value, delimiter) {
   return [first, rest];
 }
 
+function isElementBelowHalfPage(element) {
+  var rect = element.getBoundingClientRect();
+  var elementCenterY = rect.top + rect.height / 2;
+  var halfViewportHeight = window.innerHeight / 2;
+
+  return elementCenterY > halfViewportHeight;
+}
+
 function copyObject(object) {
   var copy = {};
   for (var key in object) {
@@ -1918,6 +1926,14 @@ function setupDropdowns(battleChoice) {
 
     function handleClick() {
       toggleElement(dropdown);
+
+      if (isElementBelowHalfPage(button)) {
+        dropdown.classList.add("above");
+        dropdown.classList.remove("below");
+      } else {
+        dropdown.classList.add("below");
+        dropdown.classList.remove("above");
+      }
     }
 
     function handleMouseDown(event) {
