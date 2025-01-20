@@ -4700,7 +4700,7 @@ function createBattle(characters, battle) {
 
     var category = dataModal.split("-")[0];
 
-    if (category === "attacker" || category === "victim") {
+    if (isValueInArray(category, battleChoice.categories)) {
       battleChoice[category].button.click();
     }
   }
