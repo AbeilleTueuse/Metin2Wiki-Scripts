@@ -1403,7 +1403,7 @@ function getTargetContent(targetParent, targetName, isSkill) {
     }
   }
 
-  return targetContent;
+  return targetContent.trim();
 }
 
 function handleBonusVariation(target, bonusVariation, displayName) {
@@ -4173,7 +4173,7 @@ function damagesWithVariation(
   addToBonusVariationChart(
     damagesByBonus,
     augmentationByBonus,
-    entity.bonusVariationDisplay,
+    entity.bonusVariationName,
     battle.bonusVariationChart
   );
 
