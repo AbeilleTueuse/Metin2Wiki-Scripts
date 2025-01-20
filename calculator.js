@@ -17,14 +17,6 @@ function splitFirst(value, delimiter) {
   return [first, rest];
 }
 
-function isElementBelowHalfPage(element) {
-  var rect = element.getBoundingClientRect();
-  var elementCenterY = rect.top + rect.height / 2;
-  var halfViewportHeight = window.innerHeight / 2;
-
-  return elementCenterY > halfViewportHeight;
-}
-
 function copyObject(object) {
   var copy = {};
   for (var key in object) {
@@ -1913,60 +1905,6 @@ function filterAttackTypeSelectionMonster(attackType) {
   }
 }
 
-function setupDropdowns(battleChoice) {
-  var { form, buttons } = battleChoice;
-  var lastInvalidTime = 0;
-
-  buttons.forEach(function (button) {
-    var dropdown = button.nextElementSibling;
-
-    button.addEventListener("click", handleClick);
-    document.addEventListener("mousedown", handleMouseDown);
-    dropdown.addEventListener("change", handleChange);
-
-    function handleClick() {
-      toggleElement(dropdown);
-
-      if (isElementBelowHalfPage(button)) {
-        dropdown.classList.add("above");
-        dropdown.classList.remove("below");
-      } else {
-        dropdown.classList.add("below");
-        dropdown.classList.remove("above");
-      }
-    }
-
-    function handleMouseDown(event) {
-      if (!button.contains(event.target) && !dropdown.contains(event.target)) {
-        hideElement(dropdown);
-      }
-    }
-
-    function handleChange() {
-      hideElement(dropdown);
-    }
-  });
-
-  form.addEventListener("invalid", handleInvalidInput, true);
-
-  function handleInvalidInput(event) {
-    var currentTime = Date.now();
-
-    if (currentTime - lastInvalidTime < 100) {
-      return;
-    }
-
-    lastInvalidTime = currentTime;
-
-    var target = event.target;
-    var dropdownContainer = target.closest(".dropdown-container");
-
-    if (dropdownContainer) {
-      showElement(dropdownContainer);
-    }
-  }
-}
-
 function removeBattleElement(battleChoice, nameOrVnum, category, type) {
   var elements = battleChoice[category][type].elements;
 
@@ -2113,7 +2051,6 @@ function updateBattleChoice(characters, battleChoice) {
   resetImageFromWiki(templateImage);
   resetImageFromWiki(attackerImage);
   resetImageFromWiki(victimImage);
-  setupDropdowns(battleChoice);
 
   for (var [pseudo, character] of Object.entries(characters.savedCharacters)) {
     addBattleChoice(battleChoice, pseudo, character);
@@ -4713,8 +4650,10 @@ function useBonusVariationMode(character, variation) {
 function createBattle(characters, battle) {
   var battleChoice = battle.battleChoice;
   var battleForm = battleChoice.form;
+  var lastInvalidTime = 0;
 
   battleForm.addEventListener("change", handleBattleFormChange);
+  battleForm.addEventListener("invalid", handleBattleFormInvalid, true);
   battleForm.addEventListener("submit", handleBattleFormSubmit);
 
   function handleBattleFormChange(event) {
@@ -4734,6 +4673,35 @@ function createBattle(characters, battle) {
       if (targetName === "attacker") {
         filterAttackTypeSelection(characters, battleChoice, targetValue);
       }
+    }
+  }
+
+  function handleBattleFormInvalid(event) {
+    var currentTime = Date.now();
+
+    if (currentTime - lastInvalidTime < 100) {
+      return;
+    }
+
+    lastInvalidTime = currentTime;
+
+    var target = event.target;
+    var modal = target.closest(".modal");
+
+    if (!modal) {
+      return;
+    }
+
+    var dataModal = modal.dataset.modal;
+
+    if (!dataModal) {
+      return;
+    }
+
+    var category = dataModal.split("-")[0];
+
+    if (category === "attacker" || category === "victim") {
+      battleChoice[category].button.click();
     }
   }
 
@@ -5493,7 +5461,6 @@ function createDamageCalculatorInformation(chartSource) {
   var battle = {
     savedFights: getSavedFights(),
     battleChoice: {
-      buttons: document.querySelectorAll(".dropdown-trigger"),
       resetAttackType: false,
       form: document.getElementById("create-battle"),
       template: document.getElementById("battle-selection-template")
