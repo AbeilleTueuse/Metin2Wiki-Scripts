@@ -323,21 +323,18 @@ function getMonsterName(monsterVnum) {
 }
 
 function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
-  showElement(classChoice.parentElement);
+  for (var radioNode of classChoice) {
+    var radioGrandParent = radioNode.parentElement.parentElement;
 
-  for (var option of classChoice.options) {
-    if (option.getAttribute("data-race") === selectedRace) {
+    if (radioNode.getAttribute("data-race") === selectedRace) {
       if (!selectValueIsChanged) {
-        classChoice.value = option.value;
+        radioNode.checked = true;
         selectValueIsChanged = true;
       }
-      showElement(option);
+      showElement(radioGrandParent);
     } else {
-      hideElement(option);
+      hideElement(radioGrandParent);
     }
-  }
-  if (selectedRace == "lycan") {
-    hideElement(classChoice.parentElement);
   }
 }
 
@@ -2359,6 +2356,7 @@ function calcDamageWithSecondaryBonuses(
   damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
   damages = Math.floor((damages * bonusValues.tigerStrengthCoeff) / 100);
   damages = Math.floor((damages * bonusValues.blessingBonusCoeff) / 100);
+  damages = Math.floor((damages * bonusValues.fearBonusCoeff) / 100);
 
   if (damagesType.criticalHit) {
     damages *= 2;
@@ -2614,6 +2612,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var weaponDefense = 0;
   var tigerStrength = 0;
   var blessingBonus = 0;
+  var fearBonus = 0;
   var magicAttackValueMeleeMagic = 0;
   var criticalHitPercentage = attacker.criticalHit;
   var piercingHitPercentage = attacker.piercingHit;
@@ -2681,6 +2680,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           (missPercentage * victim.meleeArrowBlock) / 100;
 
         blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
+        fearBonus = calcFearBonus(constants.skillPowerTable, victim);
         averageDamageResistance = victim.averageDamageResistance;
       }
 
@@ -2818,11 +2818,13 @@ function createBattleValues(attacker, victim, battle, skillType) {
           missPercentage = victim.meleeBlock;
           averageDamageResistance = victim.averageDamageResistance;
           blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
+          fearBonus = calcFearBonus(constants.skillPowerTable, victim);
         } else if (isRangeAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           weaponDefense = victim.arrowDefense;
           averageDamageResistance = victim.averageDamageResistance;
           blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
+          fearBonus = calcFearBonus(constants.skillPowerTable, victim);
         } else if (isMagicAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           skillDamageResistance = victim.skillDamageResistance;
@@ -2921,6 +2923,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 100 - weaponDefense,
     blessingBonusCoeff: 100 - blessingBonus,
+    fearBonusCoeff: 100 - fearBonus,
     magicAttackValueCoeff: 100 + magicAttackValueMeleeMagic,
     extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
     averageDamageCoeff: 100 + averageDamage,
@@ -3077,6 +3080,22 @@ function calcBlessingBonus(skillPowerTable, victim) {
   }
 
   return blessingBonus;
+}
+
+function calcFearBonus(skillPowerTable, victim) {
+  if (!isChecked(victim.useFear) || victim.class !== "weaponary") {
+    return 0;
+  }
+
+  var skillPower = getSkillPower(victim["skillFear"], skillPowerTable);
+
+  if (!skillPower) {
+    return 0;
+  }
+
+  var fearBonus = 5 + skillPower * 20;
+
+  return fearBonus;
 }
 
 function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
