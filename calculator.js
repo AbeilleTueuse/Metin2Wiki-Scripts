@@ -3115,7 +3115,7 @@ function calcFearBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var fearBonus = 5 + Math.floor((skillPower * 100) / 5);
+  var fearBonus = 5 + Math.floor(skillPower * 20);
 
   return fearBonus;
 }
