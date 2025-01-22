@@ -11,14 +11,22 @@ function handleModal(button) {
   }
 
   const closeButton = modalContainer.querySelector(".close-button");
-  const autoClose = modalContainer.dataset.autoClose === "1";
+  const autoCloseChange = modalContainer.dataset.autoCloseChange === "1";
+  const autoCloseLink = modalContainer.dataset.autoCloseLink === "1";
   const addEvent = modalContainer.dataset.addEvent === "1";
 
   button.addEventListener("click", openModal);
   closeButton.addEventListener("click", closeModal);
 
-  if (autoClose) {
+  if (autoCloseChange) {
     modalContainer.addEventListener("change", closeModal);
+  }
+
+  if (autoCloseLink) {
+    const links = modalContainer.querySelectorAll("a");
+    links.forEach((link) => {
+      link.addEventListener("click", closeModal);
+    });
   }
 
   function openModal() {
