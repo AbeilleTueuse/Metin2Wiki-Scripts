@@ -11,18 +11,16 @@ function handleModal(button) {
   }
 
   const closeButton = modalContainer.querySelector(".close-button");
-  const autoCloseChange = modalContainer.dataset.autoCloseChange === "1";
-  const autoCloseLink = modalContainer.dataset.autoCloseLink === "1";
-  const addEvent = modalContainer.dataset.addEvent === "1";
+  const { autoCloseChange, autoCloseLink, addEvent } = modalContainer.dataset;
 
   button.addEventListener("click", openModal);
   closeButton.addEventListener("click", closeModal);
 
-  if (autoCloseChange) {
+  if (autoCloseChange === "1") {
     modalContainer.addEventListener("change", closeModal);
   }
 
-  if (autoCloseLink) {
+  if (autoCloseLink === "1") {
     const links = modalContainer.querySelectorAll("a");
     links.forEach((link) => {
       link.addEventListener("click", closeModal);
@@ -35,7 +33,7 @@ function handleModal(button) {
     window.addEventListener("click", handleClickOutside);
     window.addEventListener("keydown", handleEscape);
 
-    if (addEvent) {
+    if (addEvent === "1") {
       const modalOpenEvent = new CustomEvent('modalOpen', {
         bubbles: true,
         detail: { modal: modalContainer, name: modalName }
