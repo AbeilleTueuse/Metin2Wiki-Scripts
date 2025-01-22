@@ -1924,7 +1924,7 @@ function removeBattleChoice(battleChoice, nameOrVnum, type) {
         parseTypeAndName(selected);
 
       if (nameOrVnum === selectedNameOrVnum && type === selectedType) {
-        resetBattleChoiceButton(battleChoice, category, selected);
+        resetBattleChoiceButton(battleChoice, category);
         battleChoice[category].selected = null;
       }
     }
@@ -2355,6 +2355,7 @@ function calcDamageWithSecondaryBonuses(
   damages = Math.floor(damages * bonusValues.magicResistanceCoeff);
   damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
   damages = Math.floor((damages * bonusValues.tigerStrengthCoeff) / 100);
+  damages = Math.floor((damages * bonusValues.berserkBonusCoeff) / 100);
   damages = Math.floor((damages * bonusValues.blessingBonusCoeff) / 100);
   damages = Math.floor((damages * bonusValues.fearBonusCoeff) / 100);
 
@@ -2611,6 +2612,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var magicResistance = 0;
   var weaponDefense = 0;
   var tigerStrength = 0;
+  var berserkBonus = 0;
   var blessingBonus = 0;
   var fearBonus = 0;
   var magicAttackValueMeleeMagic = 0;
@@ -2679,6 +2681,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           victim.meleeArrowBlock -
           (missPercentage * victim.meleeArrowBlock) / 100;
 
+        berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
         blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
         fearBonus = calcFearBonus(constants.skillPowerTable, victim);
         averageDamageResistance = victim.averageDamageResistance;
@@ -2817,12 +2820,14 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isMeleeAttacker(attacker)) {
           missPercentage = victim.meleeBlock;
           averageDamageResistance = victim.averageDamageResistance;
+          berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
           blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
           fearBonus = calcFearBonus(constants.skillPowerTable, victim);
         } else if (isRangeAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           weaponDefense = victim.arrowDefense;
           averageDamageResistance = victim.averageDamageResistance;
+          berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
           blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
           fearBonus = calcFearBonus(constants.skillPowerTable, victim);
         } else if (isMagicAttacker(attacker)) {
@@ -2922,6 +2927,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     tigerStrengthCoeff: 100 + tigerStrength,
     magicResistanceCoeff: magicResistanceToCoeff(magicResistance),
     weaponDefenseCoeff: 100 - weaponDefense,
+    berserkBonusCoeff: 100 + berserkBonus,
     blessingBonusCoeff: 100 - blessingBonus,
     fearBonusCoeff: 100 - fearBonus,
     magicAttackValueCoeff: 100 + magicAttackValueMeleeMagic,
@@ -3057,6 +3063,22 @@ function calcWeights(minValue, maxValue, minInterval) {
   return weights;
 }
 
+function calcBerserkBonus(skillPowerTable, victim) {
+  if (!isChecked(victim.useBerserk) || victim.class !== "body") {
+    return 0;
+  }
+
+  var skillPower = getSkillPower(victim["skillBerserk"], skillPowerTable);
+
+  if (!skillPower) {
+    return 0;
+  }
+
+  var berserkBonus = Math.floor(skillPower * 25);
+
+  return berserkBonus;
+}
+
 function calcBlessingBonus(skillPowerTable, victim) {
   if (!isChecked(victim.isBlessed)) {
     return 0;
@@ -3075,7 +3097,7 @@ function calcBlessingBonus(skillPowerTable, victim) {
     1
   );
 
-  if (victim.class === "dragon" && isChecked(ictim.blessingOnself)) {
+  if (victim.class === "dragon" && isChecked(victim.blessingOnself)) {
     blessingBonus = floorMultiplication(blessingBonus, 1.1);
   }
 
