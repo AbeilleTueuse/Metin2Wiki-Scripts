@@ -2356,9 +2356,9 @@ function calcDamageWithSecondaryBonuses(
   damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
   damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
   damage = Math.floor((damage * bonusValues.berserkBonusCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
   damage = Math.floor((damage * bonusValues.fearBonusCoeff) / 100);
-
+  damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
+  
   if (damageType.criticalHit) {
     damage *= 2;
   }
@@ -5248,6 +5248,11 @@ function initDamageChart(battle) {
               size: 16,
             },
           },
+          ticks: {
+            callback: function(value) {
+              return Number.isInteger(value) ? value : "";
+          }
+          }
         },
         y: {
           title: {
