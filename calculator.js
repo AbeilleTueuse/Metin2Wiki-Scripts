@@ -34,6 +34,7 @@ function isChecked(attribute) {
 }
 
 function floorMultiplication(firstFactor, secondFactor) {
+  // @ts-ignore
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
 
@@ -117,92 +118,92 @@ function addRowToTableResultHistory(
   cell.appendChild(deleteFightTemplate.cloneNode(true));
 }
 
-function calcMeanDamages(damagesWeightedByType, totalCardinal) {
-  var sumDamages = 0;
+function calcMeanDamage(damageWeightedByType, totalCardinal) {
+  var sumDamage = 0;
 
-  for (var damagesTypeName in damagesWeightedByType) {
-    if (damagesTypeName === "miss") {
+  for (var damageTypeName in damageWeightedByType) {
+    if (damageTypeName === "miss") {
       continue;
     }
 
-    var damagesWeighted = damagesWeightedByType[damagesTypeName];
+    var damageWeighted = damageWeightedByType[damageTypeName];
 
-    for (var damages in damagesWeighted) {
-      sumDamages += damages * damagesWeighted[damages];
+    for (var damage in damageWeighted) {
+      sumDamage += damage * damageWeighted[damage];
     }
   }
 
-  return sumDamages / totalCardinal;
+  return sumDamage / totalCardinal;
 }
 
-function prepareDamagesData(
-  damagesWeightedByType,
-  possibleDamagesCountTemp,
+function prepareDamageData(
+  damageWeightedByType,
+  possibleDamageCountTemp,
   totalCardinal
 ) {
-  var minDamages = Infinity;
-  var maxDamages = 0;
+  var minDamage = Infinity;
+  var maxDamage = 0;
   var scatterDataByType = {};
-  var sumDamages = 0;
-  var possibleDamagesCount = 0;
-  var uniqueDamagesCount = 0;
+  var sumDamage = 0;
+  var possibleDamageCount = 0;
+  var uniqueDamageCount = 0;
 
-  for (var damagesTypeName in damagesWeightedByType) {
-    if (damagesTypeName === "miss") {
-      scatterDataByType.miss = damagesWeightedByType.miss;
-      possibleDamagesCount++;
-      uniqueDamagesCount++;
+  for (var damageTypeName in damageWeightedByType) {
+    if (damageTypeName === "miss") {
+      scatterDataByType.miss = damageWeightedByType.miss;
+      possibleDamageCount++;
+      uniqueDamageCount++;
       continue;
     }
 
     var firstIteration = true;
-    var damagesWeighted = damagesWeightedByType[damagesTypeName];
+    var damageWeighted = damageWeightedByType[damageTypeName];
     var scatterData = [];
-    scatterDataByType[damagesTypeName] = scatterData;
+    scatterDataByType[damageTypeName] = scatterData;
 
-    for (var damages in damagesWeighted) {
-      damages = +damages;
+    for (var damage in damageWeighted) {
+      damage = +damage;
 
       if (firstIteration) {
-        if (damages < minDamages) {
-          minDamages = damages;
+        if (damage < minDamage) {
+          minDamage = damage;
         }
         firstIteration = false;
       }
 
-      var weight = damagesWeighted[damages];
+      var weight = damageWeighted[damage];
       var probability = weight / totalCardinal;
 
-      sumDamages += damages * weight;
-      damagesWeighted[damages] = probability;
-      scatterData.push({ x: damages, y: probability });
+      sumDamage += damage * weight;
+      damageWeighted[damage] = probability;
+      scatterData.push({ x: damage, y: probability });
     }
 
     var scatterDataLength = scatterData.length;
 
-    possibleDamagesCount += possibleDamagesCountTemp;
-    uniqueDamagesCount += scatterDataLength;
+    possibleDamageCount += possibleDamageCountTemp;
+    uniqueDamageCount += scatterDataLength;
 
-    if (damages > maxDamages) {
-      maxDamages = damages;
+    if (damage > maxDamage) {
+      maxDamage = damage;
     }
   }
 
-  if (minDamages === Infinity) {
-    minDamages = 0;
+  if (minDamage === Infinity) {
+    minDamage = 0;
   }
 
   return [
-    sumDamages / totalCardinal,
-    minDamages,
-    maxDamages,
+    sumDamage / totalCardinal,
+    minDamage,
+    maxDamage,
     scatterDataByType,
-    possibleDamagesCount,
-    uniqueDamagesCount,
+    possibleDamageCount,
+    uniqueDamageCount,
   ];
 }
 
-function aggregateDamages(scatterData, maxPoints) {
+function aggregateDamage(scatterData, maxPoints) {
   var dataLength = scatterData.length;
   var remainingData = dataLength;
   var aggregateScatterData = [];
@@ -210,17 +211,17 @@ function aggregateDamages(scatterData, maxPoints) {
   for (var groupIndex = 0; groupIndex < maxPoints; groupIndex++) {
     var groupLength = Math.floor(remainingData / (maxPoints - groupIndex));
     var startIndex = dataLength - remainingData;
-    var aggregateDamages = 0;
+    var aggregateDamage = 0;
     var aggregateProbability = 0;
 
     for (var index = startIndex; index < startIndex + groupLength; index++) {
-      var { x: damages, y: probability } = scatterData[index];
-      aggregateDamages += damages * probability;
+      var { x: damage, y: probability } = scatterData[index];
+      aggregateDamage += damage * probability;
       aggregateProbability += probability;
     }
 
     aggregateScatterData.push({
-      x: aggregateDamages / aggregateProbability,
+      x: aggregateDamage / aggregateProbability,
       y: aggregateProbability,
     });
 
@@ -230,13 +231,13 @@ function aggregateDamages(scatterData, maxPoints) {
   return aggregateScatterData;
 }
 
-function addToDamagesChart(
+function addToDamageChart(
   scatterDataByType,
-  damagesChart,
+  damageChart,
   isReducePointsChecked
 ) {
   var { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
-    damagesChart;
+    damageChart;
   var isFirstDataset = true;
   var datasets = chart.data.datasets;
 
@@ -256,7 +257,7 @@ function addToDamagesChart(
     dataset.canBeReduced = canBeReduced;
 
     if (canBeReduced && isReducePointsChecked) {
-      dataset.data = aggregateDamages(scatterData, maxPoints);
+      dataset.data = aggregateDamage(scatterData, maxPoints);
     } else {
       dataset.data = scatterData;
     }
@@ -284,12 +285,12 @@ function addToDamagesChart(
 }
 
 function addToBonusVariationChart(
-  damagesByBonus,
+  damageByBonus,
   augmentationByBonus,
   xLabel,
   chart
 ) {
-  chart.data.datasets[0].data = damagesByBonus;
+  chart.data.datasets[0].data = damageByBonus;
   chart.data.datasets[1].data = augmentationByBonus;
   chart.options.scales.x.title.text = xLabel;
   chart.update();
@@ -302,17 +303,17 @@ function handleChartAnimations(chart, addAnimations) {
   chart.options.transitions.active.animation.duration = addAnimations * 1000;
 }
 
-function updateDamagesChartDescription(
-  uniqueDamagesCounters,
-  uniqueDamagesCount,
+function updateDamageChartDescription(
+  uniqueDamageCounters,
+  uniqueDamageCount,
   formatNumber
 ) {
-  uniqueDamagesCounters.forEach(function (element) {
-    if (uniqueDamagesCount <= 1) {
+  uniqueDamageCounters.forEach(function (element) {
+    if (uniqueDamageCount <= 1) {
       hideElement(element.parentElement);
     } else {
       showElement(element.parentElement);
-      element.textContent = formatNumber.format(uniqueDamagesCount);
+      element.textContent = formatNumber.format(uniqueDamageCount);
     }
   });
 }
@@ -791,7 +792,7 @@ function characterCreationListener(characters, battle) {
   }
 
   function handleTooltipOverflow(event) {
-    label = event.target.closest("label");
+    var label = event.target.closest("label");
 
     if (label) {
       var tooltip = label.lastChild;
@@ -1699,8 +1700,7 @@ function handleiFrame(iframeInfo, category) {
   iframe.addEventListener("load", function () {
     var iframeDoc = this.contentDocument || this.contentWindow.document;
     var iframeBody = iframeDoc.body;
-
-    content = iframeDoc.getElementById("show-after-loading");
+    var content = iframeDoc.getElementById("show-after-loading");
 
     iframeBody.firstElementChild.replaceWith(content);
 
@@ -2234,7 +2234,7 @@ function calcSecondaryAttackValue(attacker) {
     attackValueOther: attackValueOther,
     totalCardinal: totalCardinal,
     weights: calcWeights(minAttackValue, maxAttackValue, minInterval),
-    possibleDamagesCount: maxAttackValue - minAttackValue + 1,
+    possibleDamageCount: maxAttackValue - minAttackValue + 1,
   };
 }
 
@@ -2284,7 +2284,7 @@ function calcMagicAttackValue(attacker) {
     ),
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
-    possibleDamagesCount: maxMagicAttackValue - minMagicAttackValue + 1,
+    possibleDamageCount: maxMagicAttackValue - minMagicAttackValue + 1,
   };
 }
 
@@ -2313,140 +2313,144 @@ function getMarriageBonusValue(character, marriageTable, itemName) {
   return marriageTable[itemName][index];
 }
 
-function calcDamageWithPrimaryBonuses(damages, bonusValues) {
-  damages = Math.floor((damages * bonusValues.attackValueCoeff) / 100);
+function calcDamageWithPrimaryBonuses(damage, bonusValues) {
+  damage = Math.floor((damage * bonusValues.attackValueCoeff) / 100);
 
-  damages += bonusValues.attackValueMarriage;
+  damage += bonusValues.attackValueMarriage;
 
-  damages = Math.floor(
-    (damages * bonusValues.monsterResistanceMarriageCoeff) / 100
+  damage = Math.floor(
+    (damage * bonusValues.monsterResistanceMarriageCoeff) / 100
   );
-  damages = Math.floor((damages * bonusValues.monsterResistanceCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.monsterResistanceCoeff) / 100);
 
-  damages += Math.floor((damages * bonusValues.typeBonusCoeff) / 100);
-  damages +=
-    Math.floor((damages * bonusValues.raceBonusCoeff) / 100) -
-    Math.floor((damages * bonusValues.raceResistanceCoeff) / 100);
-  damages += Math.floor((damages * bonusValues.stoneBonusCoeff) / 100);
-  damages += Math.floor((damages * bonusValues.monsterBonusCoeff) / 100);
+  damage += Math.floor((damage * bonusValues.typeBonusCoeff) / 100);
+  damage +=
+    Math.floor((damage * bonusValues.raceBonusCoeff) / 100) -
+    Math.floor((damage * bonusValues.raceResistanceCoeff) / 100);
+  damage += Math.floor((damage * bonusValues.stoneBonusCoeff) / 100);
+  damage += Math.floor((damage * bonusValues.monsterBonusCoeff) / 100);
 
   var elementBonusCoeff = bonusValues.elementBonusCoeff;
 
-  damages +=
-    Math.trunc((damages * elementBonusCoeff[0]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[1]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[2]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[3]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[4]) / 10000) +
-    Math.trunc((damages * elementBonusCoeff[5]) / 10000);
+  damage +=
+    Math.trunc((damage * elementBonusCoeff[0]) / 10000) +
+    Math.trunc((damage * elementBonusCoeff[1]) / 10000) +
+    Math.trunc((damage * elementBonusCoeff[2]) / 10000) +
+    Math.trunc((damage * elementBonusCoeff[3]) / 10000) +
+    Math.trunc((damage * elementBonusCoeff[4]) / 10000) +
+    Math.trunc((damage * elementBonusCoeff[5]) / 10000);
 
-  damages = Math.floor(damages * bonusValues.damageMultiplier);
+    damage = Math.floor(damage * bonusValues.damageMultiplier);
 
-  return damages;
+  return damage;
 }
 
 function calcDamageWithSecondaryBonuses(
-  damages,
+  damage,
   bonusValues,
-  damagesType,
-  minPiercingDamages,
-  damagesWithPrimaryBonuses
+  damageType,
+  minPiercingDamage,
+  damageWithPrimaryBonuses
 ) {
-  damages = Math.floor(damages * bonusValues.magicResistanceCoeff);
-  damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.tigerStrengthCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.berserkBonusCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.blessingBonusCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.fearBonusCoeff) / 100);
+  damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
+  damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.berserkBonusCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.fearBonusCoeff) / 100);
 
-  if (damagesType.criticalHit) {
-    damages *= 2;
+  if (damageType.criticalHit) {
+    damage *= 2;
   }
 
-  if (damagesType.piercingHit) {
-    damages += bonusValues.defenseBoost + Math.min(0, minPiercingDamages);
-    damages += Math.floor(
-      (damagesWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
+  if (damageType.piercingHit) {
+    damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
+    damage += Math.floor(
+      (damageWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
     );
   }
 
-  damages = Math.floor((damages * bonusValues.averageDamageCoeff) / 100);
-  damages = Math.floor(
-    (damages * bonusValues.averageDamageResistanceCoeff) / 100
+  damage = Math.floor((damage * bonusValues.averageDamageCoeff) / 100);
+  damage = Math.floor(
+    (damage * bonusValues.averageDamageResistanceCoeff) / 100
   );
-  damages = Math.floor(
-    (damages * bonusValues.skillDamageResistanceCoeff) / 100
+  damage = Math.floor(
+    (damage * bonusValues.skillDamageResistanceCoeff) / 100
   );
 
-  damages = Math.floor((damages * bonusValues.rankBonusCoeff) / 100);
-  damages = Math.max(0, damages + bonusValues.defensePercent);
-  damages += Math.min(
+  damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
+  damage = Math.max(0, damage + bonusValues.defensePercent);
+  damage += Math.min(
     300,
-    Math.floor((damages * bonusValues.damageBonusCoeff) / 100)
+    Math.floor((damage * bonusValues.damageBonusCoeff) / 100)
   );
-  damages = Math.floor((damages * bonusValues.empireMalusCoeff) / 10);
-  damages = Math.floor((damages * bonusValues.sungMaStrBonusCoeff) / 10000);
-  damages -= Math.floor(damages * bonusValues.sungmaStrMalusCoeff);
+  damage = Math.floor((damage * bonusValues.empireMalusCoeff) / 10);
+  damage = Math.floor((damage * bonusValues.sungMaStrBonusCoeff) / 10000);
+  damage -= Math.floor(damage * bonusValues.sungmaStrMalusCoeff);
 
-  damages = Math.floor((damages * bonusValues.whiteDragonElixirCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.steelDragonElixirCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.whiteDragonElixirCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.steelDragonElixirCoeff) / 100);
 
-  return damages;
+  return damage;
 }
 
 function calcSkillDamageWithSecondaryBonuses(
-  damages,
+  damage,
   bonusValues,
-  damagesType,
-  minPiercingDamages
+  damageType,
+  minPiercingDamage
 ) {
-  damages = Math.floor(damages * bonusValues.magicResistanceCoeff);
-  damages = Math.trunc((damages * bonusValues.weaponDefenseCoeff) / 100);
+  damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
+  damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
 
-  damages -= bonusValues.defense;
+  damage -= bonusValues.defense;
 
-  damages = floorMultiplication(damages, bonusValues.skillWardCoeff);
-  damages = floorMultiplication(damages, bonusValues.skillBonusCoeff);
+  damage = floorMultiplication(damage, bonusValues.skillWardCoeff);
+  damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
 
-  var tempDamages = Math.floor(
-    (damages * bonusValues.skillBonusByBonusCoeff) / 100
-  );
-
-  damages = Math.floor(
-    (tempDamages * bonusValues.magicAttackValueCoeff) / 100 + 0.5
-  );
-  damages = Math.floor((damages * bonusValues.tigerStrengthCoeff) / 100);
-
-  if (damagesType.criticalHit) {
-    damages *= 2;
+  if (bonusValues.useDarkProtection) {
+    // pass
   }
 
-  if (damagesType.piercingHit) {
-    damages += bonusValues.defenseBoost + Math.min(0, minPiercingDamages);
-    damages += Math.floor(
-      (tempDamages * bonusValues.extraPiercingHitCoeff) / 1000
+  var tempDamage = Math.floor(
+    (damage * bonusValues.skillBonusByBonusCoeff) / 100
+  );
+
+  damage = Math.floor(
+    (tempDamage * bonusValues.magicAttackValueCoeff) / 100 + 0.5
+  );
+  damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
+
+  if (damageType.criticalHit) {
+    damage *= 2;
+  }
+
+  if (damageType.piercingHit) {
+    damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
+    damage += Math.floor(
+      (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
     );
   }
 
-  damages = Math.floor((damages * bonusValues.skillDamageCoeff) / 100);
-  damages = Math.floor(
-    (damages * bonusValues.skillDamageResistanceCoeff) / 100
+  damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
+  damage = Math.floor(
+    (damage * bonusValues.skillDamageResistanceCoeff) / 100
   );
-  damages = Math.floor((damages * bonusValues.rankBonusCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
 
-  damages = Math.max(0, damages + bonusValues.defensePercent);
-  damages += Math.min(
+  damage = Math.max(0, damage + bonusValues.defensePercent);
+  damage += Math.min(
     300,
-    Math.floor((damages * bonusValues.damageBonusCoeff) / 100)
+    Math.floor((damage * bonusValues.damageBonusCoeff) / 100)
   );
-  damages = Math.floor((damages * bonusValues.empireMalusCoeff) / 10);
-  damages = Math.floor((damages * bonusValues.sungMaStrBonusCoeff) / 10000);
-  damages -= Math.floor(damages * bonusValues.sungmaStrMalusCoeff);
+  damage = Math.floor((damage * bonusValues.empireMalusCoeff) / 10);
+  damage = Math.floor((damage * bonusValues.sungMaStrBonusCoeff) / 10000);
+  damage -= Math.floor(damage * bonusValues.sungmaStrMalusCoeff);
 
-  damages = Math.floor((damages * bonusValues.whiteDragonElixirCoeff) / 100);
-  damages = Math.floor((damages * bonusValues.steelDragonElixirCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.whiteDragonElixirCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.steelDragonElixirCoeff) / 100);
 
-  return damages;
+  return damage;
 }
 
 function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
@@ -2606,7 +2610,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var elementBonus = [0, 0, 0, 0, 0, 0]; // fire, ice, lightning, earth, darkness, wind, order doesn't matter
   var defenseMarriage = 0;
   var damageMultiplier = 1;
-  var useDamages = 1;
+  var useDamage = 1;
   var defense = victim.defense;
   var defenseBoost = defense;
   var magicResistance = 0;
@@ -2653,7 +2657,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
     if (skillType && attacker.class === "archery") {
       if (weaponType !== 2) {
-        useDamages = 0;
+        useDamage = 0;
         weaponType = 2;
       }
       defense = 0;
@@ -2920,7 +2924,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     monsterBonusCoeff: monsterBonus,
     elementBonusCoeff: elementBonus,
     damageMultiplier: damageMultiplier,
-    useDamages: useDamages,
+    useDamage: useDamage,
     defense: defense,
     defenseBoost: defenseBoost,
     defenseMarriage: defenseMarriage,
@@ -2949,7 +2953,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
   piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
-  var damagesTypeCombinaison = [
+  var damageTypeCombinaison = [
     {
       criticalHit: false,
       piercingHit: false,
@@ -2993,7 +2997,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     mainAttackValue: calcMainAttackValue(attacker),
     attackValues: calcAttackValues(attacker),
     bonusValues: bonusValues,
-    damagesTypeCombinaison: damagesTypeCombinaison,
+    damageTypeCombinaison: damageTypeCombinaison,
   };
 }
 
@@ -3040,7 +3044,7 @@ function updateBattleValues(battleValues, skillFormula, skillInfo) {
   battleValues.skillFormula = skillFormula;
   battleValues.skillRange = skillInfo.range;
   battleValues.attackValues.totalCardinal *= variationLength;
-  battleValues.attackValues.possibleDamagesCount *= variationLength;
+  battleValues.attackValues.possibleDamageCount *= variationLength;
 }
 
 function calcWeights(minValue, maxValue, minInterval) {
@@ -3807,117 +3811,117 @@ function getMagicAttackValueAugmentation(
   return magicAttackValueAugmentation;
 }
 
-function calcPhysicalDamages(battleValues) {
+function calcPhysicalDamage(battleValues) {
   var {
     attackFactor,
     mainAttackValue,
     attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
     bonusValues,
-    damagesTypeCombinaison,
+    damageTypeCombinaison,
   } = battleValues;
 
-  var damagesWeightedByType = {};
+  var damageWeightedByType = {};
 
   if (bonusValues.missPercentage) {
-    damagesWeightedByType.miss = bonusValues.missPercentage / 100;
+    damageWeightedByType.miss = bonusValues.missPercentage / 100;
   }
 
-  for (var damagesType of damagesTypeCombinaison) {
-    if (!damagesType.weight) {
+  for (var damageType of damageTypeCombinaison) {
+    if (!damageType.weight) {
       continue;
     }
 
-    var damagesWeighted = {};
-    damagesWeightedByType[damagesType.name] = damagesWeighted;
+    var damageWeighted = {};
+    damageWeightedByType[damageType.name] = damageWeighted;
 
     for (
       var attackValue = minAttackValue;
       attackValue <= maxAttackValue;
       attackValue++
     ) {
-      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
+      var weight = weights[attackValue - minAttackValue] * damageType.weight;
 
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
-      var rawDamages =
+      var rawDamage =
         mainAttackValue +
         floorMultiplication(attackFactor, secondaryAttackValue);
 
-      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-        rawDamages,
+      var damageWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+        rawDamage,
         bonusValues
       );
 
-      var minPiercingDamages =
-        damagesWithPrimaryBonuses -
+      var minPiercingDamage =
+        damageWithPrimaryBonuses -
         bonusValues.defenseBoost -
         bonusValues.defenseMarriage;
 
-      if (minPiercingDamages <= 2) {
-        for (var damages = 1; damages <= 5; damages++) {
-          var finalDamages = calcDamageWithSecondaryBonuses(
-            damages,
+      if (minPiercingDamage <= 2) {
+        for (var damage = 1; damage <= 5; damage++) {
+          var finalDamage = calcDamageWithSecondaryBonuses(
+            damage,
             bonusValues,
-            damagesType,
-            minPiercingDamages,
-            damagesWithPrimaryBonuses
+            damageType,
+            minPiercingDamage,
+            damageWithPrimaryBonuses
           );
 
-          addKeyValue(damagesWeighted, finalDamages, weight / 5);
+          addKeyValue(damageWeighted, finalDamage, weight / 5);
         }
       } else {
-        var finalDamages = calcDamageWithSecondaryBonuses(
-          minPiercingDamages,
+        var finalDamage = calcDamageWithSecondaryBonuses(
+          minPiercingDamage,
           bonusValues,
-          damagesType,
-          minPiercingDamages,
-          damagesWithPrimaryBonuses
+          damageType,
+          minPiercingDamage,
+          damageWithPrimaryBonuses
         );
 
-        addKeyValue(damagesWeighted, finalDamages, weight);
+        addKeyValue(damageWeighted, finalDamage, weight);
       }
     }
   }
 
-  return damagesWeightedByType;
+  return damageWeightedByType;
 }
 
-function calcPhysicalSkillDamages(battleValues) {
+function calcPhysicalSkillDamage(battleValues) {
   var {
     attackFactor,
     mainAttackValue,
     attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
     bonusValues,
-    damagesTypeCombinaison,
+    damageTypeCombinaison,
     skillFormula,
     skillRange: [minVariation, maxVariation],
   } = battleValues;
 
-  var damagesWeightedByType = {};
+  var damageWeightedByType = {};
 
-  for (var damagesType of damagesTypeCombinaison) {
-    if (!damagesType.weight) {
+  for (var damageType of damageTypeCombinaison) {
+    if (!damageType.weight) {
       continue;
     }
 
-    var damagesWeighted = {};
-    var savedDamages = {};
+    var damageWeighted = {};
+    var savedDamage = {};
 
-    damagesWeightedByType[damagesType.name] = damagesWeighted;
+    damageWeightedByType[damageType.name] = damageWeighted;
 
     for (
       var attackValue = minAttackValue;
       attackValue <= maxAttackValue;
       attackValue++
     ) {
-      var weight = weights[attackValue - minAttackValue] * damagesType.weight;
+      var weight = weights[attackValue - minAttackValue] * damageType.weight;
 
       var secondaryAttackValue = 2 * attackValue + attackValueOther;
-      var rawDamages =
+      var rawDamage =
         mainAttackValue +
         floorMultiplication(attackFactor, secondaryAttackValue);
 
-      var damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-        rawDamages,
+      var damageWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+        rawDamage,
         bonusValues
       );
 
@@ -3926,60 +3930,60 @@ function calcPhysicalSkillDamages(battleValues) {
         variation <= maxVariation;
         variation++
       ) {
-        if (damagesWithPrimaryBonuses <= 2) {
-          for (var damages = 1; damages <= 5; damages++) {
-            var damagesWithFormula = skillFormula(
-              damages * bonusValues.useDamages,
+        if (damageWithPrimaryBonuses <= 2) {
+          for (var damage = 1; damage <= 5; damage++) {
+            var damageWithFormula = skillFormula(
+              damage * bonusValues.useDamage,
               variation
             );
 
-            damagesWithFormula = Math.floor(
-              (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
+            damageWithFormula = Math.floor(
+              (damageWithFormula * bonusValues.weaponBonusCoeff) / 100
             );
 
-            var finalDamages = calcSkillDamageWithSecondaryBonuses(
-              damagesWithFormula,
+            var finalDamage = calcSkillDamageWithSecondaryBonuses(
+              damageWithFormula,
               bonusValues,
-              damagesType,
-              damagesWithPrimaryBonuses
+              damageType,
+              damageWithPrimaryBonuses
             );
 
-            addKeyValue(damagesWeighted, finalDamages, weight / 5);
+            addKeyValue(damageWeighted, finalDamage, weight / 5);
           }
         } else {
-          var damagesWithFormula = skillFormula(
-            damagesWithPrimaryBonuses * bonusValues.useDamages,
+          var damageWithFormula = skillFormula(
+            damageWithPrimaryBonuses * bonusValues.useDamage,
             variation
           );
 
-          if (savedDamages.hasOwnProperty(damagesWithFormula)) {
-            var finalDamages = savedDamages[damagesWithFormula];
-            damagesWeighted[finalDamages] += weight;
+          if (savedDamage.hasOwnProperty(damageWithFormula)) {
+            var finalDamage = savedDamage[damageWithFormula];
+            damageWeighted[finalDamage] += weight;
             continue;
           }
 
-          var finalDamages = Math.floor(
-            (damagesWithFormula * bonusValues.weaponBonusCoeff) / 100
+          var finalDamage = Math.floor(
+            (damageWithFormula * bonusValues.weaponBonusCoeff) / 100
           );
 
-          finalDamages = calcSkillDamageWithSecondaryBonuses(
-            finalDamages,
+          finalDamage = calcSkillDamageWithSecondaryBonuses(
+            finalDamage,
             bonusValues,
-            damagesType,
-            damagesWithPrimaryBonuses
+            damageType,
+            damageWithPrimaryBonuses
           );
 
-          savedDamages[damagesWithFormula] = finalDamages;
-          addKeyValue(damagesWeighted, finalDamages, weight);
+          savedDamage[damageWithFormula] = finalDamage;
+          addKeyValue(damageWeighted, finalDamage, weight);
         }
       }
     }
   }
 
-  return damagesWeightedByType;
+  return damageWeightedByType;
 }
 
-function calcMagicSkillDamages(battleValues) {
+function calcMagicSkillDamage(battleValues) {
   var {
     attackValues: {
       minMagicAttackValue,
@@ -3988,22 +3992,22 @@ function calcMagicSkillDamages(battleValues) {
       weights,
     },
     bonusValues,
-    damagesTypeCombinaison,
+    damageTypeCombinaison,
     skillFormula,
     skillRange: [minVariation, maxVariation],
   } = battleValues;
 
-  var damagesWeightedByType = {};
+  var damageWeightedByType = {};
 
-  for (var damagesType of damagesTypeCombinaison) {
-    if (!damagesType.weight) {
+  for (var damageType of damageTypeCombinaison) {
+    if (!damageType.weight) {
       continue;
     }
 
-    var damagesWeighted = {};
-    var savedDamages = {};
+    var damageWeighted = {};
+    var savedDamage = {};
 
-    damagesWeightedByType[damagesType.name] = damagesWeighted;
+    damageWeightedByType[damageType.name] = damageWeighted;
 
     for (
       var magicAttackValue = minMagicAttackValue;
@@ -4011,86 +4015,86 @@ function calcMagicSkillDamages(battleValues) {
       magicAttackValue++
     ) {
       var index = magicAttackValue - minMagicAttackValue;
-      var weight = weights[index] * damagesType.weight;
+      var weight = weights[index] * damageType.weight;
 
       for (
         var variation = minVariation;
         variation <= maxVariation;
         variation++
       ) {
-        var rawDamages = skillFormula(
+        var rawDamage = skillFormula(
           magicAttackValue + magicAttackValueAugmentation[index],
           variation
         );
 
-        if (savedDamages.hasOwnProperty(rawDamages)) {
-          var finalDamages = savedDamages[rawDamages];
-          damagesWeighted[finalDamages] += weight;
+        if (savedDamage.hasOwnProperty(rawDamage)) {
+          var finalDamage = savedDamage[rawDamage];
+          damageWeighted[finalDamage] += weight;
           continue;
         }
 
-        var damagesWithPrimaryBonuses = Math.floor(
-          (rawDamages * bonusValues.weaponBonusCoeff) / 100
+        var damageWithPrimaryBonuses = Math.floor(
+          (rawDamage * bonusValues.weaponBonusCoeff) / 100
         );
 
-        damagesWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
-          damagesWithPrimaryBonuses,
+        damageWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
+          damageWithPrimaryBonuses,
           bonusValues
         );
 
-        if (damagesWithPrimaryBonuses <= 2) {
-          for (var damages = 1; damages <= 5; damages++) {
-            var finalDamages = calcSkillDamageWithSecondaryBonuses(
-              damages,
+        if (damageWithPrimaryBonuses <= 2) {
+          for (var damage = 1; damage <= 5; damage++) {
+            var finalDamage = calcSkillDamageWithSecondaryBonuses(
+              damage,
               bonusValues,
-              damagesType,
-              damagesWithPrimaryBonuses
+              damageType,
+              damageWithPrimaryBonuses
             );
-            addKeyValue(damagesWeighted, finalDamages, weight / 5);
+            addKeyValue(damageWeighted, finalDamage, weight / 5);
           }
         } else {
-          var finalDamages = calcSkillDamageWithSecondaryBonuses(
-            damagesWithPrimaryBonuses,
+          var finalDamage = calcSkillDamageWithSecondaryBonuses(
+            damageWithPrimaryBonuses,
             bonusValues,
-            damagesType,
-            damagesWithPrimaryBonuses
+            damageType,
+            damageWithPrimaryBonuses
           );
 
-          savedDamages[rawDamages] = finalDamages;
-          addKeyValue(damagesWeighted, finalDamages, weight);
+          savedDamage[rawDamage] = finalDamage;
+          addKeyValue(damageWeighted, finalDamage, weight);
         }
       }
     }
   }
 
-  return damagesWeightedByType;
+  return damageWeightedByType;
 }
 
-function calcDamages(
+function calcDamage(
   attacker,
   victim,
   attackType,
   battle,
   removeSkillVariation
 ) {
-  var damagesCalculator, skillId, skillType;
+  var damageCalculator, skillId, skillType;
 
   if (attackType === "physical") {
-    damagesCalculator = calcPhysicalDamages;
+    damageCalculator = calcPhysicalDamage;
   } else if (attackType.startsWith("attackSkill")) {
     skillId = Number(attackType.split("attackSkill")[1]);
 
     if (isMagicClass(attacker) || isDispell(attacker, skillId)) {
       skillType = "magic";
-      damagesCalculator = calcMagicSkillDamages;
+      damageCalculator = calcMagicSkillDamage;
     } else {
       skillType = "physical";
-      damagesCalculator = calcPhysicalSkillDamages;
+      damageCalculator = calcPhysicalSkillDamage;
     }
   } else if (attackType.startsWith("horseSkill")) {
     skillType = "physical";
     skillId = Number(attackType.split("horseSkill")[1]);
-    damagesCalculator = calcPhysicalSkillDamages;
+    damageCalculator = calcPhysicalSkillDamage;
   }
 
   var battleValues = createBattleValues(attacker, victim, battle, skillType);
@@ -4100,50 +4104,50 @@ function calcDamages(
   }
 
   var {
-    attackValues: { totalCardinal, possibleDamagesCount },
+    attackValues: { totalCardinal, possibleDamageCount },
   } = battleValues;
 
   return {
-    damagesWeightedByType: damagesCalculator(battleValues),
+    damageWeightedByType: damageCalculator(battleValues),
     totalCardinal: totalCardinal,
-    possibleDamagesCount: possibleDamagesCount,
+    possibleDamageCount: possibleDamageCount,
     skillType: skillType,
   };
 }
 
-function damagesWithoutVariation(
+function damageWithoutVariation(
   attacker,
   victim,
   attackType,
   battle,
   characters
 ) {
-  startDamagesTime = performance.now();
+  var startDamageTime = performance.now();
 
   var {
-    damagesWeightedByType,
+    damageWeightedByType,
     totalCardinal,
-    possibleDamagesCount,
+    possibleDamageCount,
     skillType,
-  } = calcDamages(attacker, victim, attackType, battle);
+  } = calcDamage(attacker, victim, attackType, battle);
 
-  endDamagesTime = performance.now();
+  var endDamageTime = performance.now();
 
-  possibleDamagesCount = displayResults(
-    possibleDamagesCount,
+  possibleDamageCount = displayResults(
+    possibleDamageCount,
     totalCardinal,
-    damagesWeightedByType,
+    damageWeightedByType,
     battle,
     attacker.name,
     victim.name
   );
 
-  endDisplayTime = performance.now();
+  var endDisplayTime = performance.now();
 
   displayFightInfo(
-    possibleDamagesCount,
-    endDamagesTime - startDamagesTime,
-    endDisplayTime - endDamagesTime,
+    possibleDamageCount,
+    endDamageTime - startDamageTime,
+    endDisplayTime - endDamageTime,
     battle
   );
   addPotentialErrorInformation(
@@ -4159,7 +4163,7 @@ function damagesWithoutVariation(
   showElement(battle.fightResultContainer);
 }
 
-function damagesWithVariation(
+function damageWithVariation(
   attacker,
   victim,
   attackType,
@@ -4167,8 +4171,8 @@ function damagesWithVariation(
   entity,
   entityVariation
 ) {
-  startTime = performance.now();
-  var damagesByBonus = [];
+  var startTime = performance.now();
+  var damageByBonus = [];
   var augmentationByBonus = [];
   var {
     bonusVariationMinValue: minVariation,
@@ -4177,6 +4181,7 @@ function damagesWithVariation(
   var step = Math.ceil((maxVariation - minVariation + 1) / 500);
   var simulationCount = 0;
   var simulationTime;
+  var firstDamage = 1;
 
   for (
     var bonusValue = minVariation;
@@ -4185,7 +4190,7 @@ function damagesWithVariation(
   ) {
     entity[entityVariation] = bonusValue;
 
-    var { damagesWeightedByType, totalCardinal } = calcDamages(
+    var { damageWeightedByType, totalCardinal } = calcDamage(
       copyObject(attacker),
       copyObject(victim),
       attackType,
@@ -4193,26 +4198,26 @@ function damagesWithVariation(
       true
     );
 
-    var meanDamages = calcMeanDamages(damagesWeightedByType, totalCardinal);
+    var meanDamage = calcMeanDamage(damageWeightedByType, totalCardinal);
 
     if (bonusValue === minVariation) {
-      var firstDamages = Math.max(meanDamages, 1e-3);
+      firstDamage = Math.max(meanDamage, 1e-3);
     }
 
-    damagesByBonus.push({ x: bonusValue, y: meanDamages });
+    damageByBonus.push({ x: bonusValue, y: meanDamage });
     augmentationByBonus.push({
       x: bonusValue,
-      y: meanDamages / firstDamages - 1,
+      y: meanDamage / firstDamage - 1,
     });
     simulationCount++;
   }
 
-  endTime = performance.now();
+  var endTime = performance.now();
 
-  battle.damagesByBonus = damagesByBonus.concat(entityVariation);
+  battle.damageByBonus = damageByBonus.concat(entityVariation);
 
   addToBonusVariationChart(
-    damagesByBonus,
+    damageByBonus,
     augmentationByBonus,
     entity.bonusVariationName,
     battle.bonusVariationChart
@@ -4469,7 +4474,7 @@ function reduceChartPointsListener(battle) {
       chart: {
         data: { datasets },
       },
-    } = battle.damagesChart;
+    } = battle.damageChart;
     var addAnimations = false;
 
     for (var index = 0; index < datasets.length; index++) {
@@ -4477,7 +4482,7 @@ function reduceChartPointsListener(battle) {
       var scatterData = scatterDataByType[dataset.name];
 
       if (dataset.canBeReduced && reduceChartPoints.checked) {
-        dataset.data = aggregateDamages(scatterData, maxPoints);
+        dataset.data = aggregateDamage(scatterData, maxPoints);
         addAnimations = true;
       } else {
         dataset.data = scatterData;
@@ -4511,16 +4516,16 @@ function downloadRawDataListener(battle) {
   var fileType = "text/csv;charset=utf-8;";
 
   downLoadRawData.addEventListener("click", function () {
-    var damagesWeightedByType = battle.damagesWeightedByType;
-    var filename = "raw_damages.csv";
+    var damageWeightedByType = battle.damageWeightedByType;
+    var filename = "raw_damage.csv";
     var csvContent = "damage,probabilities,damageType\n";
 
-    for (var damagesType in damagesWeightedByType) {
-      var damagesWeighted = damagesWeightedByType[damagesType];
+    for (var damageType in damageWeightedByType) {
+      var damageWeighted = damageWeightedByType[damageType];
 
-      for (var damages in damagesWeighted) {
+      for (var damage in damageWeighted) {
         csvContent +=
-          damages + "," + damagesWeighted[damages] + "," + damagesType + "\n";
+          damage + "," + damageWeighted[damage] + "," + damageType + "\n";
       }
     }
 
@@ -4528,19 +4533,19 @@ function downloadRawDataListener(battle) {
   });
 
   downLoadRawDataVariation.addEventListener("click", function () {
-    var damagesByBonus = battle.damagesByBonus;
-    var damagesByBonusLength = damagesByBonus.length;
-    var filename = "damages_variation.csv";
+    var damageByBonus = battle.damageByBonus;
+    var damageByBonusLength = damageByBonus.length;
+    var filename = "damage_variation.csv";
 
-    if (!damagesByBonusLength) {
+    if (!damageByBonusLength) {
       return;
     }
 
     var csvContent =
-      damagesByBonus[damagesByBonusLength - 1] + ",averageDamage\n";
+      damageByBonus[damageByBonusLength - 1] + ",averageDamage\n";
 
-    for (var index = 0; index < damagesByBonusLength - 1; index++) {
-      var row = damagesByBonus[index];
+    for (var index = 0; index < damageByBonusLength - 1; index++) {
+      var row = damageByBonus[index];
 
       csvContent += row.x + "," + row.y + "\n";
     }
@@ -4550,57 +4555,57 @@ function downloadRawDataListener(battle) {
 }
 
 function displayResults(
-  possibleDamagesCount,
+  possibleDamageCount,
   totalCardinal,
-  damagesWeightedByType,
+  damageWeightedByType,
   battle,
   attackerName,
   victimName
 ) {
   var [
-    meanDamages,
-    minDamages,
-    maxDamages,
+    meanDamage,
+    minDamage,
+    maxDamage,
     scatterDataByType,
-    possibleDamagesCount,
-    uniqueDamagesCount,
-  ] = prepareDamagesData(
-    damagesWeightedByType,
-    possibleDamagesCount,
+    possibleDamageCount,
+    uniqueDamageCount,
+  ] = prepareDamageData(
+    damageWeightedByType,
+    possibleDamageCount,
     totalCardinal
   );
 
-  addToDamagesChart(
+  addToDamageChart(
     scatterDataByType,
-    battle.damagesChart,
+    battle.damageChart,
     battle.reduceChartPoints.checked
   );
-  updateDamagesChartDescription(
-    battle.uniqueDamagesCounters,
-    uniqueDamagesCount,
+  updateDamageChartDescription(
+    battle.uniqueDamageCounters,
+    uniqueDamageCount,
     battle.numberFormats.default
   );
   displayFightResults(
     battle,
     attackerName,
     victimName,
-    meanDamages,
-    minDamages,
-    maxDamages
+    meanDamage,
+    minDamage,
+    maxDamage
   );
-  battle.damagesWeightedByType = damagesWeightedByType;
+  battle.damageWeightedByType = damageWeightedByType;
   battle.scatterDataByType = scatterDataByType;
 
-  return possibleDamagesCount;
+  return possibleDamageCount;
 }
 
 function displayFightResults(
   battle,
   attackerName,
   victimName,
-  meanDamages,
-  minDamages,
-  maxDamages
+  meanDamage,
+  minDamage,
+  maxDamage
 ) {
   var {
     tableResultFight,
@@ -4616,9 +4621,9 @@ function displayFightResults(
     attackerName,
     victimName,
     battle.battleChoice.attackType.selectedText,
-    meanDamages,
-    minDamages,
-    maxDamages,
+    meanDamage,
+    minDamage,
+    maxDamage,
   ];
 
   savedFights.push(valuesToDisplay);
@@ -4634,34 +4639,34 @@ function displayFightResults(
 }
 
 function displayFightInfo(
-  possibleDamagesCount,
-  damagesTime,
-  displayTime,
+  possibleDamageCount,
+  damageTimeDuration,
+  displayTimeDuration,
   battle
 ) {
-  var container = battle.possibleDamagesCounter.parentElement;
+  var container = battle.possibleDamageCounter.parentElement;
 
-  if (possibleDamagesCount <= 1) {
+  if (possibleDamageCount <= 1) {
     hideElement(container);
     return;
   } else {
     showElement(container);
   }
 
-  var { numberFormats, possibleDamagesCounter, damagesTime, displayTime } =
+  var { numberFormats, possibleDamageCounter, damageTime, displayTime } =
     battle;
 
-  possibleDamagesCount = numberFormats.default.format(possibleDamagesCount);
-  damagesTime = numberFormats.second.format(damagesTime / 1000);
-  displayTime = numberFormats.second.format(displayTime / 1000);
+  possibleDamageCount = numberFormats.default.format(possibleDamageCount);
+  damageTimeDuration = numberFormats.second.format(damageTimeDuration / 1000);
+  displayTimeDuration = numberFormats.second.format(displayTimeDuration / 1000);
 
-  possibleDamagesCounter.textContent = possibleDamagesCount;
-  damagesTime.textContent = damagesTime;
-  displayTime.textContent = displayTime;
+  possibleDamageCounter.textContent = possibleDamageCount;
+  damageTime.textContent = damageTimeDuration;
+  displayTime.textContent = displayTimeDuration;
 }
 
 function parseTypeAndName(data) {
-  [type, nameOrVnum] = splitFirst(data, "-");
+  var [type, nameOrVnum] = splitFirst(data, "-");
 
   return {
     type: type,
@@ -4785,7 +4790,7 @@ function createBattle(characters, battle) {
     }
 
     if (useBonusVariationMode(attacker, attackerVariation)) {
-      damagesWithVariation(
+      damageWithVariation(
         attacker,
         victim,
         attackType,
@@ -4794,7 +4799,7 @@ function createBattle(characters, battle) {
         attackerVariation
       );
     } else if (useBonusVariationMode(victim, victimVariation)) {
-      damagesWithVariation(
+      damageWithVariation(
         attacker,
         victim,
         attackType,
@@ -4803,13 +4808,13 @@ function createBattle(characters, battle) {
         victimVariation
       );
     } else {
-      damagesWithoutVariation(attacker, victim, attackType, battle, characters);
+      damageWithoutVariation(attacker, victim, attackType, battle, characters);
     }
   }
 }
 
 function createMapping() {
-  mapping = {
+  var mapping = {
     typeFlag: [
       "animalBonus", // 0
       "humanBonus", // 1
@@ -4904,109 +4909,109 @@ function createConstants() {
     },
     translation: {
       fr: {
-        damages: "Dégâts",
+        damage: "Dégâts",
         percentage: "Pourcentage",
         miss: "Miss",
         normalHit: "Coup classique",
         criticalHit: "Coup critique",
         piercingHit: "Coup perçant",
         criticalPiercingHit: "Coup critique perçant",
-        damagesRepartition: "Distribution des dégâts",
-        averageDamages: "Dégâts moyens",
-        damagesAugmentation: "Augmentation des dégâts",
+        damageRepartition: "Distribution des dégâts",
+        averageDamage: "Dégâts moyens",
+        damageAugmentation: "Augmentation des dégâts",
         bonusVariationTitle: [
           "Évolution des dégâts moyens",
           "par rapport à la valeur d'un bonus",
         ],
       },
       en: {
-        damages: "Damage",
+        damage: "Damage",
         percentage: "Percentage",
         miss: "Miss",
         normalHit: "Normal Hit",
         criticalHit: "Critical Hit",
         piercingHit: "Piercing Hit",
         criticalPiercingHit: "Critical Piercing Hit",
-        damagesRepartition: "Damage Repartition",
-        averageDamages: "Average Damage",
-        damagesAugmentation: "Damage Augmentation",
+        damageRepartition: "Damage Repartition",
+        averageDamage: "Average Damage",
+        damageAugmentation: "Damage Augmentation",
         bonusVariationTitle: [
           "Evolution of Average Damage",
           "Relative to a Bonus Value",
         ],
       },
       tr: {
-        damages: "Hasar",
+        damage: "Hasar",
         percentage: "Yüzde",
         miss: "Miss Vuruş",
         normalHit: "Düz Vuruş",
         criticalHit: "Kritik Vuruş",
         piercingHit: "Delici Vuruş",
         criticalPiercingHit: "Kritikli Delici Vuruş",
-        damagesRepartition: "Hasar Dağılımı",
-        averageDamages: "Ortalama Hasar",
-        damagesAugmentation: "Ortalama Hasar Artışı",
+        damageRepartition: "Hasar Dağılımı",
+        averageDamage: "Ortalama Hasar",
+        damageAugmentation: "Ortalama Hasar Artışı",
         bonusVariationTitle: [
           "Bir bonusun değerine kıyasla",
           "Ortalama Hasar Çizelgesi",
         ],
       },
       ro: {
-        damages: "Daune",
+        damage: "Daune",
         percentage: "Procent",
         miss: "Miss",
         normalHit: "Lovitura normala",
         criticalHit: "Lovitura critica",
         piercingHit: "Lovitura patrunzatoare",
         criticalPiercingHit: "Lovitura critica si patrunzatoare",
-        damagesRepartition: "Distribuția daunelor",
-        averageDamages: "Media damageului",
-        damagesAugmentation: "Damage imbunatatit",
+        damageRepartition: "Distribuția daunelor",
+        averageDamage: "Media damageului",
+        damageAugmentation: "Damage imbunatatit",
         bonusVariationTitle: [
           "Evolutia mediei damageului",
           "relativ la o valoare bonus",
         ],
       },
       de: {
-        damages: "Schäden",
+        damage: "Schäden",
         percentage: "Prozentsatz",
         miss: "Verfehlen",
         normalHit: "Normaler Treffer",
         criticalHit: "Kritischer Treffer",
         piercingHit: "Durchdringender Treffer",
         criticalPiercingHit: "Kritischer durchdringender Treffer",
-        damagesRepartition: "Schadensverteilung",
-        averageDamages: "Durchschnittlicher Schaden",
-        damagesAugmentation: "Schadenserhöhung",
+        damageRepartition: "Schadensverteilung",
+        averageDamage: "Durchschnittlicher Schaden",
+        damageAugmentation: "Schadenserhöhung",
         bonusVariationTitle: [
           "Entwicklung des durchschnittlichen Schadens",
           "im Verhältnis zu einem Bonus",
         ],
       },
       pt: {
-        damages: "Dano",
+        damage: "Dano",
         percentage: "Percentagem",
         miss: "Miss",
         normalHit: "Dano normal",
         criticalHit: "Dano crítico",
         piercingHit: "Dano perfurante",
         criticalPiercingHit: "Dano crítico perfurante",
-        damagesRepartition: "Repartição de dano",
-        averageDamages: "Dano médio",
-        damagesAugmentation: "Aumento de dano",
+        damageRepartition: "Repartição de dano",
+        averageDamage: "Dano médio",
+        damageAugmentation: "Aumento de dano",
         bonusVariationTitle: ["Evolução do dano médio", "relativo a um bónus"],
       },
       // es: {
-      //   damages: "Daño",
+      //   damage: "Daño",
       //   percentage: "Porcentaje",
       //   miss: "Miss",
       //   normalHit: "Daño normal",
       //   criticalHit: "Daño crítico",
       //   piercingHit: "Daño perforante",
       //   criticalPiercingHit: "Daño crítico perforante",
-      //   damagesRepartition: "Repartición de daños",
-      //   averageDamages: "Daño medio",
-      //   damagesAugmentation: "Aumento de daño",
+      //   damageRepartition: "Repartición de daños",
+      //   averageDamage: "Daño medio",
+      //   damageAugmentation: "Aumento de daño",
       //   bonusVariationTitle: ["Evolución del daño medio", "Relativo a una bonificación"]
       // },
     },
@@ -5056,7 +5061,7 @@ function initResultTableHistory(battle) {
   });
 }
 
-function initDamagesChart(battle) {
+function initDamageChart(battle) {
   var { translation, reduceChartPointsContainer, reduceChartPoints } = battle;
   var percentFormat = battle.numberFormats.percent;
   var customPlugins = {
@@ -5110,7 +5115,7 @@ function initDamagesChart(battle) {
 
   Chart.register(customPlugins);
 
-  var ctx = battle.plotDamages.getContext("2d");
+  var ctx = battle.plotDamage.getContext("2d");
   var maxLabelsInTooltip = 10;
   var nullLabelText = " ...";
 
@@ -5163,7 +5168,7 @@ function initDamagesChart(battle) {
         },
         title: {
           display: true,
-          text: translation.damagesRepartition,
+          text: translation.damageRepartition,
           font: {
             size: 20,
           },
@@ -5181,8 +5186,7 @@ function initDamagesChart(battle) {
               var yValue = battle.numberFormats.percent.format(
                 context.parsed.y
               );
-
-              label =
+              var label =
                 " " +
                 context.dataset.label +
                 " : (" +
@@ -5209,7 +5213,7 @@ function initDamagesChart(battle) {
           position: "bottom",
           title: {
             display: true,
-            text: translation.damages,
+            text: translation.damage,
             font: {
               size: 16,
             },
@@ -5272,7 +5276,7 @@ function initDamagesChart(battle) {
       borderColor: "rgba(75, 75, 192, 1)",
     },
   ];
-  battle.damagesChart = {
+  battle.damageChart = {
     chart: chart,
     datasetsStyle: datasetsStyle,
     maxPoints: 500,
@@ -5290,13 +5294,13 @@ function initBonusVariationChart(battle) {
     data: {
       datasets: [
         {
-          label: translation.averageDamages,
+          label: translation.averageDamage,
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
           fill: true,
         },
         {
-          label: translation.damagesAugmentation,
+          label: translation.damageAugmentation,
           backgroundColor: "rgba(192, 192, 75, 0.2)",
           borderColor: "rgba(192, 192, 75, 1)",
           hidden: true,
@@ -5371,7 +5375,7 @@ function initBonusVariationChart(battle) {
         y: {
           title: {
             display: true,
-            text: translation.averageDamages,
+            text: translation.averageDamage,
             font: {
               size: 16,
             },
@@ -5563,9 +5567,9 @@ function createDamageCalculatorInformation(chartSource) {
         selectedText: "",
       },
     },
-    damagesWeightedByType: {},
+    damageWeightedByType: {},
     scatterDataByType: {},
-    damagesByBonus: [],
+    damageByBonus: [],
     tableResultFight: document.getElementById("result-table-fight"),
     tableResultHistory: document.getElementById("result-table-history"),
     deleteFightTemplate: document.getElementById("delete-fight-template")
@@ -5584,11 +5588,11 @@ function createDamageCalculatorInformation(chartSource) {
       "reduce-chart-points-container"
     ),
     reduceChartPoints: document.getElementById("reduce-chart-points"),
-    plotDamages: document.getElementById("plot-damages"),
+    plotDamage: document.getElementById("plot-damage"),
     plotBonusVariation: document.getElementById("plot-bonus-variation"),
-    uniqueDamagesCounters: document.querySelectorAll(".unique-damages-counter"),
-    possibleDamagesCounter: document.getElementById("possible-damages-counter"),
-    damagesTime: document.getElementById("damages-time"),
+    uniqueDamageCounters: document.querySelectorAll(".unique-damage-counter"),
+    possibleDamageCounter: document.getElementById("possible-damage-counter"),
+    damageTime: document.getElementById("damage-time"),
     displayTime: document.getElementById("display-time"),
     simulationCounter: document.getElementById("simulation-counter"),
     simulationTime: document.getElementById("simulation-time"),
@@ -5616,7 +5620,7 @@ function createDamageCalculatorInformation(chartSource) {
   addBattleData(battle);
   initResultTableHistory(battle);
   addScript(chartSource, function () {
-    initDamagesChart(battle);
+    initDamageChart(battle);
     initBonusVariationChart(battle);
   });
   reduceChartPointsListener(battle);
