@@ -2409,7 +2409,16 @@ function calcSkillDamageWithSecondaryBonuses(
   damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
 
   if (bonusValues.useDarkProtection) {
-    // pass
+    var { skillDarkProtection, darkProtectionSp } = bonusValues;
+
+    var damageReduction = Math.floor(dam / 3);
+    var spAbsorption = Math.floor(damageReduction * skillDarkProtection / 100);
+
+    if (spAbsorption <= darkProtectionSp) {
+      damage -= damageReduction;
+    } else {
+      damage -= Math.floor(darkProtectionSp * 100 / skillDarkProtection);
+    }
   }
 
   var tempDamage = Math.floor(
@@ -3072,7 +3081,7 @@ function calcBerserkBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var skillPower = getSkillPower(victim["skillBerserk"], skillPowerTable);
+  var skillPower = getSkillPower(victim.skillBerserk, skillPowerTable);
 
   if (!skillPower) {
     return 0;
@@ -3090,7 +3099,7 @@ function calcBlessingBonus(skillPowerTable, victim) {
 
   var int = victim.intBlessing;
   var dex = victim.dexBlessing;
-  var skillPower = getSkillPower(victim["skillBlessing"], skillPowerTable);
+  var skillPower = getSkillPower(victim.skillBlessing, skillPowerTable);
 
   if (!skillPower) {
     return 0;
@@ -3113,7 +3122,7 @@ function calcFearBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var skillPower = getSkillPower(victim["skillFear"], skillPowerTable);
+  var skillPower = getSkillPower(victim.skillFear, skillPowerTable);
 
   if (!skillPower) {
     return 0;
