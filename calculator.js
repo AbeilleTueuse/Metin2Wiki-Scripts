@@ -2340,7 +2340,7 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
     Math.trunc((damage * elementBonusCoeff[4]) / 10000) +
     Math.trunc((damage * elementBonusCoeff[5]) / 10000);
 
-    damage = Math.floor(damage * bonusValues.damageMultiplier);
+  damage = Math.floor(damage * bonusValues.damageMultiplier);
 
   return damage;
 }
@@ -2358,7 +2358,7 @@ function calcDamageWithSecondaryBonuses(
   damage = Math.floor((damage * bonusValues.berserkBonusCoeff) / 100);
   damage = Math.floor((damage * bonusValues.fearBonusCoeff) / 100);
   damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
-  
+
   if (damageType.criticalHit) {
     damage *= 2;
   }
@@ -2374,20 +2374,20 @@ function calcDamageWithSecondaryBonuses(
   damage = Math.floor(
     (damage * bonusValues.averageDamageResistanceCoeff) / 100
   );
-  damage = Math.floor(
-    (damage * bonusValues.skillDamageResistanceCoeff) / 100
-  );
+  damage = Math.floor((damage * bonusValues.skillDamageResistanceCoeff) / 100);
 
   if (bonusValues.useDarkProtection) {
     var { skillDarkProtection, darkProtectionSp } = bonusValues;
 
     var damageReduction = Math.floor(damage / 3);
-    var spAbsorption = Math.floor(damageReduction * skillDarkProtection / 100);
+    var spAbsorption = Math.floor(
+      (damageReduction * skillDarkProtection) / 100
+    );
 
     if (spAbsorption <= darkProtectionSp) {
       damage -= damageReduction;
     } else {
-      damage -= Math.floor(darkProtectionSp * 100 / skillDarkProtection);
+      damage -= Math.floor((darkProtectionSp * 100) / skillDarkProtection);
     }
   }
 
@@ -2425,12 +2425,14 @@ function calcSkillDamageWithSecondaryBonuses(
     var { skillDarkProtection, darkProtectionSp } = bonusValues;
 
     var damageReduction = Math.floor(damage / 3);
-    var spAbsorption = Math.floor(damageReduction * skillDarkProtection / 100);
+    var spAbsorption = Math.floor(
+      (damageReduction * skillDarkProtection) / 100
+    );
 
     if (spAbsorption <= darkProtectionSp) {
       damage -= damageReduction;
     } else {
-      damage -= Math.floor(darkProtectionSp * 100 / skillDarkProtection);
+      damage -= Math.floor((darkProtectionSp * 100) / skillDarkProtection);
     }
   }
 
@@ -2455,9 +2457,7 @@ function calcSkillDamageWithSecondaryBonuses(
   }
 
   damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
-  damage = Math.floor(
-    (damage * bonusValues.skillDamageResistanceCoeff) / 100
-  );
+  damage = Math.floor((damage * bonusValues.skillDamageResistanceCoeff) / 100);
   damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
 
   damage = Math.max(0, damage + bonusValues.defensePercent);
@@ -2896,7 +2896,11 @@ function createBattleValues(attacker, victim, battle, skillType) {
       skillDamageResistance = victim.skillDamageResistance;
     }
 
-    if (victim.useDarkProtection && victim.class === "black_magic" && victim.skillDarkProtection) {
+    if (
+      victim.useDarkProtection &&
+      victim.class === "black_magic" &&
+      victim.skillDarkProtection
+    ) {
       useDarkProtection = true;
     }
 
@@ -4154,12 +4158,8 @@ function damageWithoutVariation(
 ) {
   var startDamageTime = performance.now();
 
-  var {
-    damageWeightedByType,
-    totalCardinal,
-    possibleDamageCount,
-    skillType,
-  } = calcDamage(attacker, victim, attackType, battle);
+  var { damageWeightedByType, totalCardinal, possibleDamageCount, skillType } =
+    calcDamage(attacker, victim, attackType, battle);
 
   var endDamageTime = performance.now();
 
@@ -5249,10 +5249,10 @@ function initDamageChart(battle) {
             },
           },
           ticks: {
-            callback: function(value) {
+            callback: function (value) {
               return Number.isInteger(value) ? value : "";
-          }
-          }
+            },
+          },
         },
         y: {
           title: {
