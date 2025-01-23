@@ -34,7 +34,6 @@ function isChecked(attribute) {
 }
 
 function floorMultiplication(firstFactor, secondFactor) {
-  // @ts-ignore
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
 
