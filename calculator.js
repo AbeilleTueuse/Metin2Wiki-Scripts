@@ -2378,6 +2378,19 @@ function calcDamageWithSecondaryBonuses(
     (damage * bonusValues.skillDamageResistanceCoeff) / 100
   );
 
+  if (bonusValues.useDarkProtection) {
+    var { skillDarkProtection, darkProtectionSp } = bonusValues;
+
+    var damageReduction = Math.floor(damage / 3);
+    var spAbsorption = Math.floor(damageReduction * skillDarkProtection / 100);
+
+    if (spAbsorption <= darkProtectionSp) {
+      damage -= damageReduction;
+    } else {
+      damage -= Math.floor(darkProtectionSp * 100 / skillDarkProtection);
+    }
+  }
+
   damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
   damage = Math.max(0, damage + bonusValues.defensePercent);
   damage += Math.min(
@@ -2411,7 +2424,7 @@ function calcSkillDamageWithSecondaryBonuses(
   if (bonusValues.useDarkProtection) {
     var { skillDarkProtection, darkProtectionSp } = bonusValues;
 
-    var damageReduction = Math.floor(dam / 3);
+    var damageReduction = Math.floor(damage / 3);
     var spAbsorption = Math.floor(damageReduction * skillDarkProtection / 100);
 
     if (spAbsorption <= darkProtectionSp) {
@@ -2636,6 +2649,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var averageDamageResistance = 0;
   var skillDamage = 0;
   var skillDamageResistance = 0;
+  var useDarkProtection = false;
   var rankBonus = 0;
   var defensePercent = 0;
   var damageBonus = 0;
@@ -2882,6 +2896,10 @@ function createBattleValues(attacker, victim, battle, skillType) {
       skillDamageResistance = victim.skillDamageResistance;
     }
 
+    if (victim.useDarkProtection && victim.class === "black_magic" && victim.skillDarkProtection) {
+      useDarkProtection = true;
+    }
+
     if (isMagicClass(victim)) {
       defensePercent = (-2 * victim.magicDefense * victim.defensePercent) / 100;
     } else {
@@ -2949,6 +2967,9 @@ function createBattleValues(attacker, victim, battle, skillType) {
     averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
     skillDamageCoeff: 100 + skillDamage,
     skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
+    useDarkProtection: useDarkProtection,
+    skillDarkProtection: victim.skillDarkProtection,
+    darkProtectionSp: victim.darkProtectionSp,
     rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: Math.min(20, damageBonus),
