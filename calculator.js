@@ -2374,23 +2374,23 @@ function calcDamageWithSecondaryBonuses(
     (damage * bonusValues.averageDamageResistanceCoeff) / 100
   );
   damage = Math.floor((damage * bonusValues.skillDamageResistanceCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
 
   if (bonusValues.useDarkProtection) {
-    var { skillDarkProtection, darkProtectionSp } = bonusValues;
+    var { darkProtectionPoint, darkProtectionSp } = bonusValues;
 
     var damageReduction = Math.floor(damage / 3);
     var spAbsorption = Math.floor(
-      (damageReduction * skillDarkProtection) / 100
+      (damageReduction * darkProtectionPoint) / 100
     );
 
     if (spAbsorption <= darkProtectionSp) {
       damage -= damageReduction;
     } else {
-      damage -= Math.floor((darkProtectionSp * 100) / skillDarkProtection);
+      damage -= Math.floor((darkProtectionSp * 100) / darkProtectionPoint);
     }
   }
 
-  damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
   damage = Math.max(0, damage + bonusValues.defensePercent);
   damage += Math.min(
     300,
@@ -2421,17 +2421,17 @@ function calcSkillDamageWithSecondaryBonuses(
   damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
 
   if (bonusValues.useDarkProtection) {
-    var { skillDarkProtection, darkProtectionSp } = bonusValues;
+    var { darkProtectionPoint, darkProtectionSp } = bonusValues;
 
     var damageReduction = Math.floor(damage / 3);
     var spAbsorption = Math.floor(
-      (damageReduction * skillDarkProtection) / 100
+      (damageReduction * darkProtectionPoint) / 100
     );
 
     if (spAbsorption <= darkProtectionSp) {
       damage -= damageReduction;
     } else {
-      damage -= Math.floor((darkProtectionSp * 100) / skillDarkProtection);
+      damage -= Math.floor((darkProtectionSp * 100) / darkProtectionPoint);
     }
   }
 
@@ -2615,7 +2615,10 @@ function magicResistanceToCoeff(magicResistance) {
 }
 
 function createBattleValues(attacker, victim, battle, skillType) {
-  var { mapping, constants } = battle;
+  var {
+    mapping,
+    constants: { polymorphPowerTable, skillPowerTable, marriageTable },
+  } = battle;
   var calcAttackValues;
 
   var missPercentage = 0;
@@ -2648,8 +2651,9 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var averageDamageResistance = 0;
   var skillDamage = 0;
   var skillDamageResistance = 0;
-  var useDarkProtection = false;
   var rankBonus = 0;
+  var useDarkProtection = false;
+  var darkProtectionPoint = 0;
   var defensePercent = 0;
   var damageBonus = 0;
   var empireMalus = 0;
@@ -2660,7 +2664,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
   attacker.statAttackValue = calcStatAttackValue(attacker);
 
-  computePolymorphPoint(attacker, victim, constants.polymorphPowerTable);
+  computePolymorphPoint(attacker, victim, polymorphPowerTable);
   computeHorse(attacker);
 
   if (isPC(attacker)) {
@@ -2707,9 +2711,9 @@ function createBattleValues(attacker, victim, battle, skillType) {
           victim.meleeArrowBlock -
           (missPercentage * victim.meleeArrowBlock) / 100;
 
-        berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
-        blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-        fearBonus = calcFearBonus(constants.skillPowerTable, victim);
+        berserkBonus = calcBerserkBonus(skillPowerTable, victim);
+        blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+        fearBonus = calcFearBonus(skillPowerTable, victim);
         averageDamageResistance = victim.averageDamageResistance;
       }
 
@@ -2729,7 +2733,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(attacker.loveNecklace)) {
           attackValueMarriage = getMarriageBonusValue(
             attacker,
-            constants.marriageTable,
+            marriageTable,
             "loveNecklace"
           );
         }
@@ -2737,7 +2741,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(attacker.loveEarrings)) {
           criticalHitPercentage += getMarriageBonusValue(
             attacker,
-            constants.marriageTable,
+            marriageTable,
             "loveEarrings"
           );
         }
@@ -2745,7 +2749,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(attacker.harmonyEarrings)) {
           piercingHitPercentage += getMarriageBonusValue(
             attacker,
-            constants.marriageTable,
+            marriageTable,
             "harmonyEarrings"
           );
         }
@@ -2816,7 +2820,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(victim.harmonyBracelet)) {
           monsterResistanceMarriage = getMarriageBonusValue(
             victim,
-            constants.marriageTable,
+            marriageTable,
             "harmonyBracelet"
           );
         }
@@ -2824,7 +2828,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(victim.harmonyNecklace) && !skillType) {
           defenseMarriage = getMarriageBonusValue(
             victim,
-            constants.marriageTable,
+            marriageTable,
             "harmonyNecklace"
           );
         }
@@ -2846,16 +2850,16 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isMeleeAttacker(attacker)) {
           missPercentage = victim.meleeBlock;
           averageDamageResistance = victim.averageDamageResistance;
-          berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
-          blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-          fearBonus = calcFearBonus(constants.skillPowerTable, victim);
+          berserkBonus = calcBerserkBonus(skillPowerTable, victim);
+          blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+          fearBonus = calcFearBonus(skillPowerTable, victim);
         } else if (isRangeAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           weaponDefense = victim.arrowDefense;
           averageDamageResistance = victim.averageDamageResistance;
-          berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
-          blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-          fearBonus = calcFearBonus(constants.skillPowerTable, victim);
+          berserkBonus = calcBerserkBonus(skillPowerTable, victim);
+          blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+          fearBonus = calcFearBonus(skillPowerTable, victim);
         } else if (isMagicAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           skillDamageResistance = victim.skillDamageResistance;
@@ -2901,6 +2905,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
       victim.skillDarkProtection
     ) {
       useDarkProtection = true;
+      darkProtectionPoint = calcDarkProtectionPoint(skillPowerTable, victim);
     }
 
     if (isMagicClass(victim)) {
@@ -2971,7 +2976,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     skillDamageCoeff: 100 + skillDamage,
     skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
     useDarkProtection: useDarkProtection,
-    skillDarkProtection: victim.skillDarkProtection,
+    darkProtectionPoint: darkProtectionPoint,
     darkProtectionSp: victim.darkProtectionSp,
     rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
@@ -3155,6 +3160,12 @@ function calcFearBonus(skillPowerTable, victim) {
   var fearBonus = 5 + Math.floor(skillPower * 20);
 
   return fearBonus;
+}
+
+function calcDarkProtectionPoint(skillPowerTable, victim) {
+  var skillPower = getSkillPower(victim.skillDarkProtection, skillPowerTable);
+
+  return floorMultiplication(100 - victim.int * 0.84 * skillPower, 1);
 }
 
 function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
