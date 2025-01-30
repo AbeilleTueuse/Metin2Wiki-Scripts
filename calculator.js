@@ -5492,11 +5492,6 @@ function createDamageCalculatorInformation(chartSource) {
     ),
     toggleSiblings: {},
     polymorphDisplay: document.getElementById("polymorph-display"),
-    polymorphCreation: document.getElementById("polymorph-creation"),
-    yoharaCreation: document.getElementById("yohara-creation"),
-    rankSelection: document.getElementById("rank-selection"),
-    blessingCreation: document.getElementById("blessing-creation"),
-    marriageCreation: document.getElementById("marriage-creation"),
     bonusVariation: {
       tabButton: document.getElementById("Variation"),
       checkbox: document.getElementById("use-bonus-variation"),
