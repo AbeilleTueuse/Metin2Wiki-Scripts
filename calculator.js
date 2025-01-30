@@ -502,7 +502,7 @@ function filterSkills(selectedClass, skillElementsToFilter) {
 }
 
 function filterForm(characters, battle) {
-  var { saveButton, characterCreation } = characters;
+  var { saveButton, characterCreation, toggleSiblings } = characters;
   var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace;
   var battleChoice = battle.battleChoice;
 
@@ -580,24 +580,12 @@ function filterForm(characters, battle) {
         battleChoice.resetAttackType = true;
         break;
       case "isPolymorph":
-        filterCheckbox(target, characters.polymorphCreation);
         battleChoice.resetAttackType = true;
         break;
-      case "lowRank":
-        filterCheckbox(target, characters.rankSelection);
-        break;
-      case "isBlessed":
-        filterCheckbox(target, characters.blessingCreation);
-        break;
-      case "onYohara":
-        filterCheckbox(target, characters.yoharaCreation);
-        break;
-      case "isMarried":
-        filterCheckbox(target, characters.marriageCreation);
-        break;
-      case "useBonusVariation":
-        filterCheckbox(target, characters.bonusVariation.container);
-        break;
+    }
+
+    if (toggleSiblings.hasOwnProperty(targetName)) {
+      filterCheckbox(target, toggleSiblings[targetName]);
     }
 
     if (
@@ -1043,15 +1031,9 @@ function updateForm(
     characters.randomAttackValue,
     characters.randomMagicAttackValue
   );
-  filterCheckbox(characterCreation.isPolymorph, characters.polymorphCreation);
-  filterCheckbox(characterCreation.lowRank, characters.rankSelection);
-  filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
-  filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
-  filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
-  filterCheckbox(
-    characterCreation.useBonusVariation,
-    characters.bonusVariation.container
-  );
+  for (var [targetName, sibling] of Object.entries(characters.toggleSiblings)) {
+    filterCheckbox(characterCreation[targetName], sibling);
+  }
   filterSkills(classChoice.value, characters.skillElementsToFilter);
   handleBonusVariationUpdate(characterCreation, characters.bonusVariation);
 }
@@ -5508,6 +5490,7 @@ function createDamageCalculatorInformation(chartSource) {
     randomMagicAttackValue: document.getElementById(
       "random-magic-attack-value"
     ),
+    toggleSiblings: {},
     polymorphDisplay: document.getElementById("polymorph-display"),
     polymorphCreation: document.getElementById("polymorph-creation"),
     yoharaCreation: document.getElementById("yohara-creation"),
@@ -5534,6 +5517,12 @@ function createDamageCalculatorInformation(chartSource) {
   for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
     characters.savedCharacters[pseudo] = character;
   }
+
+  document.querySelectorAll(".toggle-sibling").forEach(function (element) {
+    var target = element.dataset.target;
+    var sibling = document.getElementById(target);
+    characters.toggleSiblings[element.name] = sibling;
+  });
 
   var constants = createConstants();
 
