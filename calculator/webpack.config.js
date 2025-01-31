@@ -18,5 +18,9 @@ module.exports = {
       },
     ],
   },
-  mode: 'development',
+  optimization: {
+    minimize: false,
+  },
+  mode: 'production',
+  devtool: false,
 };
