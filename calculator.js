@@ -34,7 +34,6 @@ function isChecked(attribute) {
 }
 
 function floorMultiplication(firstFactor, secondFactor) {
-  // @ts-ignore
   return Math.floor((firstFactor * secondFactor).toFixed(8));
 }
 
@@ -503,7 +502,7 @@ function filterSkills(selectedClass, skillElementsToFilter) {
 }
 
 function filterForm(characters, battle) {
-  var { saveButton, characterCreation } = characters;
+  var { saveButton, characterCreation, toggleSiblings } = characters;
   var allowedWeaponsPerRace = battle.constants.allowedWeaponsPerRace;
   var battleChoice = battle.battleChoice;
 
@@ -581,24 +580,12 @@ function filterForm(characters, battle) {
         battleChoice.resetAttackType = true;
         break;
       case "isPolymorph":
-        filterCheckbox(target, characters.polymorphCreation);
         battleChoice.resetAttackType = true;
         break;
-      case "lowRank":
-        filterCheckbox(target, characters.rankSelection);
-        break;
-      case "isBlessed":
-        filterCheckbox(target, characters.blessingCreation);
-        break;
-      case "onYohara":
-        filterCheckbox(target, characters.yoharaCreation);
-        break;
-      case "isMarried":
-        filterCheckbox(target, characters.marriageCreation);
-        break;
-      case "useBonusVariation":
-        filterCheckbox(target, characters.bonusVariation.container);
-        break;
+    }
+
+    if (toggleSiblings.hasOwnProperty(targetName)) {
+      filterCheckbox(target, toggleSiblings[targetName]);
     }
 
     if (
@@ -1044,15 +1031,9 @@ function updateForm(
     characters.randomAttackValue,
     characters.randomMagicAttackValue
   );
-  filterCheckbox(characterCreation.isPolymorph, characters.polymorphCreation);
-  filterCheckbox(characterCreation.lowRank, characters.rankSelection);
-  filterCheckbox(characterCreation.onYohara, characters.yoharaCreation);
-  filterCheckbox(characterCreation.isBlessed, characters.blessingCreation);
-  filterCheckbox(characterCreation.isMarried, characters.marriageCreation);
-  filterCheckbox(
-    characterCreation.useBonusVariation,
-    characters.bonusVariation.container
-  );
+  for (var [targetName, sibling] of Object.entries(characters.toggleSiblings)) {
+    filterCheckbox(characterCreation[targetName], sibling);
+  }
   filterSkills(classChoice.value, characters.skillElementsToFilter);
   handleBonusVariationUpdate(characterCreation, characters.bonusVariation);
 }
@@ -2340,7 +2321,7 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
     Math.trunc((damage * elementBonusCoeff[4]) / 10000) +
     Math.trunc((damage * elementBonusCoeff[5]) / 10000);
 
-    damage = Math.floor(damage * bonusValues.damageMultiplier);
+  damage = Math.floor(damage * bonusValues.damageMultiplier);
 
   return damage;
 }
@@ -2356,8 +2337,8 @@ function calcDamageWithSecondaryBonuses(
   damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
   damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
   damage = Math.floor((damage * bonusValues.berserkBonusCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
   damage = Math.floor((damage * bonusValues.fearBonusCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
 
   if (damageType.criticalHit) {
     damage *= 2;
@@ -2374,11 +2355,24 @@ function calcDamageWithSecondaryBonuses(
   damage = Math.floor(
     (damage * bonusValues.averageDamageResistanceCoeff) / 100
   );
-  damage = Math.floor(
-    (damage * bonusValues.skillDamageResistanceCoeff) / 100
-  );
-
+  damage = Math.floor((damage * bonusValues.skillDamageResistanceCoeff) / 100);
   damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
+
+  if (bonusValues.useDarkProtection) {
+    var { darkProtectionPoint, darkProtectionSp } = bonusValues;
+
+    var damageReduction = Math.floor(damage / 3);
+    var spAbsorption = Math.floor(
+      (damageReduction * darkProtectionPoint) / 100
+    );
+
+    if (spAbsorption <= darkProtectionSp) {
+      damage -= damageReduction;
+    } else {
+      damage -= Math.floor((darkProtectionSp * 100) / darkProtectionPoint);
+    }
+  }
+
   damage = Math.max(0, damage + bonusValues.defensePercent);
   damage += Math.min(
     300,
@@ -2409,7 +2403,18 @@ function calcSkillDamageWithSecondaryBonuses(
   damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
 
   if (bonusValues.useDarkProtection) {
-    // pass
+    var { darkProtectionPoint, darkProtectionSp } = bonusValues;
+
+    var damageReduction = Math.floor(damage / 3);
+    var spAbsorption = Math.floor(
+      (damageReduction * darkProtectionPoint) / 100
+    );
+
+    if (spAbsorption <= darkProtectionSp) {
+      damage -= damageReduction;
+    } else {
+      damage -= Math.floor((darkProtectionSp * 100) / darkProtectionPoint);
+    }
   }
 
   var tempDamage = Math.floor(
@@ -2433,9 +2438,7 @@ function calcSkillDamageWithSecondaryBonuses(
   }
 
   damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
-  damage = Math.floor(
-    (damage * bonusValues.skillDamageResistanceCoeff) / 100
-  );
+  damage = Math.floor((damage * bonusValues.skillDamageResistanceCoeff) / 100);
   damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
 
   damage = Math.max(0, damage + bonusValues.defensePercent);
@@ -2594,7 +2597,10 @@ function magicResistanceToCoeff(magicResistance) {
 }
 
 function createBattleValues(attacker, victim, battle, skillType) {
-  var { mapping, constants } = battle;
+  var {
+    mapping,
+    constants: { polymorphPowerTable, skillPowerTable, marriageTable },
+  } = battle;
   var calcAttackValues;
 
   var missPercentage = 0;
@@ -2628,6 +2634,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var skillDamage = 0;
   var skillDamageResistance = 0;
   var rankBonus = 0;
+  var useDarkProtection = false;
+  var darkProtectionPoint = 0;
   var defensePercent = 0;
   var damageBonus = 0;
   var empireMalus = 0;
@@ -2638,7 +2646,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
   attacker.statAttackValue = calcStatAttackValue(attacker);
 
-  computePolymorphPoint(attacker, victim, constants.polymorphPowerTable);
+  computePolymorphPoint(attacker, victim, polymorphPowerTable);
   computeHorse(attacker);
 
   if (isPC(attacker)) {
@@ -2685,9 +2693,9 @@ function createBattleValues(attacker, victim, battle, skillType) {
           victim.meleeArrowBlock -
           (missPercentage * victim.meleeArrowBlock) / 100;
 
-        berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
-        blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-        fearBonus = calcFearBonus(constants.skillPowerTable, victim);
+        berserkBonus = calcBerserkBonus(skillPowerTable, victim);
+        blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+        fearBonus = calcFearBonus(skillPowerTable, victim);
         averageDamageResistance = victim.averageDamageResistance;
       }
 
@@ -2707,7 +2715,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(attacker.loveNecklace)) {
           attackValueMarriage = getMarriageBonusValue(
             attacker,
-            constants.marriageTable,
+            marriageTable,
             "loveNecklace"
           );
         }
@@ -2715,7 +2723,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(attacker.loveEarrings)) {
           criticalHitPercentage += getMarriageBonusValue(
             attacker,
-            constants.marriageTable,
+            marriageTable,
             "loveEarrings"
           );
         }
@@ -2723,7 +2731,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(attacker.harmonyEarrings)) {
           piercingHitPercentage += getMarriageBonusValue(
             attacker,
-            constants.marriageTable,
+            marriageTable,
             "harmonyEarrings"
           );
         }
@@ -2794,7 +2802,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(victim.harmonyBracelet)) {
           monsterResistanceMarriage = getMarriageBonusValue(
             victim,
-            constants.marriageTable,
+            marriageTable,
             "harmonyBracelet"
           );
         }
@@ -2802,7 +2810,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isChecked(victim.harmonyNecklace) && !skillType) {
           defenseMarriage = getMarriageBonusValue(
             victim,
-            constants.marriageTable,
+            marriageTable,
             "harmonyNecklace"
           );
         }
@@ -2824,16 +2832,16 @@ function createBattleValues(attacker, victim, battle, skillType) {
         if (isMeleeAttacker(attacker)) {
           missPercentage = victim.meleeBlock;
           averageDamageResistance = victim.averageDamageResistance;
-          berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
-          blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-          fearBonus = calcFearBonus(constants.skillPowerTable, victim);
+          berserkBonus = calcBerserkBonus(skillPowerTable, victim);
+          blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+          fearBonus = calcFearBonus(skillPowerTable, victim);
         } else if (isRangeAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           weaponDefense = victim.arrowDefense;
           averageDamageResistance = victim.averageDamageResistance;
-          berserkBonus = calcBerserkBonus(constants.skillPowerTable, victim);
-          blessingBonus = calcBlessingBonus(constants.skillPowerTable, victim);
-          fearBonus = calcFearBonus(constants.skillPowerTable, victim);
+          berserkBonus = calcBerserkBonus(skillPowerTable, victim);
+          blessingBonus = calcBlessingBonus(skillPowerTable, victim);
+          fearBonus = calcFearBonus(skillPowerTable, victim);
         } else if (isMagicAttacker(attacker)) {
           missPercentage = victim.arrowBlock;
           skillDamageResistance = victim.skillDamageResistance;
@@ -2871,6 +2879,15 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
     if (skillType) {
       skillDamageResistance = victim.skillDamageResistance;
+    }
+
+    if (
+      victim.useDarkProtection &&
+      victim.class === "black_magic" &&
+      victim.skillDarkProtection
+    ) {
+      useDarkProtection = true;
+      darkProtectionPoint = calcDarkProtectionPoint(skillPowerTable, victim);
     }
 
     if (isMagicClass(victim)) {
@@ -2940,6 +2957,9 @@ function createBattleValues(attacker, victim, battle, skillType) {
     averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
     skillDamageCoeff: 100 + skillDamage,
     skillDamageResistanceCoeff: 100 - Math.min(99, skillDamageResistance),
+    useDarkProtection: useDarkProtection,
+    darkProtectionPoint: darkProtectionPoint,
+    darkProtectionSp: victim.darkProtectionSp,
     rankBonusCoeff: 100 + rankBonus,
     defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: Math.min(20, damageBonus),
@@ -3072,7 +3092,7 @@ function calcBerserkBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var skillPower = getSkillPower(victim["skillBerserk"], skillPowerTable);
+  var skillPower = getSkillPower(victim.skillBerserk, skillPowerTable);
 
   if (!skillPower) {
     return 0;
@@ -3090,7 +3110,7 @@ function calcBlessingBonus(skillPowerTable, victim) {
 
   var int = victim.intBlessing;
   var dex = victim.dexBlessing;
-  var skillPower = getSkillPower(victim["skillBlessing"], skillPowerTable);
+  var skillPower = getSkillPower(victim.skillBlessing, skillPowerTable);
 
   if (!skillPower) {
     return 0;
@@ -3113,7 +3133,7 @@ function calcFearBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var skillPower = getSkillPower(victim["skillFear"], skillPowerTable);
+  var skillPower = getSkillPower(victim.skillFear, skillPowerTable);
 
   if (!skillPower) {
     return 0;
@@ -3122,6 +3142,12 @@ function calcFearBonus(skillPowerTable, victim) {
   var fearBonus = 5 + Math.floor(skillPower * 20);
 
   return fearBonus;
+}
+
+function calcDarkProtectionPoint(skillPowerTable, victim) {
+  var skillPower = getSkillPower(victim.skillDarkProtection, skillPowerTable);
+
+  return floorMultiplication(100 - victim.int * 0.84 * skillPower, 1);
 }
 
 function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
@@ -4124,12 +4150,8 @@ function damageWithoutVariation(
 ) {
   var startDamageTime = performance.now();
 
-  var {
-    damageWeightedByType,
-    totalCardinal,
-    possibleDamageCount,
-    skillType,
-  } = calcDamage(attacker, victim, attackType, battle);
+  var { damageWeightedByType, totalCardinal, possibleDamageCount, skillType } =
+    calcDamage(attacker, victim, attackType, battle);
 
   var endDamageTime = performance.now();
 
@@ -5218,6 +5240,11 @@ function initDamageChart(battle) {
               size: 16,
             },
           },
+          ticks: {
+            callback: function (value) {
+              return Number.isInteger(value) ? value : "";
+            },
+          },
         },
         y: {
           title: {
@@ -5474,12 +5501,8 @@ function createDamageCalculatorInformation(chartSource) {
     randomMagicAttackValue: document.getElementById(
       "random-magic-attack-value"
     ),
+    toggleSiblings: {},
     polymorphDisplay: document.getElementById("polymorph-display"),
-    polymorphCreation: document.getElementById("polymorph-creation"),
-    yoharaCreation: document.getElementById("yohara-creation"),
-    rankSelection: document.getElementById("rank-selection"),
-    blessingCreation: document.getElementById("blessing-creation"),
-    marriageCreation: document.getElementById("marriage-creation"),
     bonusVariation: {
       tabButton: document.getElementById("Variation"),
       checkbox: document.getElementById("use-bonus-variation"),
@@ -5500,6 +5523,12 @@ function createDamageCalculatorInformation(chartSource) {
   for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
     characters.savedCharacters[pseudo] = character;
   }
+
+  document.querySelectorAll(".toggle-sibling").forEach(function (element) {
+    var target = element.dataset.target;
+    var sibling = document.getElementById(target);
+    characters.toggleSiblings[element.name] = sibling;
+  });
 
   var constants = createConstants();
 
