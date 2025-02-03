@@ -1,12 +1,16 @@
 import Attack from "./Attack";
 
-export default class Character {
-    name: string;
-    attack: Attack;
+export class Character {
+    private name: string;
+    private attack: Attack;
 
     constructor(name: string, attack: Attack) {
         this.name = name;
         this.attack = attack;
+    }
+
+    public getName() : string {
+        return this.name
     }
 
     performAttack(): number {
