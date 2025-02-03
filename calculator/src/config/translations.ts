@@ -2,6 +2,7 @@ type LanguageCode = 'fr' | 'en' | 'de' | 'tr' | 'ro' | 'pt';
 
 export const translations: Record<LanguageCode, Record<string, string | string[]>> = {
     fr: {
+        NOT_EXISTS: "Cette traduction n'existe pas",
         DAMAGE: "Dégâts",
         percentage: "Pourcentage",
         miss: "Miss",
@@ -18,6 +19,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     en: {
+        NOT_EXISTS: "Cette traduction n'existe pas",
         DAMAGE: "Damage",
         percentage: "Percentage",
         miss: "Miss",
@@ -34,6 +36,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     tr: {
+        NOT_EXISTS: "Cette traduction n'existe pas",
         DAMAGE: "Hasar",
         percentage: "Yüzde",
         miss: "Miss Vuruş",
@@ -50,6 +53,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     ro: {
+        NOT_EXISTS: "Cette traduction n'existe pas",
         DAMAGE: "Daune",
         percentage: "Procent",
         miss: "Miss",
@@ -66,6 +70,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     de: {
+        NOT_EXISTS: "Cette traduction n'existe pas",
         DAMAGE: "Schäden",
         percentage: "Prozentsatz",
         miss: "Verfehlen",
@@ -82,6 +87,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     pt: {
+        NOT_EXISTS: "Cette traduction n'existe pas",
         DAMAGE: "Dano",
         percentage: "Percentagem",
         miss: "Miss",

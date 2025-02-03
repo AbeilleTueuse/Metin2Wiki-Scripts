@@ -6,7 +6,7 @@ import Attack from "./core/models/Attack";
 
 //import { RaceType, WeaponType } from './core/enums/index'
 
-class App {
+export class App {
     private modal: Modal;
     private character: Character;
 
@@ -32,7 +32,7 @@ class App {
     }
 
     public u__(key: string) {
-        return translations[this.currentLanguage as keyof typeof translations][key];
+        return translations[this.currentLanguage as keyof typeof translations][key] || translations[this.currentLanguage as keyof typeof translations]['NOT_EXISTS']
     }
 }
 
