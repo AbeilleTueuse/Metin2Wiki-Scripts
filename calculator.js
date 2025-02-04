@@ -2234,7 +2234,10 @@ function calcMagicAttackValue(attacker) {
   var minMagicAttackValueSlash = 0;
   var maxMagicAttackValueSlash = 0;
 
-  var { isSerpent, minMagicAttackValue, maxMagicAttackValue, growth } =
+  var minWeaponAttackValue = 0;
+  var maxWeaponAttackValue = 0;
+
+  var { isSerpent, minMagicAttackValue, maxMagicAttackValue, minAttackValue, maxAttackValue, growth } =
     attacker.weapon;
 
   if (isSerpent) {
@@ -2243,10 +2246,18 @@ function calcMagicAttackValue(attacker) {
       minMagicAttackValue,
       attacker.maxMagicAttackValueRandom
     );
+    minAttackValue = Math.max(0, attacker.minAttackValueRandom - growth);
+    maxAttackValue = Math.max(
+      minAttackValue,
+      attacker.maxAttackValueRandom - growth
+    );
   } else {
     minMagicAttackValue += growth;
     maxMagicAttackValue += growth;
   }
+
+  minWeaponAttackValue = minAttackValue + growth;
+  maxWeaponAttackValue = maxAttackValue + growth;
 
   minMagicAttackValueSlash = Math.min(
     attacker.minMagicAttackValueSlash,
@@ -2277,6 +2288,11 @@ function calcMagicAttackValue(attacker) {
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
     possibleDamageCount: maxMagicAttackValue - minMagicAttackValue + 1,
+    weapon: {
+      minAttackValue: minWeaponAttackValue,
+      maxAttackValue: maxWeaponAttackValue,
+      interval: maxWeaponAttackValue - minWeaponAttackValue + 1
+    }
   };
 }
 
@@ -2337,11 +2353,11 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
   return damage;
 }
 
-function calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses) {
+function calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, tempDamage) {
   if (damageType.isPiercingHit) {
     damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
     damage += Math.floor(
-      (damageWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
+      (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
     );
   }
 
@@ -2349,6 +2365,7 @@ function calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, dam
   damage = Math.floor(
     (damage * bonusValues.averageDamageResistanceCoeff) / 100
   );
+  damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
   damage = Math.floor((damage * bonusValues.skillDamageResistanceCoeff) / 100);
   damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
 
@@ -2402,12 +2419,11 @@ function saveFinalDamage(
   const isCriticalHit = damageType.isCriticalHit;
 
   if (isCriticalHit && bonusValues.isPlayerVsPlayer) {
-    for (let weaponAttackValue = weapon.minAttackValue; weaponAttackValue < weapon.maxAttackValue; weaponAttackValue++) {
-      let criticalDamage = damage + 2 * weaponAttackValue;
-
-      criticalDamage = calcFinalDamage(criticalDamage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
+    for (let weaponAttackValue = weapon.minAttackValue; weaponAttackValue <= weapon.maxAttackValue; weaponAttackValue++) {
+      const criticalDamage = damage + 2 * weaponAttackValue;
+      const finalDamage = calcFinalDamage(criticalDamage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
       
-      addKeyValue(damageWeighted, criticalDamage, weight / weapon.interval);
+      addKeyValue(damageWeighted, finalDamage, weight / weapon.interval);
     }
   } else {
     if (isCriticalHit) {
@@ -2424,7 +2440,10 @@ function calcSkillDamageWithSecondaryBonuses(
   damage,
   bonusValues,
   damageType,
-  minPiercingDamage
+  weapon,
+  minPiercingDamage,
+  damageWeighted,
+  weight
 ) {
   damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
   damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
@@ -2433,21 +2452,6 @@ function calcSkillDamageWithSecondaryBonuses(
 
   damage = floorMultiplication(damage, bonusValues.skillWardCoeff);
   damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
-
-  if (bonusValues.useDarkProtection) {
-    var { darkProtectionPoint, darkProtectionSp } = bonusValues;
-
-    var damageReduction = Math.floor(damage / 3);
-    var spAbsorption = Math.floor(
-      (damageReduction * darkProtectionPoint) / 100
-    );
-
-    if (spAbsorption <= darkProtectionSp) {
-      damage -= damageReduction;
-    } else {
-      damage -= Math.floor((darkProtectionSp * 100) / darkProtectionPoint);
-    }
-  }
 
   var tempDamage = Math.floor(
     (damage * bonusValues.skillBonusByBonusCoeff) / 100
@@ -2458,32 +2462,24 @@ function calcSkillDamageWithSecondaryBonuses(
   );
   damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
 
-  if (damageType.isCriticalHit) {
-    damage *= 2;
+  const isCriticalHit = damageType.isCriticalHit;
+
+  if (isCriticalHit && bonusValues.isPlayerVsPlayer) {
+    for (let weaponAttackValue = weapon.minAttackValue; weaponAttackValue <= weapon.maxAttackValue; weaponAttackValue++) {
+      const criticalDamage = damage + 2 * weaponAttackValue;
+      const finalDamage = calcFinalDamage(criticalDamage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
+      
+      addKeyValue(damageWeighted, finalDamage, weight / weapon.interval);
+    }
+  } else {
+    if (isCriticalHit) {
+      damage *= 2;
+    }
+
+    damage = calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
+    
+    addKeyValue(damageWeighted, damage, weight);
   }
-
-  if (damageType.isPiercingHit) {
-    damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
-    damage += Math.floor(
-      (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
-    );
-  }
-
-  damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.skillDamageResistanceCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
-
-  damage = Math.max(0, damage + bonusValues.defensePercent);
-  damage += Math.min(
-    300,
-    Math.floor((damage * bonusValues.damageBonusCoeff) / 100)
-  );
-  damage = Math.floor((damage * bonusValues.empireMalusCoeff) / 10);
-  damage = Math.floor((damage * bonusValues.sungMaStrBonusCoeff) / 10000);
-  damage -= Math.floor(damage * bonusValues.sungmaStrMalusCoeff);
-
-  damage = Math.floor((damage * bonusValues.whiteDragonElixirCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.steelDragonElixirCoeff) / 100);
 
   return damage;
 }
@@ -4007,7 +4003,10 @@ function calcPhysicalSkillDamage(battleValues) {
               damageWithFormula,
               bonusValues,
               damageType,
-              damageWithPrimaryBonuses
+              weapon,
+              damageWithPrimaryBonuses,
+              damageWeighted,
+              weight
             );
 
             addKeyValue(damageWeighted, finalDamage, weight / 5);
@@ -4032,7 +4031,10 @@ function calcPhysicalSkillDamage(battleValues) {
             finalDamage,
             bonusValues,
             damageType,
-            damageWithPrimaryBonuses
+            weapon,
+            damageWithPrimaryBonuses,
+            damageWeighted,
+            weight
           );
 
           savedDamage[damageWithFormula] = finalDamage;
@@ -4052,6 +4054,7 @@ function calcMagicSkillDamage(battleValues) {
       maxMagicAttackValue,
       magicAttackValueAugmentation,
       weights,
+      weapon
     },
     bonusValues,
     damageTypeCombinaison,
@@ -4110,7 +4113,10 @@ function calcMagicSkillDamage(battleValues) {
               damage,
               bonusValues,
               damageType,
-              damageWithPrimaryBonuses
+              weapon,
+              damageWithPrimaryBonuses,
+              damageWeighted,
+              weight
             );
             addKeyValue(damageWeighted, finalDamage, weight / 5);
           }
@@ -4119,7 +4125,10 @@ function calcMagicSkillDamage(battleValues) {
             damageWithPrimaryBonuses,
             bonusValues,
             damageType,
-            damageWithPrimaryBonuses
+            weapon,
+            damageWithPrimaryBonuses,
+            damageWeighted,
+            weight
           );
 
           savedDamage[rawDamage] = finalDamage;
