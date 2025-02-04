@@ -2514,7 +2514,7 @@ function saveFinalSkillDamage(
     ) {
       const criticalDamage = damage + 2 * weaponAttackValue;
 
-      if (savedCriticalDamage.hasOwnProperty(criticalDamage)) {
+      if (savedCriticalDamage.hasOwnProperty(criticalDamage) && minPiercingDamage >= 0) {
         const savedDamage = savedCriticalDamage[criticalDamage];
         damageWeighted[savedDamage] += criticalWeight;
         continue;
