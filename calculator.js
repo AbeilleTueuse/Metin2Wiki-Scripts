@@ -135,16 +135,14 @@ function calcMeanDamage(damageWeightedByType, totalCardinal) {
   return sumDamage / totalCardinal;
 }
 
-function prepareDamageData(
-  damageWeightedByType,
-  possibleDamageCountTemp,
-  totalCardinal
-) {
+function prepareDamageData(damageWeightedByType, attackValues) {
+  var totalCardinal = attackValues.totalCardinal;
   var minDamage = Infinity;
   var maxDamage = 0;
   var scatterDataByType = {};
   var sumDamage = 0;
   var possibleDamageCount = 0;
+  var possibleDamageCountTemp = 0;
   var uniqueDamageCount = 0;
 
   for (var damageTypeName in damageWeightedByType) {
@@ -153,6 +151,15 @@ function prepareDamageData(
       possibleDamageCount++;
       uniqueDamageCount++;
       continue;
+    } else if (
+      (damageTypeName === "criticalHit" ||
+        damageTypeName === "criticalPiercingHit") &&
+      attackValues.isPlayerVsPlayer
+    ) {
+      possibleDamageCountTemp =
+        attackValues.possibleDamageCount * attackValues.weapon.interval;
+    } else {
+      possibleDamageCountTemp = attackValues.possibleDamageCount;
     }
 
     var firstIteration = true;
@@ -192,12 +199,13 @@ function prepareDamageData(
     minDamage = 0;
   }
 
+  attackValues.possibleDamageCount = possibleDamageCount;
+
   return [
     sumDamage / totalCardinal,
     minDamage,
     maxDamage,
     scatterDataByType,
-    possibleDamageCount,
     uniqueDamageCount,
   ];
 }
@@ -2154,7 +2162,7 @@ function calcStatAttackValue(character) {
   }
 }
 
-function calcSecondaryAttackValue(attacker) {
+function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
   var attackValueOther = 0;
 
   var minAttackValue = 0;
@@ -2226,19 +2234,26 @@ function calcSecondaryAttackValue(attacker) {
       minAttackValue: minWeaponAttackValue,
       maxAttackValue: maxWeaponAttackValue,
       interval: weaponInterval,
-    }
+    },
+    isPlayerVsPlayer: isPlayerVsPlayer,
   };
 }
 
-function calcMagicAttackValue(attacker) {
+function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
   var minMagicAttackValueSlash = 0;
   var maxMagicAttackValueSlash = 0;
 
   var minWeaponAttackValue = 0;
   var maxWeaponAttackValue = 0;
 
-  var { isSerpent, minMagicAttackValue, maxMagicAttackValue, minAttackValue, maxAttackValue, growth } =
-    attacker.weapon;
+  var {
+    isSerpent,
+    minMagicAttackValue,
+    maxMagicAttackValue,
+    minAttackValue,
+    maxAttackValue,
+    growth,
+  } = attacker.weapon;
 
   if (isSerpent) {
     minMagicAttackValue = Math.max(0, attacker.minMagicAttackValueRandom);
@@ -2291,8 +2306,9 @@ function calcMagicAttackValue(attacker) {
     weapon: {
       minAttackValue: minWeaponAttackValue,
       maxAttackValue: maxWeaponAttackValue,
-      interval: maxWeaponAttackValue - minWeaponAttackValue + 1
-    }
+      interval: maxWeaponAttackValue - minWeaponAttackValue + 1,
+    },
+    isPlayerVsPlayer: isPlayerVsPlayer,
   };
 }
 
@@ -2353,7 +2369,13 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
   return damage;
 }
 
-function calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, tempDamage) {
+function calcFinalDamage(
+  damage,
+  bonusValues,
+  damageType,
+  minPiercingDamage,
+  tempDamage
+) {
   if (damageType.isPiercingHit) {
     damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
     damage += Math.floor(
@@ -2419,10 +2441,20 @@ function saveFinalDamage(
   const isCriticalHit = damageType.isCriticalHit;
 
   if (isCriticalHit && bonusValues.isPlayerVsPlayer) {
-    for (let weaponAttackValue = weapon.minAttackValue; weaponAttackValue <= weapon.maxAttackValue; weaponAttackValue++) {
+    for (
+      let weaponAttackValue = weapon.minAttackValue;
+      weaponAttackValue <= weapon.maxAttackValue;
+      weaponAttackValue++
+    ) {
       const criticalDamage = damage + 2 * weaponAttackValue;
-      const finalDamage = calcFinalDamage(criticalDamage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
-      
+      const finalDamage = calcFinalDamage(
+        criticalDamage,
+        bonusValues,
+        damageType,
+        minPiercingDamage,
+        damageWithPrimaryBonuses
+      );
+
       addKeyValue(damageWeighted, finalDamage, weight / weapon.interval);
     }
   } else {
@@ -2430,20 +2462,27 @@ function saveFinalDamage(
       damage *= 2;
     }
 
-    damage = calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
-    
+    damage = calcFinalDamage(
+      damage,
+      bonusValues,
+      damageType,
+      minPiercingDamage,
+      damageWithPrimaryBonuses
+    );
+
     addKeyValue(damageWeighted, damage, weight);
   }
 }
 
-function calcSkillDamageWithSecondaryBonuses(
+function saveFinalSkillDamage(
   damage,
   bonusValues,
   damageType,
   weapon,
   minPiercingDamage,
   damageWeighted,
-  weight
+  weight,
+  savedCriticalDamage
 ) {
   damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
   damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
@@ -2453,7 +2492,7 @@ function calcSkillDamageWithSecondaryBonuses(
   damage = floorMultiplication(damage, bonusValues.skillWardCoeff);
   damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
 
-  var tempDamage = Math.floor(
+  const tempDamage = Math.floor(
     (damage * bonusValues.skillBonusByBonusCoeff) / 100
   );
 
@@ -2465,23 +2504,50 @@ function calcSkillDamageWithSecondaryBonuses(
   const isCriticalHit = damageType.isCriticalHit;
 
   if (isCriticalHit && bonusValues.isPlayerVsPlayer) {
-    for (let weaponAttackValue = weapon.minAttackValue; weaponAttackValue <= weapon.maxAttackValue; weaponAttackValue++) {
+    const { minAttackValue, maxAttackValue, interval } = weapon;
+    const criticalWeight = weight / interval;
+
+    for (
+      let weaponAttackValue = minAttackValue;
+      weaponAttackValue <= maxAttackValue;
+      weaponAttackValue++
+    ) {
       const criticalDamage = damage + 2 * weaponAttackValue;
-      const finalDamage = calcFinalDamage(criticalDamage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
-      
-      addKeyValue(damageWeighted, finalDamage, weight / weapon.interval);
+
+      if (savedCriticalDamage.hasOwnProperty(criticalDamage)) {
+        const savedDamage = savedCriticalDamage[criticalDamage];
+        damageWeighted[savedDamage] += criticalWeight;
+        continue;
+      }
+
+      const finalDamage = calcFinalDamage(
+        criticalDamage,
+        bonusValues,
+        damageType,
+        minPiercingDamage,
+        tempDamage
+      );
+
+      addKeyValue(damageWeighted, finalDamage, criticalWeight);
+      savedCriticalDamage[criticalDamage] = finalDamage;
     }
   } else {
     if (isCriticalHit) {
       damage *= 2;
     }
 
-    damage = calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
-    
-    addKeyValue(damageWeighted, damage, weight);
-  }
+    damage = calcFinalDamage(
+      damage,
+      bonusValues,
+      damageType,
+      minPiercingDamage,
+      tempDamage
+    );
 
-  return damage;
+    addKeyValue(damageWeighted, damage, weight);
+
+    return damage;
+  }
 }
 
 function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
@@ -3045,7 +3111,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     victim: victim,
     attackFactor: calcAttackFactor(attacker, victim),
     mainAttackValue: calcMainAttackValue(attacker),
-    attackValues: calcAttackValues(attacker),
+    attackValues: calcAttackValues(attacker, isPlayerVsPlayer),
     bonusValues: bonusValues,
     damageTypeCombinaison: damageTypeCombinaison,
   };
@@ -3871,7 +3937,13 @@ function calcPhysicalDamage(battleValues) {
   var {
     attackFactor,
     mainAttackValue,
-    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights, weapon },
+    attackValues: {
+      minAttackValue,
+      maxAttackValue,
+      attackValueOther,
+      weights,
+      weapon,
+    },
     bonusValues,
     damageTypeCombinaison,
   } = battleValues;
@@ -3947,7 +4019,13 @@ function calcPhysicalSkillDamage(battleValues) {
   var {
     attackFactor,
     mainAttackValue,
-    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights, weapon },
+    attackValues: {
+      minAttackValue,
+      maxAttackValue,
+      attackValueOther,
+      weights,
+      weapon,
+    },
     bonusValues,
     damageTypeCombinaison,
     skillFormula,
@@ -3999,7 +4077,7 @@ function calcPhysicalSkillDamage(battleValues) {
               (damageWithFormula * bonusValues.weaponBonusCoeff) / 100
             );
 
-            var finalDamage = calcSkillDamageWithSecondaryBonuses(
+            saveFinalSkillDamage(
               damageWithFormula,
               bonusValues,
               damageType,
@@ -4008,8 +4086,6 @@ function calcPhysicalSkillDamage(battleValues) {
               damageWeighted,
               weight
             );
-
-            addKeyValue(damageWeighted, finalDamage, weight / 5);
           }
         } else {
           var damageWithFormula = skillFormula(
@@ -4027,7 +4103,7 @@ function calcPhysicalSkillDamage(battleValues) {
             (damageWithFormula * bonusValues.weaponBonusCoeff) / 100
           );
 
-          finalDamage = calcSkillDamageWithSecondaryBonuses(
+          finalDamage = saveFinalSkillDamage(
             finalDamage,
             bonusValues,
             damageType,
@@ -4037,8 +4113,9 @@ function calcPhysicalSkillDamage(battleValues) {
             weight
           );
 
-          savedDamage[damageWithFormula] = finalDamage;
-          addKeyValue(damageWeighted, finalDamage, weight);
+          if (finalDamage) {
+            savedDamage[damageWithFormula] = finalDamage;
+          }
         }
       }
     }
@@ -4054,7 +4131,7 @@ function calcMagicSkillDamage(battleValues) {
       maxMagicAttackValue,
       magicAttackValueAugmentation,
       weights,
-      weapon
+      weapon,
     },
     bonusValues,
     damageTypeCombinaison,
@@ -4071,6 +4148,7 @@ function calcMagicSkillDamage(battleValues) {
 
     var damageWeighted = {};
     var savedDamage = {};
+    var savedCriticalDamage = {};
 
     damageWeightedByType[damageType.name] = damageWeighted;
 
@@ -4109,7 +4187,7 @@ function calcMagicSkillDamage(battleValues) {
 
         if (damageWithPrimaryBonuses <= 2) {
           for (var damage = 1; damage <= 5; damage++) {
-            var finalDamage = calcSkillDamageWithSecondaryBonuses(
+            saveFinalSkillDamage(
               damage,
               bonusValues,
               damageType,
@@ -4118,21 +4196,22 @@ function calcMagicSkillDamage(battleValues) {
               damageWeighted,
               weight
             );
-            addKeyValue(damageWeighted, finalDamage, weight / 5);
           }
         } else {
-          var finalDamage = calcSkillDamageWithSecondaryBonuses(
+          var finalDamage = saveFinalSkillDamage(
             damageWithPrimaryBonuses,
             bonusValues,
             damageType,
             weapon,
             damageWithPrimaryBonuses,
             damageWeighted,
-            weight
+            weight,
+            savedCriticalDamage
           );
 
-          savedDamage[rawDamage] = finalDamage;
-          addKeyValue(damageWeighted, finalDamage, weight);
+          if (finalDamage) {
+            savedDamage[rawDamage] = finalDamage;
+          }
         }
       }
     }
@@ -4174,14 +4253,9 @@ function calcDamage(
     getSkillFormula(battle, skillId, battleValues, removeSkillVariation);
   }
 
-  var {
-    attackValues: { totalCardinal, possibleDamageCount },
-  } = battleValues;
-
   return {
     damageWeightedByType: damageCalculator(battleValues),
-    totalCardinal: totalCardinal,
-    possibleDamageCount: possibleDamageCount,
+    attackValues: battleValues.attackValues,
     skillType: skillType,
   };
 }
@@ -4195,14 +4269,17 @@ function damageWithoutVariation(
 ) {
   var startDamageTime = performance.now();
 
-  var { damageWeightedByType, totalCardinal, possibleDamageCount, skillType } =
-    calcDamage(attacker, victim, attackType, battle);
+  var { damageWeightedByType, attackValues, skillType } = calcDamage(
+    attacker,
+    victim,
+    attackType,
+    battle
+  );
 
   var endDamageTime = performance.now();
 
-  possibleDamageCount = displayResults(
-    possibleDamageCount,
-    totalCardinal,
+  displayResults(
+    attackValues,
     damageWeightedByType,
     battle,
     attacker.name,
@@ -4212,7 +4289,7 @@ function damageWithoutVariation(
   var endDisplayTime = performance.now();
 
   displayFightInfo(
-    possibleDamageCount,
+    attackValues.possibleDamageCount,
     endDamageTime - startDamageTime,
     endDisplayTime - endDamageTime,
     battle
@@ -4622,25 +4699,14 @@ function downloadRawDataListener(battle) {
 }
 
 function displayResults(
-  possibleDamageCount,
-  totalCardinal,
+  attackValues,
   damageWeightedByType,
   battle,
   attackerName,
   victimName
 ) {
-  var [
-    meanDamage,
-    minDamage,
-    maxDamage,
-    scatterDataByType,
-    possibleDamageCount,
-    uniqueDamageCount,
-  ] = prepareDamageData(
-    damageWeightedByType,
-    possibleDamageCount,
-    totalCardinal
-  );
+  var [meanDamage, minDamage, maxDamage, scatterDataByType, uniqueDamageCount] =
+    prepareDamageData(damageWeightedByType, attackValues);
 
   addToDamageChart(
     scatterDataByType,
@@ -4662,8 +4728,6 @@ function displayResults(
   );
   battle.damageWeightedByType = damageWeightedByType;
   battle.scatterDataByType = scatterDataByType;
-
-  return possibleDamageCount;
 }
 
 function displayFightResults(
