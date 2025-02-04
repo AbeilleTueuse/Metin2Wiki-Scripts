@@ -2160,6 +2160,9 @@ function calcSecondaryAttackValue(attacker) {
   var minAttackValue = 0;
   var maxAttackValue = 0;
 
+  var minWeaponAttackValue = 0;
+  var maxWeaponAttackValue = 0;
+
   var minAttackValueSlash = 0;
   var maxAttackValueSlash = 0;
 
@@ -2174,6 +2177,9 @@ function calcSecondaryAttackValue(attacker) {
         attacker.maxAttackValueRandom - growth
       );
     }
+
+    minWeaponAttackValue = minAttackValue + growth;
+    maxWeaponAttackValue = maxAttackValue + growth;
 
     minAttackValueSlash = Math.min(
       attacker.minAttackValueSlash,
@@ -2216,6 +2222,11 @@ function calcSecondaryAttackValue(attacker) {
     totalCardinal: totalCardinal,
     weights: calcWeights(minAttackValue, maxAttackValue, minInterval),
     possibleDamageCount: maxAttackValue - minAttackValue + 1,
+    weapon: {
+      minAttackValue: minWeaponAttackValue,
+      maxAttackValue: maxWeaponAttackValue,
+      interval: weaponInterval,
+    }
   };
 }
 
@@ -2326,25 +2337,8 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
   return damage;
 }
 
-function calcDamageWithSecondaryBonuses(
-  damage,
-  bonusValues,
-  damageType,
-  minPiercingDamage,
-  damageWithPrimaryBonuses
-) {
-  damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
-  damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.berserkBonusCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.fearBonusCoeff) / 100);
-  damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
-
-  if (damageType.criticalHit) {
-    damage *= 2;
-  }
-
-  if (damageType.piercingHit) {
+function calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses) {
+  if (damageType.isPiercingHit) {
     damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
     damage += Math.floor(
       (damageWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
@@ -2388,6 +2382,44 @@ function calcDamageWithSecondaryBonuses(
   return damage;
 }
 
+function saveFinalDamage(
+  damage,
+  bonusValues,
+  damageType,
+  weapon,
+  minPiercingDamage,
+  damageWithPrimaryBonuses,
+  damageWeighted,
+  weight
+) {
+  damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
+  damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.berserkBonusCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.fearBonusCoeff) / 100);
+  damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
+
+  const isCriticalHit = damageType.isCriticalHit;
+
+  if (isCriticalHit && bonusValues.isPlayerVsPlayer) {
+    for (let weaponAttackValue = weapon.minAttackValue; weaponAttackValue < weapon.maxAttackValue; weaponAttackValue++) {
+      let criticalDamage = damage + 2 * weaponAttackValue;
+
+      criticalDamage = calcFinalDamage(criticalDamage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
+      
+      addKeyValue(damageWeighted, criticalDamage, weight / weapon.interval);
+    }
+  } else {
+    if (isCriticalHit) {
+      damage *= 2;
+    }
+
+    damage = calcFinalDamage(damage, bonusValues, damageType, minPiercingDamage, damageWithPrimaryBonuses);
+    
+    addKeyValue(damageWeighted, damage, weight);
+  }
+}
+
 function calcSkillDamageWithSecondaryBonuses(
   damage,
   bonusValues,
@@ -2426,11 +2458,11 @@ function calcSkillDamageWithSecondaryBonuses(
   );
   damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
 
-  if (damageType.criticalHit) {
+  if (damageType.isCriticalHit) {
     damage *= 2;
   }
 
-  if (damageType.piercingHit) {
+  if (damageType.isPiercingHit) {
     damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
     damage += Math.floor(
       (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
@@ -2627,6 +2659,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var fearBonus = 0;
   var magicAttackValueMeleeMagic = 0;
   var criticalHitPercentage = attacker.criticalHit;
+  var isPlayerVsPlayer = false;
   var piercingHitPercentage = attacker.piercingHit;
   var extraPiercingHitPercentage = Math.max(0, piercingHitPercentage - 100);
   var averageDamage = 0;
@@ -2683,6 +2716,9 @@ function createBattleValues(attacker, victim, battle, skillType) {
     }
 
     if (isPC(victim)) {
+      isPlayerVsPlayer = true;
+      criticalHitPercentage = skillChanceReduction(criticalHitPercentage);
+
       if (!skillType) {
         if (weaponType === 2 && !isPolymorph(attacker)) {
           missPercentage = victim.arrowBlock;
@@ -2708,8 +2744,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
       if (weaponType !== 2 && attacker.hasOwnProperty(weaponDefenseBreakName)) {
         weaponDefense -= attacker[weaponDefenseBreakName];
       }
-
-      criticalHitPercentage = 0;
     } else {
       if (isChecked(attacker.isMarried)) {
         if (isChecked(attacker.loveNecklace)) {
@@ -2859,7 +2893,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
   }
 
   if (skillType) {
-    criticalHitPercentage = skillChanceReduction(criticalHitPercentage);
     piercingHitPercentage = skillChanceReduction(piercingHitPercentage);
   }
 
@@ -2952,6 +2985,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     blessingBonusCoeff: 100 - blessingBonus,
     fearBonusCoeff: 100 - fearBonus,
     magicAttackValueCoeff: 100 + magicAttackValueMeleeMagic,
+    isPlayerVsPlayer: isPlayerVsPlayer,
     extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
     averageDamageCoeff: 100 + averageDamage,
     averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
@@ -2975,8 +3009,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
   var damageTypeCombinaison = [
     {
-      criticalHit: false,
-      piercingHit: false,
+      isCriticalHit: false,
+      isPiercingHit: false,
       weight:
         (100 - criticalHitPercentage) *
         (100 - piercingHitPercentage) *
@@ -2984,8 +3018,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
       name: "normalHit",
     },
     {
-      criticalHit: true,
-      piercingHit: false,
+      isCriticalHit: true,
+      isPiercingHit: false,
       weight:
         criticalHitPercentage *
         (100 - piercingHitPercentage) *
@@ -2993,8 +3027,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
       name: "criticalHit",
     },
     {
-      criticalHit: false,
-      piercingHit: true,
+      isCriticalHit: false,
+      isPiercingHit: true,
       weight:
         (100 - criticalHitPercentage) *
         piercingHitPercentage *
@@ -3002,8 +3036,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
       name: "piercingHit",
     },
     {
-      criticalHit: true,
-      piercingHit: true,
+      isCriticalHit: true,
+      isPiercingHit: true,
       weight:
         criticalHitPercentage * piercingHitPercentage * (100 - missPercentage),
       name: "criticalPiercingHit",
@@ -3841,7 +3875,7 @@ function calcPhysicalDamage(battleValues) {
   var {
     attackFactor,
     mainAttackValue,
-    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
+    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights, weapon },
     bonusValues,
     damageTypeCombinaison,
   } = battleValues;
@@ -3884,26 +3918,28 @@ function calcPhysicalDamage(battleValues) {
 
       if (minPiercingDamage <= 2) {
         for (var damage = 1; damage <= 5; damage++) {
-          var finalDamage = calcDamageWithSecondaryBonuses(
+          saveFinalDamage(
             damage,
             bonusValues,
             damageType,
+            weapon,
             minPiercingDamage,
-            damageWithPrimaryBonuses
+            damageWithPrimaryBonuses,
+            damageWeighted,
+            weight / 5
           );
-
-          addKeyValue(damageWeighted, finalDamage, weight / 5);
         }
       } else {
-        var finalDamage = calcDamageWithSecondaryBonuses(
+        saveFinalDamage(
           minPiercingDamage,
           bonusValues,
           damageType,
+          weapon,
           minPiercingDamage,
-          damageWithPrimaryBonuses
+          damageWithPrimaryBonuses,
+          damageWeighted,
+          weight
         );
-
-        addKeyValue(damageWeighted, finalDamage, weight);
       }
     }
   }
@@ -3915,7 +3951,7 @@ function calcPhysicalSkillDamage(battleValues) {
   var {
     attackFactor,
     mainAttackValue,
-    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights },
+    attackValues: { minAttackValue, maxAttackValue, attackValueOther, weights, weapon },
     bonusValues,
     damageTypeCombinaison,
     skillFormula,
