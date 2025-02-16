@@ -2514,7 +2514,11 @@ function saveFinalSkillDamage(
     ) {
       const criticalDamage = damage + 2 * weaponAttackValue;
 
-      if (savedCriticalDamage && savedCriticalDamage.hasOwnProperty(criticalDamage) && minPiercingDamage >= 0) {
+      if (
+        savedCriticalDamage &&
+        savedCriticalDamage.hasOwnProperty(criticalDamage) &&
+        minPiercingDamage >= 0
+      ) {
         const savedDamage = savedCriticalDamage[criticalDamage];
         damageWeighted[savedDamage] += criticalWeight;
         continue;
@@ -2681,7 +2685,7 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
 function calcCriticalHitChance(criticalHitPercentage) {
   if (criticalHitPercentage <= 9) {
     return Math.floor((criticalHitPercentage + 5) / 5);
-  } 
+  }
   return Math.floor((criticalHitPercentage + 5) / 6);
 }
 
@@ -2700,7 +2704,6 @@ function calcPiercingSkillChance(piercingHitPercentage) {
   }
   return 5 + Math.floor((piercingHitPercentage - 10) / 4);
 }
-
 
 function magicResistanceToCoeff(magicResistance) {
   if (magicResistance) {
