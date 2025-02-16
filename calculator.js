@@ -2514,7 +2514,7 @@ function saveFinalSkillDamage(
     ) {
       const criticalDamage = damage + 2 * weaponAttackValue;
 
-      if (savedCriticalDamage.hasOwnProperty(criticalDamage) && minPiercingDamage >= 0) {
+      if (savedCriticalDamage && savedCriticalDamage.hasOwnProperty(criticalDamage) && minPiercingDamage >= 0) {
         const savedDamage = savedCriticalDamage[criticalDamage];
         damageWeighted[savedDamage] += criticalWeight;
         continue;
@@ -2529,7 +2529,9 @@ function saveFinalSkillDamage(
       );
 
       addKeyValue(damageWeighted, finalDamage, criticalWeight);
-      savedCriticalDamage[criticalDamage] = finalDamage;
+      if (savedCriticalDamage) {
+        savedCriticalDamage[criticalDamage] = finalDamage;
+      }
     }
   } else {
     if (isCriticalHit) {
@@ -2684,7 +2686,9 @@ function calcCriticalHitChance(criticalHitPercentage) {
 }
 
 function calcCriticalSkillChance(criticalHitPercentage) {
-  if (criticalHitPercentage <= 9) {
+  if (criticalHitPercentage === 0) {
+    return 0;
+  } else if (criticalHitPercentage <= 9) {
     return Math.floor((criticalHitPercentage + 7) / 3);
   }
   return Math.floor((criticalHitPercentage + 5) / 3);
@@ -4057,6 +4061,7 @@ function calcPhysicalSkillDamage(battleValues) {
 
     var damageWeighted = {};
     var savedDamage = {};
+    var savedCriticalDamage = {};
 
     damageWeightedByType[damageType.name] = damageWeighted;
 
@@ -4126,7 +4131,8 @@ function calcPhysicalSkillDamage(battleValues) {
             weapon,
             damageWithPrimaryBonuses,
             damageWeighted,
-            weight
+            weight,
+            savedCriticalDamage
           );
 
           if (finalDamage) {
