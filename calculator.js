@@ -2676,12 +2676,27 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
   }
 }
 
-function skillChanceReduction(value) {
-  if (value <= 9) {
-    return Math.floor(value / 2);
-  }
-  return 5 + Math.floor((value - 10) / 4);
+function calcCriticalHitChance(criticalHitPercentage) {
+  if (criticalHitPercentage <= 9) {
+    return Math.floor((criticalHitPercentage + 5) / 5);
+  } 
+  return Math.floor((criticalHitPercentage + 5) / 6);
 }
+
+function calcCriticalSkillChance(criticalHitPercentage) {
+  if (criticalHitPercentage <= 9) {
+    return Math.floor((criticalHitPercentage + 7) / 3);
+  }
+  return Math.floor((criticalHitPercentage + 5) / 3);
+}
+
+function calcPiercingSkillChance(piercingHitPercentage) {
+  if (piercingHitPercentage <= 9) {
+    return Math.floor(piercingHitPercentage / 2);
+  }
+  return 5 + Math.floor((piercingHitPercentage - 10) / 4);
+}
+
 
 function magicResistanceToCoeff(magicResistance) {
   if (magicResistance) {
@@ -2779,7 +2794,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
     if (isPC(victim)) {
       isPlayerVsPlayer = true;
-      criticalHitPercentage = skillChanceReduction(criticalHitPercentage);
 
       if (!skillType) {
         if (weaponType === 2 && !isPolymorph(attacker)) {
@@ -2791,6 +2805,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           victim.meleeArrowBlock -
           (missPercentage * victim.meleeArrowBlock) / 100;
 
+        criticalHitPercentage = calcCriticalHitChance(criticalHitPercentage);
         berserkBonus = calcBerserkBonus(skillPowerTable, victim);
         blessingBonus = calcBlessingBonus(skillPowerTable, victim);
         fearBonus = calcFearBonus(skillPowerTable, victim);
@@ -2955,7 +2970,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
   }
 
   if (skillType) {
-    piercingHitPercentage = skillChanceReduction(piercingHitPercentage);
+    criticalHitPercentage = calcCriticalSkillChance(criticalHitPercentage);
+    piercingHitPercentage = calcPiercingSkillChance(piercingHitPercentage);
   }
 
   if (isPC(victim)) {
