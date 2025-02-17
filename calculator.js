@@ -4359,7 +4359,10 @@ function damageWithVariation(
   ) {
     entity[entityVariation] = bonusValue;
 
-    var { damageWeightedByType, totalCardinal } = calcDamage(
+    var {
+      damageWeightedByType,
+      attackValues: { totalCardinal },
+    } = calcDamage(
       copyObject(attacker),
       copyObject(victim),
       attackType,
