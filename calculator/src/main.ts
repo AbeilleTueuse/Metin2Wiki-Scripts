@@ -1,14 +1,22 @@
 import { Modal } from "./ui/components/modal";
 import { translations } from "./config/translations"
 
-import { Character } from './core/models/Character'
-import Attack from "./core/models/Attack";
+import { Ui } from "./ui/index";
+import { cssSource, javascriptSource, chartSource } from "./config/sources";
+import { Player } from "./core/models/Player";
+import { Monster } from "./core/models/Monster";
 
 //import { RaceType, WeaponType } from './core/enums/index'
 
+interface callbackAddScript { (...args: any): void }
+const addScript = async (src: string, cb: callbackAddScript) => {
+    console.log('ADD SCRIPT', src);
+    cb()
+}
+
 export class App {
     private modal: Modal;
-    private character: Character;
+    private ui: Ui;
 
     private currentLanguage: string;
 
@@ -17,7 +25,14 @@ export class App {
         this.currentLanguage = language;
 
         this.modal = Modal.getInstance();
-        this.character = new Character('J0thun', new Attack(10, 1.5))
+        this.ui = Ui.getInstance(cssSource);
+
+        addScript(javascriptSource, () => {
+            const player = new Player('J0thun')
+            const monster = new Monster('Hydre')
+            
+            console.log(player, monster, chartSource);
+        });
 
         console.log("App initialized")
     }

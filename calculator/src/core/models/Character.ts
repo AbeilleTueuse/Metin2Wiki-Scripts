@@ -1,20 +1,15 @@
-import Attack from "./Attack";
+import { CharacterType } from "../enums/charType";
 
 export class Character {
+    private type: CharacterType;
     private name: string;
-    private attack: Attack;
 
-    constructor(name: string, attack: Attack) {
+    constructor(type: CharacterType, name: string) {
+        this.type = type
         this.name = name;
-        this.attack = attack;
     }
 
     public getName() : string {
         return this.name
-    }
-
-    performAttack(): number {
-        console.log(`${this.name} attaque avec ${this.attack.power} de puissance!`);
-        return this.attack.calculateDamage();
     }
 }
