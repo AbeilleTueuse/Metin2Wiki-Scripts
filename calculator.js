@@ -2233,6 +2233,7 @@ function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
     weapon: {
       minAttackValue: minWeaponAttackValue,
       maxAttackValue: maxWeaponAttackValue,
+      interval: weaponInterval,
     },
     isPlayerVsPlayer: isPlayerVsPlayer,
   };
@@ -2305,6 +2306,7 @@ function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
     weapon: {
       minAttackValue: minWeaponAttackValue,
       maxAttackValue: maxWeaponAttackValue,
+      interval: maxWeaponAttackValue - minWeaponAttackValue + 1,
     },
     isPlayerVsPlayer: isPlayerVsPlayer,
   };
@@ -2375,10 +2377,14 @@ function calcFinalDamage(
   currentDamageInfo,
   criticalIndex
 ) {
-  for (let index = 0; index <= 1; index++) {
+  const piercingStep = bonusValues.piercingStep;
+
+  for (let piercingIndex = 0; piercingIndex < piercingStep.length; piercingIndex++) {
     let damage = finalDamage;
 
-    if (index) {
+    const isPiercingHit = piercingStep[piercingIndex];
+
+    if (isPiercingHit) {
       damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
       damage += Math.floor(
         (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
@@ -2422,7 +2428,7 @@ function calcFinalDamage(
     damage = Math.floor((damage * bonusValues.whiteDragonElixirCoeff) / 100);
     damage = Math.floor((damage * bonusValues.steelDragonElixirCoeff) / 100);
 
-    currentDamageInfo[1 + criticalIndex + 2 * index].push(damage);
+    currentDamageInfo[1 + criticalIndex + 2 * piercingIndex].push(damage);
   }
 }
 
@@ -2504,9 +2510,12 @@ function saveFinalSkillDamage(
   );
   damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
 
-  for (let index = 0; index <= 1; index++) {
-    const isCriticalHit = index;
-    let finalDamage = damage;
+  const criticalStep = bonusValues.criticalStep;
+
+  for (let criticalIndex = 0; criticalIndex < criticalStep.length; criticalIndex++) {
+    let preFinalDamage = damage;
+
+    const isCriticalHit = criticalStep[criticalIndex];
 
     if (isCriticalHit && bonusValues.isPlayerVsPlayer) {
       const { minAttackValue, maxAttackValue } = weapon;
@@ -2516,28 +2525,27 @@ function saveFinalSkillDamage(
         weaponAttackValue <= maxAttackValue;
         weaponAttackValue++
       ) {
-        finalDamage = finalDamage + 2 * weaponAttackValue;
         calcFinalDamage(
-          finalDamage,
+          preFinalDamage + 2 * weaponAttackValue,
           bonusValues,
           minPiercingDamage,
           tempDamage,
           currentDamageInfo,
-          index
+          criticalIndex
         );
       }
     } else {
       if (isCriticalHit) {
-        finalDamage *= 2;
+        preFinalDamage *= 2;
       }
 
       calcFinalDamage(
-        finalDamage,
+        preFinalDamage,
         bonusValues,
         minPiercingDamage,
         tempDamage,
         currentDamageInfo,
-        index
+        criticalIndex
       );
     }
   }
@@ -3031,9 +3039,13 @@ function createBattleValues(attacker, victim, battle, skillType) {
   }
 
   missPercentage = Math.min(100, missPercentage);
+  criticalHitPercentage = Math.min(criticalHitPercentage, 100);
+  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
 
-  var bonusValues = {
+  const bonusValues = {
     missPercentage: missPercentage,
+    criticalStep: [false, true],
+    piercingStep: [false, true],
     weaponBonusCoeff: 1,
     attackValueCoeff: 100 + attackValueMeleeMagic,
     attackValueMarriage: attackValueMarriage,
@@ -3076,10 +3088,19 @@ function createBattleValues(attacker, victim, battle, skillType) {
     steelDragonElixirCoeff: 100 - steelDragonElixir,
   };
 
-  criticalHitPercentage = Math.min(criticalHitPercentage, 100);
-  piercingHitPercentage = Math.min(piercingHitPercentage, 100);
+  if (criticalHitPercentage >= 100) {
+    bonusValues.criticalStep.shift();
+  } else if (criticalHitPercentage <= 0) {
+    bonusValues.criticalStep.pop();
+  }
 
-  var damageTypeCombinaison = [
+  if (piercingHitPercentage >= 100) {
+    bonusValues.piercingStep.shift();
+  } else if (piercingHitPercentage <= 0) {
+    bonusValues.piercingStep.pop();
+  }
+
+  const damageTypeCombinaison = [
     {
       isCriticalHit: false,
       isPiercingHit: false,
@@ -3087,7 +3108,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
         (100 - criticalHitPercentage) *
         (100 - piercingHitPercentage) *
         (100 - missPercentage),
-      name: "normalHit",
     },
     {
       isCriticalHit: true,
@@ -3096,7 +3116,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
         criticalHitPercentage *
         (100 - piercingHitPercentage) *
         (100 - missPercentage),
-      name: "criticalHit",
     },
     {
       isCriticalHit: false,
@@ -3105,14 +3124,12 @@ function createBattleValues(attacker, victim, battle, skillType) {
         (100 - criticalHitPercentage) *
         piercingHitPercentage *
         (100 - missPercentage),
-      name: "piercingHit",
     },
     {
       isCriticalHit: true,
       isPiercingHit: true,
       weight:
         criticalHitPercentage * piercingHitPercentage * (100 - missPercentage),
-      name: "criticalPiercingHit",
     },
   ];
 
@@ -4152,7 +4169,7 @@ function calcMagicSkillDamage(battleValues) {
   } = battleValues;
 
   const savedDamage = {};
-  const damageWeightedByType = {0: {}, 1: {}, 2: {}, 3: {}};
+  const damageWeightedByType = { normalHit: {}, criticalHit: {}, piercingHit: {}, criticalPiercingHit: {}};
 
   for (
     let magicAttackValue = minMagicAttackValue;
@@ -4210,14 +4227,19 @@ function calcMagicSkillDamage(battleValues) {
     }
   }
 
+  const indexMapping = ["normalHit", "criticalHit", "piercingHit", "criticalPiercingHit"];
+
   for (const [, [weight, ...damageByType]] of Object.entries(savedDamage)) {
     for (let index = 0; index <= 3; index++) {
-      const damageWeighted = damageWeightedByType[index];
-      for (let damage of damageByType[index]) {
+      const damageWeighted = damageWeightedByType[indexMapping[index]];
+      const damageByTypeIndex = damageByType[index];
+      const currentWeight = weight * damageTypeCombinaison[index].weight / damageByTypeIndex.length;
+
+      for (let damage of damageByTypeIndex) {
         if (damageWeighted.hasOwnProperty(damage)) {
-          damageWeighted[damage] += weight;
+          damageWeighted[damage] += currentWeight;
         } else {
-          damageWeighted[damage] = weight;
+          damageWeighted[damage] = currentWeight;
         }
       }
     }
