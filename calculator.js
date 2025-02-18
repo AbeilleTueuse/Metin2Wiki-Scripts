@@ -894,7 +894,7 @@ function uploadCharacter(
             );
           }
         } catch (error) {
-          console.log(error);
+          console.warn(error);
           if (error.name === "TypeError") {
             // delete the character
           }
@@ -2339,8 +2339,8 @@ function getSkillPower(skillPoint, skillPowerTable) {
 }
 
 function getMarriageBonusValue(character, marriageTable, itemName) {
-  var index;
-  var lovePoint = character.lovePoint;
+  let index;
+  const lovePoint = character.lovePoint;
 
   if (lovePoint < 65) {
     index = 0;
@@ -2372,7 +2372,7 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
   damage += Math.floor((damage * bonusValues.stoneBonusCoeff) / 100);
   damage += Math.floor((damage * bonusValues.monsterBonusCoeff) / 100);
 
-  var elementBonusCoeff = bonusValues.elementBonusCoeff;
+  const elementBonusCoeff = bonusValues.elementBonusCoeff;
 
   damage +=
     Math.trunc((damage * elementBonusCoeff[0]) / 10000) +
@@ -4071,19 +4071,21 @@ function calcPhysicalSkillDamage(battleValues) {
           variation
         );
 
-        const entry = savedDamage[damageWithFormula];
+        let damageKey = damageWithFormula;
 
-        if (entry?.[2] >= 0) {
+        if (damageWithPrimaryBonuses < 0) {
+          damageKey = `${damageWithFormula}_${Math.abs(damageWithPrimaryBonuses)}`;
+        }
+
+        const entry = savedDamage[damageKey];
+
+        if (entry) {
           entry[0] += weight;
           continue;
         }
 
         const damageByType = [[], [], [], []];
-        const currentDamageInfo = [
-          weight,
-          damageByType,
-          damageWithPrimaryBonuses,
-        ];
+        const currentDamageInfo = [weight, damageByType];
 
         const finalDamage = Math.floor(
           (damageWithFormula * bonusValues.weaponBonusCoeff) / 100
@@ -4097,7 +4099,7 @@ function calcPhysicalSkillDamage(battleValues) {
           damageByType
         );
         
-        savedDamage[damageWithFormula] = currentDamageInfo;
+        savedDamage[damageKey] = currentDamageInfo;
       }
     }
   }
