@@ -2462,7 +2462,7 @@ function saveFinalDamage(
   minPiercingDamage,
   damageWithPrimaryBonuses,
   bonusValues,
-  weapon,
+  criticalAttackRange,
   damageByType
 ) {
   damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
@@ -2478,14 +2478,14 @@ function saveFinalDamage(
     }
     let preFinalDamage = damage;
 
-    if (criticalIndex && bonusValues.isPlayerVsPlayer) {
+    if (criticalIndex && criticalAttackRange) {
       for (
-        let weaponAttackValue = weapon.minAttackValue;
-        weaponAttackValue <= weapon.maxAttackValue;
-        weaponAttackValue++
+        let index = 0, len = criticalAttackRange.length;
+        index < len;
+        index++
       ) {
         calcFinalDamage(
-          preFinalDamage + 2 * weaponAttackValue,
+          preFinalDamage + criticalAttackRange[index],
           minPiercingDamage,
           damageWithPrimaryBonuses,
           bonusValues,
@@ -3970,7 +3970,7 @@ function calcPhysicalDamage(battleValues) {
       maxAttackValue,
       attackValueOther,
       weights,
-      weapon,
+      criticalAttackRange,
     },
     bonusValues,
     damageWeightedByType,
@@ -4014,7 +4014,7 @@ function calcPhysicalDamage(battleValues) {
         minPiercingDamage,
         damageWithPrimaryBonuses,
         bonusValues,
-        weapon,
+        criticalAttackRange,
         damageByType
       );
     }
