@@ -177,7 +177,7 @@ function prepareDamageData(damageWeightedByType, attackValues) {
     if (
       (damageTypeName === "criticalHit" ||
         damageTypeName === "criticalPiercingHit") &&
-        criticalAttackRange
+      criticalAttackRange
     ) {
       possibleDamageCountTemp =
         attackValues.possibleDamageCount * criticalAttackRange.length;
@@ -2400,60 +2400,80 @@ function calcFinalDamage(
   minPiercingDamage,
   tempDamage,
   bonusValues,
-  damageByType,
-  criticalIndex
+  criticalAttackRange,
+  damageByType
 ) {
-  for (let piercingIndex = 0; piercingIndex < 2; piercingIndex++) {
-    if (bonusValues.skipPiercingStep[piercingIndex]) {
+  for (let criticalIndex = 0; criticalIndex < 2; criticalIndex++) {
+    if (bonusValues.skipCriticalStep[criticalIndex]) {
       continue;
     }
-    let damage = finalDamage;
+    let beforeCriticalDamage = finalDamage;
+    let damageValues = criticalIndex
+      ? criticalAttackRange || [finalDamage]
+      : [0];
 
-    if (piercingIndex) {
-      damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
-      damage += Math.floor(
-        (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
-      );
-    }
+    for (let index = 0, len = damageValues.length; index < len; index++) {
+      let afterCriticalDamage = beforeCriticalDamage + damageValues[index];
 
-    damage = Math.floor((damage * bonusValues.averageDamageCoeff) / 100);
-    damage = Math.floor(
-      (damage * bonusValues.averageDamageResistanceCoeff) / 100
-    );
-    damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
-    damage = Math.floor(
-      (damage * bonusValues.skillDamageResistanceCoeff) / 100
-    );
-    damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
+      for (let piercingIndex = 0; piercingIndex < 2; piercingIndex++) {
+        if (bonusValues.skipPiercingStep[piercingIndex]) {
+          continue;
+        }
+        let damage = afterCriticalDamage;
 
-    if (bonusValues.useDarkProtection) {
-      const { darkProtectionPoint, darkProtectionSp } = bonusValues;
+        if (piercingIndex) {
+          damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
+          damage += Math.floor(
+            (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
+          );
+        }
 
-      const damageReduction = Math.floor(damage / 3);
-      const spAbsorption = Math.floor(
-        (damageReduction * darkProtectionPoint) / 100
-      );
+        damage = Math.floor((damage * bonusValues.averageDamageCoeff) / 100);
+        damage = Math.floor(
+          (damage * bonusValues.averageDamageResistanceCoeff) / 100
+        );
+        damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
+        damage = Math.floor(
+          (damage * bonusValues.skillDamageResistanceCoeff) / 100
+        );
+        damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
 
-      if (spAbsorption <= darkProtectionSp) {
-        damage -= damageReduction;
-      } else {
-        damage -= Math.floor((darkProtectionSp * 100) / darkProtectionPoint);
+        if (bonusValues.useDarkProtection) {
+          const { darkProtectionPoint, darkProtectionSp } = bonusValues;
+
+          const damageReduction = Math.floor(damage / 3);
+          const spAbsorption = Math.floor(
+            (damageReduction * darkProtectionPoint) / 100
+          );
+
+          if (spAbsorption <= darkProtectionSp) {
+            damage -= damageReduction;
+          } else {
+            damage -= Math.floor(
+              (darkProtectionSp * 100) / darkProtectionPoint
+            );
+          }
+        }
+
+        damage = Math.max(0, damage + bonusValues.defensePercent);
+        damage += Math.min(
+          300,
+          Math.floor((damage * bonusValues.damageBonusCoeff) / 100)
+        );
+        damage = Math.floor((damage * bonusValues.empireMalusCoeff) / 10);
+        damage = Math.floor((damage * bonusValues.sungMaStrBonusCoeff) / 10000);
+        damage -= Math.floor(damage * bonusValues.sungmaStrMalusCoeff);
+
+        damage = Math.floor(
+          (damage * bonusValues.whiteDragonElixirCoeff) / 100
+        );
+        damage = Math.floor(
+          (damage * bonusValues.steelDragonElixirCoeff) / 100
+        );
+
+        damageByType[criticalIndex + 2 * piercingIndex].push(damage);
       }
     }
-
-    damage = Math.max(0, damage + bonusValues.defensePercent);
-    damage += Math.min(
-      300,
-      Math.floor((damage * bonusValues.damageBonusCoeff) / 100)
-    );
-    damage = Math.floor((damage * bonusValues.empireMalusCoeff) / 10);
-    damage = Math.floor((damage * bonusValues.sungMaStrBonusCoeff) / 10000);
-    damage -= Math.floor(damage * bonusValues.sungmaStrMalusCoeff);
-
-    damage = Math.floor((damage * bonusValues.whiteDragonElixirCoeff) / 100);
-    damage = Math.floor((damage * bonusValues.steelDragonElixirCoeff) / 100);
-
-    damageByType[criticalIndex + 2 * piercingIndex].push(damage);
   }
 }
 
@@ -2472,42 +2492,14 @@ function saveFinalDamage(
   damage = Math.floor((damage * bonusValues.fearBonusCoeff) / 100);
   damage = Math.floor((damage * bonusValues.blessingBonusCoeff) / 100);
 
-  for (let criticalIndex = 0; criticalIndex < 2; criticalIndex++) {
-    if (bonusValues.skipCriticalStep[criticalIndex]) {
-      continue;
-    }
-    let preFinalDamage = damage;
-
-    if (criticalIndex && criticalAttackRange) {
-      for (
-        let index = 0, len = criticalAttackRange.length;
-        index < len;
-        index++
-      ) {
-        calcFinalDamage(
-          preFinalDamage + criticalAttackRange[index],
-          minPiercingDamage,
-          damageWithPrimaryBonuses,
-          bonusValues,
-          damageByType,
-          criticalIndex
-        );
-      }
-    } else {
-      if (criticalIndex) {
-        preFinalDamage *= 2;
-      }
-
-      calcFinalDamage(
-        preFinalDamage,
-        minPiercingDamage,
-        damageWithPrimaryBonuses,
-        bonusValues,
-        damageByType,
-        criticalIndex
-      );
-    }
-  }
+  calcFinalDamage(
+    damage,
+    minPiercingDamage,
+    damageWithPrimaryBonuses,
+    bonusValues,
+    criticalAttackRange,
+    damageByType
+  );
 }
 
 function saveFinalSkillDamage(
@@ -2534,42 +2526,14 @@ function saveFinalSkillDamage(
   );
   damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
 
-  for (let criticalIndex = 0; criticalIndex < 2; criticalIndex++) {
-    if (bonusValues.skipCriticalStep[criticalIndex]) {
-      continue;
-    }
-    let preFinalDamage = damage;
-
-    if (criticalIndex && criticalAttackRange) {
-      for (
-        let index = 0, len = criticalAttackRange.length;
-        index < len;
-        index++
-      ) {
-        calcFinalDamage(
-          preFinalDamage + criticalAttackRange[index],
-          minPiercingDamage,
-          tempDamage,
-          bonusValues,
-          damageByType,
-          criticalIndex
-        );
-      }
-    } else {
-      if (criticalIndex) {
-        preFinalDamage *= 2;
-      }
-
-      calcFinalDamage(
-        preFinalDamage,
-        minPiercingDamage,
-        tempDamage,
-        bonusValues,
-        damageByType,
-        criticalIndex
-      );
-    }
-  }
+  calcFinalDamage(
+    damage,
+    minPiercingDamage,
+    tempDamage,
+    bonusValues,
+    criticalAttackRange,
+    damageByType
+  );
 }
 
 function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
