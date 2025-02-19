@@ -28,7 +28,6 @@ export class Storage {
         }
         this.notifyListeners(key, newValue);
     }
-     
 
     public get<T>(key: string, defaultValue: T = {} as T): T {
         if (this.state.has(key)) {
