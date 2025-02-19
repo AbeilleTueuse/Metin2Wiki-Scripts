@@ -152,6 +152,7 @@ function calcMeanDamage(damageWeightedByType, totalCardinal) {
 function prepareDamageData(damageWeightedByType, attackValues) {
   const totalCardinal = attackValues.totalCardinal;
   const scatterDataByType = {};
+  const criticalAttackRange = attackValues.criticalAttackRange;
 
   let minDamage = Infinity;
   let maxDamage = 0;
@@ -176,10 +177,10 @@ function prepareDamageData(damageWeightedByType, attackValues) {
     if (
       (damageTypeName === "criticalHit" ||
         damageTypeName === "criticalPiercingHit") &&
-      attackValues.isPlayerVsPlayer
+        criticalAttackRange
     ) {
       possibleDamageCountTemp =
-        attackValues.possibleDamageCount * attackValues.weapon.interval;
+        attackValues.possibleDamageCount * criticalAttackRange.length;
     } else {
       possibleDamageCountTemp = attackValues.possibleDamageCount;
     }
@@ -2180,21 +2181,29 @@ function calcStatAttackValue(character) {
   }
 }
 
+function calcPvpCriticalAttackRange(minAttackValue, maxAttackValue, growth) {
+  return Array.from(
+    { length: maxAttackValue - minAttackValue + 1 },
+    (_, index) => (minAttackValue + growth + index) * 2
+  );
+}
+
 function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
-  var attackValueOther = 0;
+  let attackValueOther = 0;
 
-  var minAttackValue = 0;
-  var maxAttackValue = 0;
+  let minAttackValue = 0;
+  let maxAttackValue = 0;
 
-  var minWeaponAttackValue = 0;
-  var maxWeaponAttackValue = 0;
+  let minAttackValueSlash = 0;
+  let maxAttackValueSlash = 0;
 
-  var minAttackValueSlash = 0;
-  var maxAttackValueSlash = 0;
+  let type, isSerpent, growth;
+
+  let criticalAttackRange;
 
   if (isPC(attacker)) {
-    var { type, isSerpent, minAttackValue, maxAttackValue, growth } =
-      attacker.weapon;
+    ({ type, isSerpent, minAttackValue, maxAttackValue, growth } =
+      attacker.weapon);
 
     if (isSerpent) {
       minAttackValue = Math.max(0, attacker.minAttackValueRandom - growth);
@@ -2203,9 +2212,6 @@ function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
         attacker.maxAttackValueRandom - growth
       );
     }
-
-    minWeaponAttackValue = minAttackValue + growth;
-    maxWeaponAttackValue = maxAttackValue + growth;
 
     minAttackValueSlash = Math.min(
       attacker.minAttackValueSlash,
@@ -2221,6 +2227,14 @@ function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
     if (isBow(type) && !isPolymorph(attacker)) {
       attackValueOther += 25;
     }
+
+    if (isPlayerVsPlayer) {
+      criticalAttackRange = calcPvpCriticalAttackRange(
+        minAttackValue,
+        maxAttackValue,
+        growth
+      );
+    }
   } else {
     minAttackValue = attacker.minAttackValue;
     maxAttackValue = attacker.maxAttackValue;
@@ -2232,11 +2246,11 @@ function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
   attackValueOther += attacker.statAttackValue;
   attackValueOther += attacker.horseAttackValue;
 
-  var weaponInterval = maxAttackValue - minAttackValue + 1;
-  var slashInterval = maxAttackValueSlash - minAttackValueSlash + 1;
+  const weaponInterval = maxAttackValue - minAttackValue + 1;
+  const slashInterval = maxAttackValueSlash - minAttackValueSlash + 1;
 
-  var totalCardinal = weaponInterval * slashInterval * 1_000_000;
-  var minInterval = Math.min(weaponInterval, slashInterval);
+  const totalCardinal = weaponInterval * slashInterval * 1_000_000;
+  const minInterval = Math.min(weaponInterval, slashInterval);
 
   minAttackValue += minAttackValueSlash;
   maxAttackValue += maxAttackValueSlash;
@@ -2248,23 +2262,17 @@ function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
     totalCardinal: totalCardinal,
     weights: calcWeights(minAttackValue, maxAttackValue, minInterval),
     possibleDamageCount: maxAttackValue - minAttackValue + 1,
-    weapon: {
-      minAttackValue: minWeaponAttackValue,
-      maxAttackValue: maxWeaponAttackValue,
-      interval: weaponInterval,
-    },
-    isPlayerVsPlayer: isPlayerVsPlayer,
+    criticalAttackRange: criticalAttackRange,
   };
 }
 
 function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
-  var minMagicAttackValueSlash = 0;
-  var maxMagicAttackValueSlash = 0;
+  let minMagicAttackValueSlash = 0;
+  let maxMagicAttackValueSlash = 0;
 
-  var minWeaponAttackValue = 0;
-  var maxWeaponAttackValue = 0;
+  let criticalAttackRange;
 
-  var {
+  let {
     isSerpent,
     minMagicAttackValue,
     maxMagicAttackValue,
@@ -2289,8 +2297,13 @@ function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
     maxMagicAttackValue += growth;
   }
 
-  minWeaponAttackValue = minAttackValue + growth;
-  maxWeaponAttackValue = maxAttackValue + growth;
+  if (isPlayerVsPlayer) {
+    criticalAttackRange = calcPvpCriticalAttackRange(
+      minAttackValue,
+      maxAttackValue,
+      growth
+    );
+  }
 
   minMagicAttackValueSlash = Math.min(
     attacker.minMagicAttackValueSlash,
@@ -2301,11 +2314,11 @@ function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
     attacker.maxMagicAttackValueSlash
   );
 
-  var weaponInterval = maxMagicAttackValue - minMagicAttackValue + 1;
-  var slashInterval = maxMagicAttackValueSlash - minMagicAttackValueSlash + 1;
+  const weaponInterval = maxMagicAttackValue - minMagicAttackValue + 1;
+  const slashInterval = maxMagicAttackValueSlash - minMagicAttackValueSlash + 1;
 
-  var totalCardinal = weaponInterval * slashInterval * 1_000_000;
-  var minInterval = Math.min(weaponInterval, slashInterval);
+  const totalCardinal = weaponInterval * slashInterval * 1_000_000;
+  const minInterval = Math.min(weaponInterval, slashInterval);
 
   minMagicAttackValue += minMagicAttackValueSlash;
   maxMagicAttackValue += maxMagicAttackValueSlash;
@@ -2321,12 +2334,7 @@ function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
     possibleDamageCount: maxMagicAttackValue - minMagicAttackValue + 1,
-    weapon: {
-      minAttackValue: minWeaponAttackValue,
-      maxAttackValue: maxWeaponAttackValue,
-      interval: maxWeaponAttackValue - minWeaponAttackValue + 1,
-    },
-    isPlayerVsPlayer: isPlayerVsPlayer,
+    criticalAttackRange: criticalAttackRange,
   };
 }
 
@@ -2506,7 +2514,7 @@ function saveFinalSkillDamage(
   damage,
   minPiercingDamage,
   bonusValues,
-  weapon,
+  criticalAttackRange,
   damageByType
 ) {
   damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
@@ -2532,16 +2540,14 @@ function saveFinalSkillDamage(
     }
     let preFinalDamage = damage;
 
-    if (criticalIndex && bonusValues.isPlayerVsPlayer) {
-      const { minAttackValue, maxAttackValue } = weapon;
-
+    if (criticalIndex && criticalAttackRange) {
       for (
-        let weaponAttackValue = minAttackValue;
-        weaponAttackValue <= maxAttackValue;
-        weaponAttackValue++
+        let index = 0, len = criticalAttackRange.length;
+        index < len;
+        index++
       ) {
         calcFinalDamage(
-          preFinalDamage + 2 * weaponAttackValue,
+          preFinalDamage + criticalAttackRange[index],
           minPiercingDamage,
           tempDamage,
           bonusValues,
@@ -3090,7 +3096,6 @@ function createBattleValues(attacker, victim, battle, skillType) {
     blessingBonusCoeff: 100 - blessingBonus,
     fearBonusCoeff: 100 - fearBonus,
     magicAttackValueCoeff: 100 + magicAttackValueMeleeMagic,
-    isPlayerVsPlayer: isPlayerVsPlayer,
     extraPiercingHitCoeff: 5 * extraPiercingHitPercentage,
     averageDamageCoeff: 100 + averageDamage,
     averageDamageResistanceCoeff: 100 - Math.min(99, averageDamageResistance),
@@ -3136,7 +3141,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
       criticalHit: {},
       piercingHit: {},
       criticalPiercingHit: {},
-    }
+    },
   };
 }
 
@@ -3968,7 +3973,7 @@ function calcPhysicalDamage(battleValues) {
       weapon,
     },
     bonusValues,
-    damageWeightedByType
+    damageWeightedByType,
   } = battleValues;
 
   const savedDamage = {};
@@ -4001,9 +4006,7 @@ function calcPhysicalDamage(battleValues) {
       bonusValues.defenseMarriage;
 
     const damageValues =
-      minPiercingDamage <= 2
-        ? [1, 2, 3, 4, 5]
-        : [damageWithPrimaryBonuses];
+      minPiercingDamage <= 2 ? [1, 2, 3, 4, 5] : [damageWithPrimaryBonuses];
 
     for (const damage of damageValues) {
       saveFinalDamage(
@@ -4033,7 +4036,7 @@ function calcPhysicalSkillDamage(battleValues) {
       maxAttackValue,
       attackValueOther,
       weights,
-      weapon,
+      criticalAttackRange,
     },
     bonusValues,
     damageWeightedByType,
@@ -4074,7 +4077,9 @@ function calcPhysicalSkillDamage(battleValues) {
         let damageKey = damageWithFormula;
 
         if (damageWithPrimaryBonuses < 0) {
-          damageKey = `${damageWithFormula}_${Math.abs(damageWithPrimaryBonuses)}`;
+          damageKey = `${damageWithFormula}_${Math.abs(
+            damageWithPrimaryBonuses
+          )}`;
         }
 
         const entry = savedDamage[damageKey];
@@ -4095,10 +4100,10 @@ function calcPhysicalSkillDamage(battleValues) {
           finalDamage,
           damageWithPrimaryBonuses,
           bonusValues,
-          weapon,
+          criticalAttackRange,
           damageByType
         );
-        
+
         savedDamage[damageKey] = currentDamageInfo;
       }
     }
@@ -4116,7 +4121,7 @@ function calcMagicSkillDamage(battleValues) {
       maxMagicAttackValue,
       magicAttackValueAugmentation,
       weights,
-      weapon,
+      criticalAttackRange,
     },
     bonusValues,
     damageWeightedByType,
@@ -4169,7 +4174,7 @@ function calcMagicSkillDamage(battleValues) {
           damage,
           damageWithPrimaryBonuses,
           bonusValues,
-          weapon,
+          criticalAttackRange,
           damageByType
         );
       }
