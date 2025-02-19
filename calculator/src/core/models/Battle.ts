@@ -76,6 +76,7 @@ export class Battle extends GlobalServicesMixin(class {}) {
     }
 
     private initListener() {
+        /* TEST CMD STORAGE SYSTEM
         this.ui.addEventListenerToElement(this.battleChoice.form, "click", () => {
             this.saveNewFight({
                 uId: crypto.randomUUID(),
@@ -87,6 +88,8 @@ export class Battle extends GlobalServicesMixin(class {}) {
                 maxDamage: 15,
              })
         })
+        */
+       
         this.ui.addEventListenerToElement(this.battleChoice.form, "change", this.handleBattleFormChange)
         this.ui.addEventListenerToElement(this.battleChoice.form, "invalid", this.handleBattleFormInvalid)
         this.ui.addEventListenerToElement(this.battleChoice.form, "submit", this.handleBattleFormSubmit)
