@@ -14,14 +14,6 @@ export class Battle extends GlobalServicesMixin(class {}) {
     }
 
     private initListener() {
-        if (!this.battleChoice.form) {
-            console.error("BattleChoice Form element not found");
-            return;
-        }
-        
-        this.ui.addEventListenerToElement(this.battleChoice.form, "click", () => {
-            console.log('HERE TEST');
-        })
         this.ui.addEventListenerToElement(this.battleChoice.form, "change", this.handleBattleFormChange)
         this.ui.addEventListenerToElement(this.battleChoice.form, "invalid", this.handleBattleFormInvalid)
         this.ui.addEventListenerToElement(this.battleChoice.form, "submit", this.handleBattleFormSubmit)
