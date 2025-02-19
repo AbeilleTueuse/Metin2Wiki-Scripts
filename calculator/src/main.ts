@@ -1,10 +1,10 @@
-import { Modal } from "./ui/components/modal";
 import { translations } from "./config/translations"
 
 import { Ui } from "./ui/index";
 import { cssSource, javascriptSource, chartSource } from "./config/sources";
 import { Player } from "./core/models/Player";
 import { Monster } from "./core/models/Monster";
+import { Battle } from "./core/models/Battle";
 
 //import { RaceType, WeaponType } from './core/enums/index'
 
@@ -14,8 +14,7 @@ const addScript = async (src: string, cb: callbackAddScript) => {
     cb()
 }
 
-export class App {
-    private modal: Modal;
+class App {
     private ui: Ui;
 
     private currentLanguage: string;
@@ -24,7 +23,6 @@ export class App {
     constructor(language: string = 'fr') {
         this.currentLanguage = language;
 
-        this.modal = Modal.getInstance();
         this.ui = Ui.getInstance(cssSource);
 
         addScript(javascriptSource, () => {
@@ -32,6 +30,8 @@ export class App {
             const monster = new Monster('Hydre')
             
             console.log(player, monster, chartSource);
+
+            new Battle()
         });
 
         console.log("App initialized")

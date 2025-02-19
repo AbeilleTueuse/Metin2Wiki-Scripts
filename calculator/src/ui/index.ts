@@ -1,9 +1,15 @@
+import { Modal } from "./components/modal";
+
 export class Ui {
     private static instance: Ui;
+    private modal: Modal;
 
     constructor(style: string) {
-        console.log('LOAD STYLE', style);
+        this.modal = Modal.getInstance();
+
         this.loadStyle(style)
+
+        console.log('Ui initialized');
     }
 
     public static getInstance(...args: [string]): Ui {
@@ -13,9 +19,9 @@ export class Ui {
         return Ui.instance;
     }
 
-    public loadStyle(stye: string) {
+    public loadStyle(style: string) {
         const link = document.createElement("link");
-        link.href = stye;
+        link.href = style;
         link.rel = "stylesheet";
 
         document.head.appendChild(link);
