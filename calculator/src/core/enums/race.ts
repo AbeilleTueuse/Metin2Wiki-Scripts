@@ -1,4 +1,4 @@
-export enum RaceType {
+export enum RaceEnum {
     Warrior = 'WARRIOR',
     Sura = 'SURA',
     Ninja = 'NINJA',

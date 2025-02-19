@@ -1,3 +1,3 @@
-export interface battleChoice {
+export interface IBattleChoice {
     form: HTMLElement
 }

@@ -1,3 +1,3 @@
 export * from './race'
 export * from './weapons'
-export * from './charType'
+export * from './char'

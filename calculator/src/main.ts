@@ -1,10 +1,9 @@
-import { translations } from "./config/translations"
-
 import { Ui } from "./ui/index";
-import { cssSource, javascriptSource, chartSource } from "./config/sources";
+import { javascriptSource, chartSource } from "./config/sources";
 import { Player } from "./core/models/Player";
 import { Monster } from "./core/models/Monster";
 import { Battle } from "./core/models/Battle";
+import { Translate } from "./core/services/Translate";
 
 //import { RaceType, WeaponType } from './core/enums/index'
 
@@ -15,15 +14,10 @@ const addScript = async (src: string, cb: callbackAddScript) => {
 }
 
 class App {
-    private ui: Ui;
-
-    private currentLanguage: string;
-
-    //INITIALISATION
+    private translate: Translate = Translate.getInstance();
+    
     constructor(language: string = 'fr') {
-        this.currentLanguage = language;
-
-        this.ui = Ui.getInstance(cssSource);
+        this.translate.switchLanguage(language)
 
         addScript(javascriptSource, () => {
             const player = new Player('J0thun')
@@ -35,19 +29,6 @@ class App {
         });
 
         console.log("App initialized")
-    }
-
-    public switchLanguage(newLanguage: string) {
-        if (translations[newLanguage as keyof typeof translations]) {
-            return this.currentLanguage = newLanguage;
-        }
-
-        console.warn("Langue non supportée")
-        return false;
-    }
-
-    public u__(key: string) {
-        return translations[this.currentLanguage as keyof typeof translations][key] || translations[this.currentLanguage as keyof typeof translations]['NOT_EXISTS']
     }
 }
 

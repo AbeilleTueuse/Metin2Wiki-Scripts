@@ -1,13 +1,15 @@
-import { battleChoice } from "../types/index";
+import { GlobalServicesMixin } from "../mixins/GlobalServicesMixin";
+import { IBattleChoice } from "../types/index";
 
-export class Battle {
+export class Battle extends GlobalServicesMixin(class {}) {
     public simulationTime: HTMLElement = document.getElementById("simulation-time") as HTMLElement;
 
-    public battleChoice: battleChoice = {
+    public battleChoice: IBattleChoice = {
         form: document.getElementById("create-battle") as HTMLElement
     }
 
     constructor() {
+        super();
         this.initListener()
     }
 
