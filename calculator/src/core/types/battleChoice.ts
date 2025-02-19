@@ -1,3 +1,3 @@
 export interface IBattleChoice {
-    form: HTMLElement
+    form: string
 }

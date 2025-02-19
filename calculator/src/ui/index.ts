@@ -1,14 +1,8 @@
-import { Modal } from "./components/modal";
-
 export class Ui {
     private static instance: Ui;
-    private modal: Modal;
 
     constructor(style: string) {
-        this.modal = Modal.getInstance();
-
         this.loadStyle(style)
-
         console.log('Ui initialized');
     }
 
@@ -27,4 +21,22 @@ export class Ui {
         document.head.appendChild(link);
     }
 
+    public addEventListenerToElement(selector: string, eventType: string, callback: EventListener): void {
+        const element = document.querySelector(selector) as HTMLElement;
+        if (element) {
+            element.addEventListener(eventType, callback);
+        } else {
+            console.warn(`Element with selector ${selector} not found`);
+        }
+    }
+    public removeEventListenerFromElement(selector: string, eventType: string, callback: EventListener): void {
+        const element = document.querySelector(selector) as HTMLElement;
+        if (element) {
+            element.removeEventListener(eventType, callback);
+        } else {
+            console.warn(`Element with selector ${selector} not found`);
+        }
+    }
+    
+    
 }

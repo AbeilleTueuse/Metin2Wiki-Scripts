@@ -5,7 +5,7 @@ export class Battle extends GlobalServicesMixin(class {}) {
     public simulationTime: HTMLElement = document.getElementById("simulation-time") as HTMLElement;
 
     public battleChoice: IBattleChoice = {
-        form: document.getElementById("create-battle") as HTMLElement
+        form: "#create-battle"
     }
 
     constructor() {
@@ -18,10 +18,13 @@ export class Battle extends GlobalServicesMixin(class {}) {
             console.error("BattleChoice Form element not found");
             return;
         }
-
-        this.battleChoice.form.addEventListener("change", this.handleBattleFormChange);
-        this.battleChoice.form.addEventListener("invalid", this.handleBattleFormInvalid, true);
-        this.battleChoice.form.addEventListener("submit", this.handleBattleFormSubmit);
+        
+        this.ui.addEventListenerToElement(this.battleChoice.form, "click", () => {
+            console.log('HERE TEST');
+        })
+        this.ui.addEventListenerToElement(this.battleChoice.form, "change", this.handleBattleFormChange)
+        this.ui.addEventListenerToElement(this.battleChoice.form, "invalid", this.handleBattleFormInvalid)
+        this.ui.addEventListenerToElement(this.battleChoice.form, "submit", this.handleBattleFormSubmit)
     }
 
     private handleBattleFormChange() {
