@@ -1,11 +1,11 @@
-import { CharacterEnum } from "../enums/char";
+import { CharType } from "../types/char";
 import { GlobalServicesMixin } from "../mixins/GlobalServicesMixin";
 
 export class Character extends GlobalServicesMixin(class {}) {
-    private type: CharacterEnum;
+    private type: CharType;
     private name: string;
 
-    constructor(type: CharacterEnum, name: string) {
+    constructor(type: CharType, name: string) {
         super();
 
         this.type = type

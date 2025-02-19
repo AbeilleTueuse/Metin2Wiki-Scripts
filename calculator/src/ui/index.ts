@@ -38,5 +38,13 @@ export class Ui {
         }
     }
     
+    public getElementBySelector(selector: string) {
+        const element = document.querySelector(selector) as HTMLElement;
+        if (element)
+            return element;
+        
+        console.warn(`Element with selector ${selector} not found`);
+        return null;
+    }
     
 }

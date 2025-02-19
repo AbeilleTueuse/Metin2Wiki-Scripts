@@ -1,8 +1,8 @@
-type LanguageCode = 'fr' | 'en' | 'de' | 'tr' | 'ro' | 'pt';
+type LanguageCode = 'fr' | 'en' | 'tr' | 'ro' | 'de' | 'pt' | 'es';
 
 export const translations: Record<LanguageCode, Record<string, string | string[]>> = {
     fr: {
-        NOT_EXISTS: "Cette traduction n'existe pas",
+        NOT_EXISTS: "Cette traduction n'existe pas.",
         DAMAGE: "Dégâts",
         percentage: "Pourcentage",
         miss: "Miss",
@@ -19,7 +19,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     en: {
-        NOT_EXISTS: "Cette traduction n'existe pas",
+        NOT_EXISTS: "This translation does not exist.",
         DAMAGE: "Damage",
         percentage: "Percentage",
         miss: "Miss",
@@ -36,7 +36,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     tr: {
-        NOT_EXISTS: "Cette traduction n'existe pas",
+        NOT_EXISTS: "Bu çeviri mevcut değil.",
         DAMAGE: "Hasar",
         percentage: "Yüzde",
         miss: "Miss Vuruş",
@@ -53,7 +53,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     ro: {
-        NOT_EXISTS: "Cette traduction n'existe pas",
+        NOT_EXISTS: "Această traducere nu există.",
         DAMAGE: "Daune",
         percentage: "Procent",
         miss: "Miss",
@@ -70,7 +70,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     de: {
-        NOT_EXISTS: "Cette traduction n'existe pas",
+        NOT_EXISTS: "Diese Übersetzung existiert nicht.",
         DAMAGE: "Schäden",
         percentage: "Prozentsatz",
         miss: "Verfehlen",
@@ -87,7 +87,7 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
         ],
     },
     pt: {
-        NOT_EXISTS: "Cette traduction n'existe pas",
+        NOT_EXISTS: "Esta tradução não existe.",
         DAMAGE: "Dano",
         percentage: "Percentagem",
         miss: "Miss",
@@ -103,17 +103,21 @@ export const translations: Record<LanguageCode, Record<string, string | string[]
             "relativo a um bónus"
         ],
     },
-    // es: {
-    //   DAMAGE: "Daño",
-    //   percentage: "Porcentaje",
-    //   miss: "Miss",
-    //   normalHit: "Daño normal",
-    //   criticalHit: "Daño crítico",
-    //   piercingHit: "Daño perforante",
-    //   criticalPiercingHit: "Daño crítico perforante",
-    //   damageRepartition: "Repartición de daños",
-    //   averageDAMAGE: "Daño medio",
-    //   damageAugmentation: "Aumento de daño",
-    //   bonusVariationTitle: ["Evolución del daño medio", "Relativo a una bonificación"]
-    // },
+    es: {
+        NOT_EXISTS: "Esta traducción no existe.",
+        DAMAGE: "Daño",
+        percentage: "Porcentaje",
+        miss: "Miss",
+        normalHit: "Daño normal",
+        criticalHit: "Daño crítico",
+        piercingHit: "Daño perforante",
+        criticalPiercingHit: "Daño crítico perforante",
+        damageRepartition: "Repartición de daños",
+        averageDAMAGE: "Daño medio",
+        damageAugmentation: "Aumento de daño",
+        bonusVariationTitle: [
+        "Evolución del daño medio",
+        "Relativo a una bonificación"
+        ]
+    },
 };
