@@ -1,4 +1,4 @@
-export interface ISavedFight {
+export interface IFight {
     uId: string;
     attackerName: string,
     victimName: string,

@@ -76,18 +76,6 @@ export class Battle extends GlobalServicesMixin(class {}) {
     }
 
     private initListener() {
-        this.ui.addEventListenerToElement(this.battleChoice.form, "click", () => {
-            this.core.saveNewFight({
-                uId: crypto.randomUUID(),
-                attackerName: "attacker",
-                victimName: "victim",
-                atackType: "type",
-                meanDamage: 10,
-                minDamage: 5,
-                maxDamage: 15,
-             })
-        })
-       
         this.ui.addEventListenerToElement(this.battleChoice.form, "change", this.handleBattleFormChange)
         this.ui.addEventListenerToElement(this.battleChoice.form, "invalid", this.handleBattleFormInvalid)
         this.ui.addEventListenerToElement(this.battleChoice.form, "submit", this.handleBattleFormSubmit)
