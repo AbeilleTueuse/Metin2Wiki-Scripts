@@ -11,6 +11,11 @@ export function GlobalServicesMixin<T extends Constructor>(Base: T) {
         protected translate: Translate = Translate.getInstance();
         protected storage: Storage = Storage.getInstance();
 
+        constructor(...args: any[]) {
+            super(...args);
+            console.log(`[GlobalServicesMixin] Instance created: ${this.constructor.name}`);
+        }
+
         protected u__(key: string): string | string[] {
             return this.translate.u__(key);
         }
