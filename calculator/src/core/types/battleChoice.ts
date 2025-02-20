@@ -1,4 +1,4 @@
-import { RaceEnum } from "../enums/race";
+import { RaceEnum } from "../enums/index";
 
 export interface IBattleChoice {
     resetAttackType: boolean;

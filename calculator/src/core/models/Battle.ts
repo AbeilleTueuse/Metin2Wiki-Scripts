@@ -1,8 +1,7 @@
-import { RaceEnum } from "../enums/race";
+import { RaceEnum } from "../enums/index";
 import { Core } from "../index";
 import { GlobalServicesMixin } from "../mixins/GlobalServicesMixin";
 import { IBattleChoice } from "../types/index";
-import { ISavedFight } from "../types/savedFight";
 import { Monster } from "./Monster";
 import { Player } from "./Player";
 

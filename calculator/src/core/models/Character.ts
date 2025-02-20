@@ -1,6 +1,5 @@
-import { CharType } from "../types/char";
+import { CharType } from "../types/index";
 import { GlobalServicesMixin } from "../mixins/GlobalServicesMixin";
-import { Core } from "../index";
 
 export class Character extends GlobalServicesMixin(class {}) {
     private type: CharType;

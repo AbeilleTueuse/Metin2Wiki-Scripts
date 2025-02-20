@@ -2,7 +2,7 @@ import { GlobalServicesMixin } from "./mixins/GlobalServicesMixin";
 import { Battle } from "./models/Battle";
 import { Monster } from "./models/Monster";
 import { Player } from "./models/Player";
-import { ISavedFight } from "./types/savedFight";
+import { ISavedFight } from "./types/index";
 
 export class Core extends GlobalServicesMixin(class {}) {
 
