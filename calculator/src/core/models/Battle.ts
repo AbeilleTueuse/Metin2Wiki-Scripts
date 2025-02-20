@@ -1,7 +1,10 @@
 import { RaceEnum } from "../enums/race";
+import { Core } from "../index";
 import { GlobalServicesMixin } from "../mixins/GlobalServicesMixin";
 import { IBattleChoice } from "../types/index";
 import { ISavedFight } from "../types/savedFight";
+import { Monster } from "./Monster";
+import { Player } from "./Player";
 
 export class Battle extends GlobalServicesMixin(class {}) {
     public simulationTime: HTMLElement = document.getElementById("simulation-time") as HTMLElement;
@@ -64,21 +67,18 @@ export class Battle extends GlobalServicesMixin(class {}) {
         },
     }
 
-    public savedFight: Array<ISavedFight> = this.storage.get("savedFightsCalculator");
-
-    constructor() {
+    constructor(private core: Core, player: Player, monster: Monster) {
         super();
-        this.initListener()
 
-        this.storage.on<ISavedFight[]>("savedFightsCalculator", (fights) => {
-            this.savedFight = fights;
-        })
+        console.log('BATTLE CREATED CHAR:', player, monster);
+        
+
+        this.initListener()
     }
 
     private initListener() {
-        /* TEST CMD STORAGE SYSTEM
         this.ui.addEventListenerToElement(this.battleChoice.form, "click", () => {
-            this.saveNewFight({
+            this.core.saveNewFight({
                 uId: crypto.randomUUID(),
                 attackerName: "attacker",
                 victimName: "victim",
@@ -88,7 +88,6 @@ export class Battle extends GlobalServicesMixin(class {}) {
                 maxDamage: 15,
              })
         })
-        */
        
         this.ui.addEventListenerToElement(this.battleChoice.form, "change", this.handleBattleFormChange)
         this.ui.addEventListenerToElement(this.battleChoice.form, "invalid", this.handleBattleFormInvalid)
@@ -103,14 +102,5 @@ export class Battle extends GlobalServicesMixin(class {}) {
     }
     private handleBattleFormSubmit() {
 
-    }
-
-    public saveNewFight(fight: ISavedFight): void {
-        this.storage.set("savedFightsCalculator", (oldData: ISavedFight[] = []) => [ ...oldData, fight], true);
-    }
-    public removeFightByUID(uId: string): void {
-        this.storage.set("savedFightsCalculator", (oldData: ISavedFight[] = []) => {
-            return oldData.filter(fight => fight.uId !== uId);
-        }, true);
     }
 }

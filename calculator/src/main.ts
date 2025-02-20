@@ -1,8 +1,6 @@
 import { javascriptSource } from "./config/sources";
-import { Player } from "./core/models/Player";
-import { Monster } from "./core/models/Monster";
-import { Battle } from "./core/models/Battle";
 import { Translate } from "./core/services/Translate";
+import { Core } from "./core/index";
 
 interface callbackAddScript { (...args: any): void }
 const addScript = async (src: string, cb: callbackAddScript) => {
@@ -22,12 +20,7 @@ class App {
         this.translate.switchLanguage(language)
 
         addScript(javascriptSource, () => {
-            const player = new Player('J0thun')
-            const monster = new Monster('Hydre')
-            
-            console.log(player, monster);
-
-            new Battle()
+            new Core();
         });
 
         console.log("App initialized")
