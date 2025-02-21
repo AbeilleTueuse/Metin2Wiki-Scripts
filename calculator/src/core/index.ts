@@ -9,7 +9,7 @@ export class Core extends GlobalServicesMixin(class {}) {
     
     public savedFight: IFight[] = this.storage.get<IFight[]>("savedFightsCalculator");
     public savedPlayers: IPlayer[] = this.storage.get<IPlayer[]>("savedPlayersCalculator");
-    public savedMonsters: T[] = this.storage.get<T[]>("savedMonsterCalculator");
+    public savedMonsters: any[] = this.storage.get<any[]>("savedMonsterCalculator");
 
     public activePlayers: Player[] = [];
     public activeMonsters: Monster[] = [];
