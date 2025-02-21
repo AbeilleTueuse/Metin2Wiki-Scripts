@@ -6,10 +6,10 @@ import { Player } from "./models/Player";
 import { IFight, IPlayer } from "./types/index";
 
 export class Core extends GlobalServicesMixin(class {}) {
-
-    public savedFight: Array<IFight> = this.storage.get("savedFightsCalculator");
-    public savedPlayers: Array<IPlayer> = this.storage.get("savedPlayersCalculator");
-    public savedMonsters: Array<any> = this.storage.get("savedMonsterCalculator");
+    
+    public savedFight: IFight[] = this.storage.get<IFight[]>("savedFightsCalculator");
+    public savedPlayers: IPlayer[] = this.storage.get<IPlayer[]>("savedPlayersCalculator");
+    public savedMonsters: T[] = this.storage.get<T[]>("savedMonsterCalculator");
 
     public activePlayers: Player[] = [];
     public activeMonsters: Monster[] = [];
@@ -23,7 +23,8 @@ export class Core extends GlobalServicesMixin(class {}) {
         const battle = new Battle(this, player, monster)
         */
 
-        
+
+
         this.ui.addEventListenerToElement("#create-battle", "click", () => {
             this.createNewPlayer();
         })
@@ -83,9 +84,11 @@ export class Core extends GlobalServicesMixin(class {}) {
     }
 
 
-    public saveNewPlayer(player: IPlayer, cb: CallableFunction = () => {}): void {
+    public saveNewPlayer(player: IPlayer, cb: CallableFunction | null = null): void {
         this.storage.set("savedPlayersCalculator", (oldData: IPlayer[] = []) => [ ...oldData, player], true);
-        cb();
+        
+        if (cb)
+            cb();
     }
     public removePlayerByUID(uId: string): void {
         this.storage.set("savedPlayersCalculator", (oldData: IPlayer[] = []) => {
@@ -93,9 +96,10 @@ export class Core extends GlobalServicesMixin(class {}) {
         }, true);
     }
 
-    public saveNewFight(fight: IFight, cb: CallableFunction = () => {}): void {
+    public saveNewFight(fight: IFight, cb: CallableFunction | null = null): void {
         this.storage.set("savedFightsCalculator", (oldData: IFight[] = []) => [ ...oldData, fight], true);
-        cb();
+        if (cb)
+            cb();
     }
     public removeFightByUID(uId: string): void {
         this.storage.set("savedFightsCalculator", (oldData: IFight[] = []) => {

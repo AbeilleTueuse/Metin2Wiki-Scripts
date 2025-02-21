@@ -70,7 +70,6 @@ export class Battle extends GlobalServicesMixin(class {}) {
         super();
 
         console.log('BATTLE CREATED CHAR:', player, monster);
-        
 
         this.initListener()
     }
