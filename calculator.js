@@ -5715,6 +5715,42 @@ function loadStyle(src) {
   document.head.appendChild(link);
 }
 
+function extractLinkText(text, linkRegex) {
+  let matches = [];
+  let match;
+  
+  while ((match = linkRegex.exec(text)) !== null) {
+      matches.push(match[1]);
+  }
+  
+  return matches;
+}
+
+function translatePage() {
+  const linkRegex = /\[\[(.*?)\]\]/g;
+
+  for (const element of document.querySelectorAll("[data-t]")) {
+    const translateText = translation[element.dataset.t];
+
+    if (!translateText) continue;
+
+    const linkText = extractLinkText(translateText, linkRegex);
+
+    if (linkText.length) {
+      console.log(linkText);
+    } else {
+      const firstChild = element.firstChild;
+
+      if (firstChild && firstChild.tagName === "A") {
+        firstChild.textContent = translateText;
+        firstChild.title = translateText;
+      } else {
+        element.textContent = translateText;
+      }
+    }
+  }
+}
+
 (function () {
   var javascriptSource =
     "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
@@ -5724,7 +5760,12 @@ function loadStyle(src) {
 
   loadStyle(cssSource);
 
+  function test() {
+    addScript("/index.php?title=Utilisateur:Ankhseram/Calculator/en.js&action=raw&ctype=text/javascript", main);
+  }
+
   function main() {
+    translatePage();
     var [characters, battle] = createDamageCalculatorInformation(chartSource);
 
     characterManagement(characters, battle);
@@ -5733,5 +5774,5 @@ function loadStyle(src) {
     updateBattleChoice(characters, battle.battleChoice);
     createBattle(characters, battle);
   }
-  addScript(javascriptSource, main);
+  addScript(javascriptSource, test);
 })();
