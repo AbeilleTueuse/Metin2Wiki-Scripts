@@ -5523,8 +5523,8 @@ function addBattleData(battle) {
   }
 }
 
-function createDamageCalculatorInformation(chartSource) {
-  var characters = {
+function createDamageCalculatorInformation() {
+  const characters = {
     unsavedChanges: false,
     savedCharacters: {},
     currentCharacter: null,
@@ -5569,19 +5569,19 @@ function createDamageCalculatorInformation(chartSource) {
     ),
   };
 
-  for (var [pseudo, character] of Object.entries(getSavedCharacters())) {
+  for (const [pseudo, character] of Object.entries(getSavedCharacters())) {
     characters.savedCharacters[pseudo] = character;
   }
 
   document.querySelectorAll(".toggle-sibling").forEach(function (element) {
-    var target = element.dataset.target;
-    var sibling = document.getElementById(target);
+    const target = element.dataset.target;
+    const sibling = document.getElementById(target);
     characters.toggleSiblings[element.name] = sibling;
   });
 
-  var constants = createConstants();
+  const constants = createConstants();
 
-  var battle = {
+  const battle = {
     savedFights: getSavedFights(),
     battleChoice: {
       resetAttackType: false,
@@ -5697,32 +5697,22 @@ function createDamageCalculatorInformation(chartSource) {
 
   addBattleData(battle);
   initResultTableHistory(battle);
-  addScript(chartSource, function () {
-    initDamageChart(battle);
-    initBonusVariationChart(battle);
-  });
+  initDamageChart(battle);
+  initBonusVariationChart(battle);
   reduceChartPointsListener(battle);
   downloadRawDataListener(battle);
 
   return [characters, battle];
 }
 
-function loadStyle(src) {
-  var link = document.createElement("link");
-  link.href = src;
-  link.rel = "stylesheet";
-
-  document.head.appendChild(link);
-}
-
 function extractLinkText(text, linkRegex) {
   let matches = [];
   let match;
-  
+
   while ((match = linkRegex.exec(text)) !== null) {
-      matches.push(match[1]);
+    matches.push(match[1]);
   }
-  
+
   return matches;
 }
 
@@ -5751,28 +5741,98 @@ function translatePage() {
   }
 }
 
-(function () {
-  var javascriptSource =
-    "/index.php?title=Utilisateur:Ankhseram/Calculator.js&action=raw&ctype=text/javascript";
-  var cssSource =
-    "/index.php?title=Utilisateur:Ankhseram/Style.css&action=raw&ctype=text/css";
-  var chartSource = "https://cdn.jsdelivr.net/npm/chart.js";
-
-  loadStyle(cssSource);
-
-  function test() {
-    addScript("/index.php?title=Utilisateur:Ankhseram/Calculator/en.js&action=raw&ctype=text/javascript", main);
+function getCurrentLanguage(defaultLang) {
+  const url = new URL(window.location.href);
+  const searchParams = url.searchParams;
+  const URLlang = searchParams.get("lang");
+  const browserLang = navigator.language.split("-")[0];
+  const languageSelection = document.getElementById("language-selection");
+  
+  languageSelection.addEventListener("change", changeLanguage);
+  
+  function changeLanguage(event) {
+    searchParams.set("lang", event.target.value);
+    window.location.href = url.toString();
   }
 
-  function main() {
+  if (!languageSelection) {
+    return defaultLang;
+  }
+
+  const radios = languageSelection.elements["country"];
+
+  if (!radios) {
+    return defaultLang;
+  }
+
+  const allowedLanguages = Array.from(radios)
+    .map((input) => input.value);
+
+  if (allowedLanguages.includes(URLlang)) {
+    radios.value = URLlang;
+    return URLlang;
+  }
+
+  if (allowedLanguages.includes(browserLang)) {
+    radios.value = URLlang;
+    return browserLang;
+  }
+
+  return defaultLang;
+}
+
+function loadStyle(src) {
+  var link = document.createElement("link");
+  link.href = src;
+  link.rel = "stylesheet";
+
+  document.head.appendChild(link);
+}
+
+async function addScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+
+    document.head.appendChild(script);
+  });
+}
+
+(async function () {
+  const basePath = "/index.php?title=Utilisateur:Ankhseram/";
+  const dataScript = `${basePath}WeaponsAndMonsters.js&action=raw&ctype=text/javascript`;
+  const simulatorStyle = `${basePath}SimulatorStyle.css&action=raw&ctype=text/css`;
+  const chartLibrary = "https://cdn.jsdelivr.net/npm/chart.js";
+  const defaultLang = "fr";
+
+  loadStyle(simulatorStyle);
+
+  const currentLanguage = getCurrentLanguage(defaultLang);
+  let translationScript;
+
+  if (currentLanguage !== defaultLang) {
+    translationScript = `${basePath}Calculator/${currentLanguage}.js&action=raw&ctype=text/javascript`;
+  }
+
+  const scriptsToLoad = [addScript(chartLibrary), addScript(dataScript)];
+
+  if (translationScript) {
+    scriptsToLoad.push(addScript(translationScript));
+  }
+
+  await Promise.all(scriptsToLoad);
+
+  if (translationScript) {
     translatePage();
-    var [characters, battle] = createDamageCalculatorInformation(chartSource);
-
-    characterManagement(characters, battle);
-    monsterManagement(characters, battle);
-
-    updateBattleChoice(characters, battle.battleChoice);
-    createBattle(characters, battle);
   }
-  addScript(javascriptSource, test);
+
+  const [characters, battle] = createDamageCalculatorInformation();
+  characterManagement(characters, battle);
+  monsterManagement(characters, battle);
+  updateBattleChoice(characters, battle.battleChoice);
+  createBattle(characters, battle);
 })();
