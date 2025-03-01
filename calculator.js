@@ -5705,37 +5705,33 @@ function createDamageCalculatorInformation() {
   return [characters, battle];
 }
 
-function extractLinkText(text, linkRegex) {
-  let matches = [];
-  let match;
-
-  while ((match = linkRegex.exec(text)) !== null) {
-    matches.push(match[1]);
-  }
-
-  return matches;
-}
-
 function translatePage() {
-  const linkRegex = /\[\[(.*?)\]\]/g;
+  const linkRegex = /\[\[(.*?)\]\]/;
 
   for (const element of document.querySelectorAll("[data-t]")) {
     const translateText = translation[element.dataset.t];
 
     if (!translateText) continue;
 
-    const linkText = extractLinkText(translateText, linkRegex);
+    const splittedText = translateText.split(linkRegex);
+    const childNodes = element.childNodes;
+    
+    if (splittedText[0] === "") {
+      splittedText.shift();
+    }
 
-    if (linkText.length) {
-      console.log(linkText);
-    } else {
-      const firstChild = element.firstChild;
+    if (splittedText[splittedText.length - 1] === "") {
+      splittedText.pop();
+    }
 
-      if (firstChild && firstChild.tagName === "A") {
-        firstChild.textContent = translateText;
-        firstChild.title = translateText;
-      } else {
-        element.textContent = translateText;
+    const len = Math.min(splittedText.length, childNodes.length);
+
+    for (let index = 0; index < len; index++) {
+      const text = splittedText[index];
+      const child = childNodes[index];
+      
+      if (child.nodeName === "#text" || text) {
+        child.textContent = text;
       }
     }
   }
@@ -5747,9 +5743,9 @@ function getCurrentLanguage(defaultLang) {
   const URLlang = searchParams.get("lang");
   const browserLang = navigator.language.split("-")[0];
   const languageSelection = document.getElementById("language-selection");
-  
+
   languageSelection.addEventListener("change", changeLanguage);
-  
+
   function changeLanguage(event) {
     searchParams.set("lang", event.target.value);
     window.location.href = url.toString();
@@ -5765,8 +5761,7 @@ function getCurrentLanguage(defaultLang) {
     return defaultLang;
   }
 
-  const allowedLanguages = Array.from(radios)
-    .map((input) => input.value);
+  const allowedLanguages = Array.from(radios).map((input) => input.value);
 
   if (allowedLanguages.includes(URLlang)) {
     radios.value = URLlang;
