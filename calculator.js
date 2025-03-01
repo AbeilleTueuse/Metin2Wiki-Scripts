@@ -427,12 +427,12 @@ function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
   polymorphDisplay.replaceChild(newLink, oldLink);
 }
 
-function createWikiLink(pageName) {
+function createWikiLink(pageName, displayName) {
   var wikiLink = document.createElement("a");
 
   wikiLink.href = mw.util.getUrl(pageName);
   wikiLink.title = pageName;
-  wikiLink.textContent = pageName;
+  wikiLink.textContent = displayName || pageName;
 
   return wikiLink;
 }
@@ -453,12 +453,14 @@ function handleWeaponDisplay(
   var newText = document.createElement("span");
   var oldImage = weaponDisplay.firstChild;
   var oldText = oldImage.nextElementSibling;
-  var weaponName = newImage.nextElementSibling.dataset.o;
+  var weaponTooltip = newImage.nextElementSibling;
+  var orignalWeaponName = weaponTooltip.dataset.o;
+  var weaponName = weaponTooltip.textContent;
 
   if (weaponVnum == 0) {
     newText.textContent = weaponName;
   } else {
-    var weaponLink = createWikiLink(weaponName);
+    var weaponLink = createWikiLink(orignalWeaponName, weaponName);
     newText.appendChild(weaponLink);
   }
 
@@ -5707,9 +5709,11 @@ function createDamageCalculatorInformation() {
 
 function translatePage() {
   const linkRegex = /\[\[(.*?)\]\]/;
+  const { general, weapons } = translation;
+  const characterCreation = document.getElementById("character-creation");
 
   for (const element of document.querySelectorAll("[data-t]")) {
-    const translateText = translation[element.dataset.t];
+    const translateText = general[element.dataset.t];
 
     if (!translateText) continue;
 
@@ -5733,6 +5737,14 @@ function translatePage() {
       if (child.nodeName === "#text" || text) {
         child.textContent = text;
       }
+    }
+  }
+
+  for (const weaponInput of characterCreation.elements["weapon"]) {
+    const weaponTranslation = weapons[weaponInput.value];
+
+    if (weaponTranslation) {
+      weaponInput.parentElement.lastElementChild.textContent = weaponTranslation;
     }
   }
 }
@@ -5802,6 +5814,7 @@ async function addScript(src) {
   const dataScript = `${basePath}WeaponsAndMonsters.js&action=raw&ctype=text/javascript`;
   const simulatorStyle = `${basePath}SimulatorStyle.css&action=raw&ctype=text/css`;
   const chartLibrary = "https://cdn.jsdelivr.net/npm/chart.js";
+
   const defaultLang = "fr";
 
   loadStyle(simulatorStyle);
