@@ -454,13 +454,13 @@ function handleWeaponDisplay(
   var oldImage = weaponDisplay.firstChild;
   var oldText = oldImage.nextElementSibling;
   var weaponTooltip = newImage.nextElementSibling;
-  var orignalWeaponName = weaponTooltip.dataset.o;
+  var originalWeaponName = weaponTooltip.dataset.o;
   var weaponName = weaponTooltip.textContent;
 
   if (weaponVnum == 0) {
     newText.textContent = weaponName;
   } else {
-    var weaponLink = createWikiLink(orignalWeaponName, weaponName);
+    var weaponLink = createWikiLink(originalWeaponName, weaponName);
     newText.appendChild(weaponLink);
   }
 
