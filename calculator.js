@@ -664,34 +664,19 @@ function getLocalStorageValue(key, defaultValue) {
 }
 
 function getSavedCharacters() {
-  return getLocalStorageValue("savedCharactersCalculator", {});
+  return getLocalStorageValue("mt2-calc.characters.saved", {});
 }
 
 function getSavedMonsters() {
-  var savedMonsters = getLocalStorageValue("savedMonstersCalculator", {});
-
-  if (Array.isArray(savedMonsters)) {
-    return {};
-  }
-
-  var filteredMonsters = {};
-
-  for (var vnum in savedMonsters) {
-    if (
-      String(Number(vnum)) === vnum &&
-      savedMonsters[vnum].hasOwnProperty("category")
-    ) {
-      filteredMonsters[vnum] = savedMonsters[vnum];
-    }
-  }
-
-  updateSavedMonsters(filteredMonsters);
-
-  return filteredMonsters;
+  return getLocalStorageValue("mt2-calc.monsters.saved", {});
 }
 
 function getSavedFights() {
-  return getLocalStorageValue("savedFightsCalculator", []);
+  return getLocalStorageValue("mt2-calc.fights.saved", []);
+}
+
+function getLastLang() {
+  return getLocalStorageValue("mt2-calc.language.last-used", "");
 }
 
 function saveToLocalStorage(key, value) {
@@ -699,16 +684,21 @@ function saveToLocalStorage(key, value) {
 }
 
 function updateSavedCharacters(savedCharacters) {
-  saveToLocalStorage("savedCharactersCalculator", savedCharacters);
+  saveToLocalStorage("mt2-calc.characters.saved", savedCharacters);
 }
 
 function updateSavedMonsters(savedMonsters) {
-  saveToLocalStorage("savedMonstersCalculator", savedMonsters);
+  saveToLocalStorage("mt2-calc.monsters.saved", savedMonsters);
 }
 
 function updateSavedFights(savedFights) {
-  saveToLocalStorage("savedFightsCalculator", savedFights);
+  saveToLocalStorage("mt2-calc.fights.saved", savedFights);
 }
+
+function updateLastLang(lang) {
+  saveToLocalStorage("mt2-calc.language.last-used", lang);
+}
+
 
 function saveCharacter(
   savedCharacters,
@@ -5749,20 +5739,25 @@ function translatePage() {
   }
 }
 
+function setLanguage(radios, lang, url, reload=false) {
+  url.searchParams.set("lang", lang);
+  updateLastLang(lang);
+
+  if (reload) {
+    window.location.href = url.toString();
+  } else {
+    radios.value = lang;
+    history.replaceState(null, "", url);
+  }
+}
+
 function getCurrentLanguage(defaultLang) {
   const url = new URL(window.location.href);
-  const searchParams = url.searchParams;
-  const URLlang = searchParams.get("lang");
+  const URLlang = url.searchParams.get("lang");
+  const lastLang = getLastLang();
   const browserLang = navigator.language.split("-")[0];
   const languageSelection = document.getElementById("language-selection");
-
-  languageSelection.addEventListener("change", changeLanguage);
-
-  function changeLanguage(event) {
-    searchParams.set("lang", event.target.value);
-    window.location.href = url.toString();
-  }
-
+  
   if (!languageSelection) {
     return defaultLang;
   }
@@ -5773,16 +5768,21 @@ function getCurrentLanguage(defaultLang) {
     return defaultLang;
   }
 
-  const allowedLanguages = Array.from(radios).map((input) => input.value);
+  languageSelection.addEventListener("change", changeLanguage);
 
-  if (allowedLanguages.includes(URLlang)) {
-    radios.value = URLlang;
-    return URLlang;
+  function changeLanguage(event) {
+    const newLang = event.target.value;
+    const newUrl = new URL(window.location.href);
+    setLanguage(radios, newLang, newUrl, true);
   }
 
-  if (allowedLanguages.includes(browserLang)) {
-    radios.value = URLlang;
-    return browserLang;
+  const allowedLanguages = Array.from(radios).map((input) => input.value);
+
+  for (const lang of [URLlang, lastLang, browserLang]) {
+    if (allowedLanguages.includes(lang)) {
+      setLanguage(radios, lang, url);
+      return lang;
+    }
   }
 
   return defaultLang;
