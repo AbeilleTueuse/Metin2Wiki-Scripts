@@ -5701,8 +5701,8 @@ function parseText(input) {
   const result = [];
 
   input.replace(regex, (_, matchA, matchText) => {
-    if (matchA) {
-      result.push({ text: matchA, category: "A" });
+    if (matchA !== undefined) {
+      result.push({ text: matchA, category: matchA === "" ? "IMG" : "A" });
     } else if (matchText) {
       result.push({ text: matchText, category: "#text" });
     }
@@ -5729,7 +5729,7 @@ function translateText(general) {
     let childIndex = 0;
     let textIndex = 0;
 
-    while (childIndex < childNodes.length && textIndex < parsedText.length) {
+    while (childIndex < childNodes.length) {
       const child = childNodes[childIndex];
       const parsed = parsedText[textIndex];
 
