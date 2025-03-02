@@ -699,7 +699,6 @@ function updateLastLang(lang) {
   saveToLocalStorage("mt2-calc.language.last-used", lang);
 }
 
-
 function saveCharacter(
   savedCharacters,
   characterCreation,
@@ -5697,49 +5696,86 @@ function createDamageCalculatorInformation() {
   return [characters, battle];
 }
 
-function translatePage() {
-  const linkRegex = /\[\[(.*?)\]\]/;
-  const { general, weapons } = translation;
-  const characterCreation = document.getElementById("character-creation");
+function parseText(input) {
+  const regex = /\[\[(.*?)\]\]|([^\[]+)/g;
+  const result = [];
 
+  input.replace(regex, (_, matchA, matchText) => {
+    if (matchA) {
+      result.push({ text: matchA, category: "A" });
+    } else if (matchText) {
+      result.push({ text: matchText, category: "#text" });
+    }
+  });
+
+  return result;
+}
+
+function translateText(general) {
   for (const element of document.querySelectorAll("[data-t]")) {
     const translateText = general[element.dataset.t];
 
     if (!translateText) continue;
 
-    const splittedText = translateText.split(linkRegex);
     const childNodes = element.childNodes;
-    
-    if (splittedText[0] === "") {
-      splittedText.shift();
+
+    if (childNodes.length === 1) {
+      childNodes[0].textContent = translateText;
+      continue;
     }
 
-    if (splittedText[splittedText.length - 1] === "") {
-      splittedText.pop();
-    }
+    const parsedText = parseText(translateText);
 
-    const len = Math.min(splittedText.length, childNodes.length);
+    let childIndex = 0;
+    let textIndex = 0;
 
-    for (let index = 0; index < len; index++) {
-      const text = splittedText[index];
-      const child = childNodes[index];
-      
-      if (child.nodeName === "#text" || text) {
-        child.textContent = text;
+    while (childIndex < childNodes.length && textIndex < parsedText.length) {
+      const child = childNodes[childIndex];
+      const parsed = parsedText[textIndex];
+
+      if (child.nodeName === "A" && child.firstChild?.nodeName === "IMG") {
+        childIndex++;
+      } else if (child.nodeName === parsed.category) {
+        child.textContent = parsed.text;
+        childIndex++;
+        textIndex++;
+      } else if (child.nodeName === "A") {
+        element.insertBefore(document.createTextNode(parsed.text), child);
+        textIndex++;
+      } else {
+        child.textContent = "";
+        childIndex++;
       }
     }
+
+    if (textIndex < parsedText.length) {
+      const textNode = document.createTextNode(parsedText[textIndex].text);
+      element.appendChild(textNode);
+    }
   }
+}
+
+function translateWeapons(weapons) {
+  const characterCreation = document.getElementById("character-creation");
 
   for (const weaponInput of characterCreation.elements["weapon"]) {
     const weaponTranslation = weapons[weaponInput.value];
 
     if (weaponTranslation) {
-      weaponInput.parentElement.lastElementChild.textContent = weaponTranslation;
+      weaponInput.parentElement.lastElementChild.textContent =
+        weaponTranslation;
     }
   }
 }
 
-function setLanguage(radios, lang, url, reload=false) {
+function translatePage() {
+  const { general, weapons } = translation;
+
+  translateText(general);
+  translateWeapons(weapons);
+}
+
+function setLanguage(radios, lang, url, reload = false) {
   url.searchParams.set("lang", lang);
   updateLastLang(lang);
 
@@ -5757,7 +5793,7 @@ function getCurrentLanguage(defaultLang) {
   const lastLang = getLastLang();
   const browserLang = navigator.language.split("-")[0];
   const languageSelection = document.getElementById("language-selection");
-  
+
   if (!languageSelection) {
     return defaultLang;
   }
