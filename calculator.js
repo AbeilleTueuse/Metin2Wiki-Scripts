@@ -3962,7 +3962,7 @@ function calcPhysicalDamage(battleValues) {
       bonusValues.defenseMarriage;
 
     const damageValues =
-      minPiercingDamage <= 2 ? [1, 2, 3, 4, 5] : [damageWithPrimaryBonuses];
+      minPiercingDamage <= 2 ? [1, 2, 3, 4, 5] : [minPiercingDamage];
 
     for (const damage of damageValues) {
       saveFinalDamage(
