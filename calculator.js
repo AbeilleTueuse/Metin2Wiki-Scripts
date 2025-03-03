@@ -349,6 +349,10 @@ function getMonsterName(monsterVnum) {
   return monsterAttributes[monsterAttributes.length - 1];
 }
 
+function getTranslatedMonsterName(monsterVnum) {
+  return translation.monsters[monsterVnum];
+}
+
 function filterClass(selectedRace, classChoice, selectValueIsChanged = false) {
   for (var radioNode of classChoice) {
     var radioGrandParent = radioNode.parentElement.parentElement;
@@ -415,11 +419,15 @@ function handleImageFromWiki(image, newSrc) {
   image.alt = newSrc.split("/").pop();
 }
 
-function handlePolymorphDisplay(polymorphDisplay, monsterVnum, monsterSrc) {
+function handlePolymorphDisplay(characters, monsterVnum, monsterSrc) {
+  var { translateMonsters, polymorphDisplay } = characters;
   var oldImage = polymorphDisplay.firstChild;
   var oldLink = oldImage.nextElementSibling;
   var monsterName = getMonsterName(monsterVnum);
-  var newLink = createWikiLink(monsterName);
+  var displayName = translateMonsters
+    ? getTranslatedMonsterName(monsterVnum)
+    : monsterName;
+  var newLink = createWikiLink(monsterName, displayName);
 
   resetImageFromWiki(oldImage);
   handleImageFromWiki(oldImage, monsterSrc);
@@ -1034,7 +1042,7 @@ function updateForm(
     true
   );
   handlePolymorphDisplay(
-    characters.polymorphDisplay,
+    characters,
     characterCreation.polymorphMonster.value,
     characterCreation.polymorphMonsterImage.value
   );
@@ -1584,7 +1592,10 @@ function addMonsterElement(characters, battle, monsterVnum, iframeInfo) {
   var spanInput = monsterElement.querySelector("span.input");
   var deleteSvg = monsterElement.querySelector("svg");
   var monsterName = getMonsterName(monsterVnum);
-  var link = createWikiLink(monsterName);
+  var displayName = characters.translateMonsters
+    ? getTranslatedMonsterName(monsterVnum)
+    : monsterName;
+  var link = createWikiLink(monsterName, displayName);
 
   monsterElement.setAttribute("tabindex", "0");
   spanInput.appendChild(link);
@@ -1622,18 +1633,23 @@ function addNewMonster(
   addBattleChoice(battle.battleChoice, monsterVnum, newMonster, true);
 }
 
-function addButtonsToCards(characters, iframeDoc, iframeInfo, category) {
+function addButtonsToCardsAndTranslate(
+  characters,
+  iframeDoc,
+  iframeInfo,
+  category
+) {
   var buttonTemplates = characters.monsterButtonTemplates.children[0];
   var cardToEdit = iframeDoc.getElementById("cards-container").children;
   var { nameToVnum } = iframeInfo;
   var vnumToButtons = iframeInfo[category].vnumToButtons;
+  var translateMonsters = characters.translateMonsters;
 
   for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
     var card = cardToEdit[cardIndex];
-    var cardName = card.querySelector("[data-name]").firstChild.title;
+    var cardNameElement = card.querySelector("[data-name]").firstChild;
     var buttonTemplatesClone = buttonTemplates.cloneNode(true);
-
-    cardName = cardName.replace(/\s/g, " ");
+    var cardName = cardNameElement.title.replace(/\s/g, " ");
 
     if (!nameToVnum.hasOwnProperty(cardName)) {
       continue;
@@ -1644,6 +1660,10 @@ function addButtonsToCards(characters, iframeDoc, iframeInfo, category) {
     buttonTemplatesClone.dataset.monsterId = monsterVnum;
     card.lastElementChild.appendChild(buttonTemplatesClone);
     vnumToButtons[monsterVnum] = buttonTemplatesClone.children;
+
+    if (translateMonsters) {
+      cardNameElement.textContent = getTranslatedMonsterName(monsterVnum);
+    }
   }
 }
 
@@ -1706,7 +1726,7 @@ function handleiFrame(iframeInfo, category) {
     iframeBody.style.background = "transparent";
     iframeBody.style.paddingRight = "10px";
 
-    addButtonsToCards(characters, iframeDoc, iframeInfo, category);
+    addButtonsToCardsAndTranslate(characters, iframeDoc, iframeInfo, category);
     updateiFrameButtons(characters, iframeInfo, category);
 
     iframeInfoCategory.loadIsFinished = true;
@@ -1735,11 +1755,7 @@ function handleiFrame(iframeInfo, category) {
             monsterVnum,
             monsterImage
           );
-          handlePolymorphDisplay(
-            characters.polymorphDisplay,
-            monsterVnum,
-            monsterImage
-          );
+          handlePolymorphDisplay(characters, monsterVnum, monsterImage);
           iframe.dispatchEvent(newChangeEvent());
         } else {
           var addedMonsters = Object.keys(characters.savedMonsters);
@@ -1940,7 +1956,7 @@ function addBattleElement(
   category,
   isMonster
 ) {
-  var { template, raceToImage } = battleChoice;
+  var { template, raceToImage, translateMonsters } = battleChoice;
   var battleChoiceCategory = battleChoice[category];
   var templateClone = template.cloneNode(true);
   var label = templateClone.firstElementChild;
@@ -1956,7 +1972,9 @@ function addBattleElement(
       return;
     }
     imageSrc = characterOrMonster.image;
-    name = getMonsterName(pseudoOrVnum);
+    name = translateMonsters
+      ? getTranslatedMonsterName(pseudoOrVnum)
+      : getMonsterName(pseudoOrVnum);
   } else {
     type = "character";
     imageSrc = raceToImage[characterOrMonster.race];
@@ -2537,7 +2555,12 @@ function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
   if (isPC(attacker) && isPolymorph(attacker)) {
     var polymorphPowerPct =
       getPolymorphPower(attacker.polymorphPoint, polymorphPowerTable) / 100;
-    var polymorphMonster = createMonster(attacker.polymorphMonster, null, true);
+    var polymorphMonster = createMonster(
+      attacker.polymorphMonster,
+      null,
+      null,
+      true
+    );
 
     var polymorphStr = floorMultiplication(
       polymorphPowerPct,
@@ -4404,12 +4427,19 @@ function createWeapon(vnum) {
   };
 }
 
-function createMonster(monsterVnum, attacker, polymorphMonster) {
+function createMonster(
+  monsterVnum,
+  translateMonster,
+  attacker,
+  polymorphMonster
+) {
   var monsterAttributes = monsterData[monsterVnum];
 
   var monster = {
     vnum: Number(monsterVnum),
-    name: monsterAttributes[36],
+    name: translateMonster
+      ? getTranslatedMonsterName(monsterVnum)
+      : monsterAttributes[36],
     rank: monsterAttributes[0],
     race: monsterAttributes[1],
     attack: monsterAttributes[2],
@@ -4769,7 +4799,7 @@ function createBattle(characters, battle) {
 
     if (targetName === "attackType") {
       battleChoice.attackType.selectedText =
-        target.previousElementSibling.dataset.o;
+        target.previousElementSibling.textContent;
     } else {
       updateBattleChoiceButton(battleChoice, targetName, targetValue);
 
@@ -4836,14 +4866,21 @@ function createBattle(characters, battle) {
       var attacker = copyObject(characters.savedCharacters[attackerNameOrVnum]);
       attackerVariation = attacker.bonusVariation;
     } else {
-      var attacker = createMonster(attackerNameOrVnum);
+      var attacker = createMonster(
+        attackerNameOrVnum,
+        characters.translateMonsters
+      );
     }
 
     if (victimIsPlayer) {
       var victim = copyObject(characters.savedCharacters[victimNameOrVnum]);
       victimVariation = victim.bonusVariation;
     } else {
-      var victim = createMonster(victimNameOrVnum, attacker);
+      var victim = createMonster(
+        victimNameOrVnum,
+        characters.translateMonsters,
+        attacker
+      );
     }
 
     if (useBonusVariationMode(attacker, attackerVariation)) {
@@ -5124,7 +5161,11 @@ function initResultTableHistory(battle) {
 }
 
 function initDamageChart(battle, currentLanguage) {
-  const { reduceChartPointsContainer, reduceChartPoints, constants: { chartTranslationByLang } } = battle;
+  const {
+    reduceChartPointsContainer,
+    reduceChartPoints,
+    constants: { chartTranslationByLang },
+  } = battle;
   const chartTranslation = chartTranslationByLang[currentLanguage];
   const percentFormat = battle.numberFormats.percent;
   const customPlugins = {
@@ -5142,7 +5183,7 @@ function initDamageChart(battle, currentLanguage) {
       } = chart;
       ctx.save();
       const text =
-      chartTranslation.miss + " : " + percentFormat.format(missPercentage);
+        chartTranslation.miss + " : " + percentFormat.format(missPercentage);
       const padding = 4;
       const fontSize = 14;
 
@@ -5354,7 +5395,10 @@ function initDamageChart(battle, currentLanguage) {
 }
 
 function initBonusVariationChart(battle, currentLanguage) {
-  const { constants: { chartTranslationByLang }, plotBonusVariation } = battle;
+  const {
+    constants: { chartTranslationByLang },
+    plotBonusVariation,
+  } = battle;
   const chartTranslation = chartTranslationByLang[currentLanguage];
 
   const ctx = plotBonusVariation.getContext("2d");
@@ -5504,7 +5548,7 @@ function addBattleData(battle) {
   }
 }
 
-function createDamageCalculatorInformation(currentLanguage) {
+function createDamageCalculatorInformation(defaultLang, currentLanguage) {
   const characters = {
     unsavedChanges: false,
     savedCharacters: {},
@@ -5548,6 +5592,7 @@ function createDamageCalculatorInformation(currentLanguage) {
     skillElementsToFilter: document.querySelectorAll(
       "#skill-container [data-class]"
     ),
+    translateMonsters: defaultLang !== currentLanguage,
   };
 
   for (const [pseudo, character] of Object.entries(getSavedCharacters())) {
@@ -5577,6 +5622,7 @@ function createDamageCalculatorInformation(currentLanguage) {
         lycan: "/images/4/4e/Protectionfrontalerouge.png",
       },
       categories: ["attacker", "victim"],
+      translateMonsters: defaultLang !== currentLanguage,
       attacker: {
         character: {
           count: 0,
@@ -5691,7 +5737,10 @@ function parseText(input) {
 
   input.replace(regex, (_, matchA, matchText) => {
     if (matchA !== undefined) {
-      result.push({ text: matchA, category: matchA === "" ? "NOTRANSLATE" : "A" });
+      result.push({
+        text: matchA,
+        category: matchA === "" ? "NOTRANSLATE" : "A",
+      });
     } else if (matchText) {
       result.push({ text: matchText, category: "#text" });
     }
@@ -5701,58 +5750,63 @@ function parseText(input) {
 }
 
 function translateText(general) {
-  const nodesToTranslate = ["A", "I" , "B"]
-  
+  const nodesToTranslate = ["A", "I", "B"];
+
   for (const element of document.querySelectorAll("[data-t]")) {
-      const translateText = general[element.dataset.t];
+    const translateText = general[element.dataset.t];
 
-      if (!translateText) continue;
+    if (!translateText) continue;
 
-      const childNodes = element.childNodes;
+    const childNodes = element.childNodes;
 
-      if (childNodes.length === 1) {
-          childNodes[0].textContent = translateText;
-          continue;
+    if (childNodes.length === 1) {
+      childNodes[0].textContent = translateText;
+      continue;
+    }
+
+    const parsedText = parseText(translateText);
+
+    let childIndex = 0;
+    let textIndex = 0;
+
+    while (childIndex < childNodes.length) {
+      const child = childNodes[childIndex];
+      const parsed = parsedText[textIndex];
+
+      let childName = child.nodeName;
+      const isNodeToTranslate = nodesToTranslate.includes(childName);
+
+      if (
+        (childName === "A" && child.firstChild?.nodeName === "IMG") ||
+        !(isNodeToTranslate || childName === "#text")
+      ) {
+        childName = "NOTRANSLATE";
       }
 
-      const parsedText = parseText(translateText);
-
-      let childIndex = 0;
-      let textIndex = 0;
-
-      while (childIndex < childNodes.length) {
-          const child = childNodes[childIndex];
-          const parsed = parsedText[textIndex];
-
-          let childName = child.nodeName;
-          const isNodeToTranslate = nodesToTranslate.includes(childName);
-
-          if (childName === "A" && child.firstChild?.nodeName === "IMG" || 
-            (!(isNodeToTranslate || childName === "#text"))) {
-            childName = "NOTRANSLATE";
-          }
-
-          if (childName === parsed.category || (parsed.category === "A" && isNodeToTranslate)) {
-              if (childName !== "NOTRANSLATE") {
-                  child.textContent = parsed.text;
-              }
-              childIndex++;
-              textIndex++;
-          } else if (childName === "NOTRANSLATE") {
-              childIndex++;
-          } else if (isNodeToTranslate) {
-              element.insertBefore(document.createTextNode(parsed.text), child);
-              textIndex++;
-          } else {
-              child.textContent = "";
-              childIndex++;
-          }
+      if (
+        childName === parsed.category ||
+        (parsed.category === "A" && isNodeToTranslate)
+      ) {
+        if (childName !== "NOTRANSLATE") {
+          child.textContent = parsed.text;
+        }
+        childIndex++;
+        textIndex++;
+      } else if (childName === "NOTRANSLATE") {
+        childIndex++;
+      } else if (isNodeToTranslate) {
+        element.insertBefore(document.createTextNode(parsed.text), child);
+        textIndex++;
+      } else {
+        child.textContent = "";
+        childIndex++;
       }
+    }
 
-      if (textIndex < parsedText.length) {
-          const textNode = document.createTextNode(parsedText[textIndex].text);
-          element.appendChild(textNode);
-      }
+    if (textIndex < parsedText.length) {
+      const textNode = document.createTextNode(parsedText[textIndex].text);
+      element.appendChild(textNode);
+    }
   }
 }
 
@@ -5875,7 +5929,10 @@ async function addScript(src) {
     translatePage();
   }
 
-  const [characters, battle] = createDamageCalculatorInformation(currentLanguage);
+  const [characters, battle] = createDamageCalculatorInformation(
+    defaultLang,
+    currentLanguage
+  );
   characterManagement(characters, battle);
   monsterManagement(characters, battle);
   updateBattleChoice(characters, battle.battleChoice);
