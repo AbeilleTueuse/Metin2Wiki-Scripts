@@ -5702,7 +5702,7 @@ function parseText(input) {
 
   input.replace(regex, (_, matchA, matchText) => {
     if (matchA !== undefined) {
-      result.push({ text: matchA, category: matchA === "" ? "OTHER" : "A" });
+      result.push({ text: matchA, category: matchA === "" ? "NOTRANSLATE" : "A" });
     } else if (matchText) {
       result.push({ text: matchText, category: "#text" });
     }
@@ -5712,6 +5712,8 @@ function parseText(input) {
 }
 
 function translateText(general) {
+  const nodesToTranslate = ["A", "I" , "B"]
+  
   for (const element of document.querySelectorAll("[data-t]")) {
       const translateText = general[element.dataset.t];
 
@@ -5734,21 +5736,22 @@ function translateText(general) {
           const parsed = parsedText[textIndex];
 
           let childName = child.nodeName;
+          const isNodeToTranslate = nodesToTranslate.includes(childName);
 
           if (childName === "A" && child.firstChild?.nodeName === "IMG" || 
-            (childName !== "A" && childName !== "#text")) {
-            childName = "OTHER";
+            (!(isNodeToTranslate || childName === "#text"))) {
+            childName = "NOTRANSLATE";
           }
 
-          if (childName === parsed.category) {
-              if (childName !== "OTHER") {
+          if (childName === parsed.category || (parsed.category === "A" && isNodeToTranslate)) {
+              if (childName !== "NOTRANSLATE") {
                   child.textContent = parsed.text;
               }
               childIndex++;
               textIndex++;
-          } else if (childName === "OTHER") {
+          } else if (childName === "NOTRANSLATE") {
               childIndex++;
-          } else if (childName === "A") {
+          } else if (isNodeToTranslate) {
               element.insertBefore(document.createTextNode(parsed.text), child);
               textIndex++;
           } else {
