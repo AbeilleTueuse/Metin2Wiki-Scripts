@@ -5702,7 +5702,7 @@ function parseText(input) {
 
   input.replace(regex, (_, matchA, matchText) => {
     if (matchA !== undefined) {
-      result.push({ text: matchA, category: matchA === "" ? "IMG" : "A" });
+      result.push({ text: matchA, category: matchA === "" ? "OTHER" : "A" });
     } else if (matchText) {
       result.push({ text: matchText, category: "#text" });
     }
@@ -5735,17 +5735,18 @@ function translateText(general) {
 
           let childName = child.nodeName;
 
-          if (childName === "A" && child.firstChild?.nodeName === "IMG" ) {
-            childName = "IMG";
+          if (childName === "A" && child.firstChild?.nodeName === "IMG" || 
+            (childName !== "A" && childName !== "#text")) {
+            childName = "OTHER";
           }
 
           if (childName === parsed.category) {
-              if (childName !== "IMG") {
+              if (childName !== "OTHER") {
                   child.textContent = parsed.text;
               }
               childIndex++;
               textIndex++;
-          } else if (childName !== "A" && childName !== "#text") {
+          } else if (childName === "OTHER") {
               childIndex++;
           } else if (childName === "A") {
               element.insertBefore(document.createTextNode(parsed.text), child);
