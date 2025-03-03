@@ -4969,7 +4969,7 @@ function createConstants() {
       shaman: [4, 6, 8],
       lycan: [5, 8],
     },
-    translation: {
+    chartTranslationByLang: {
       fr: {
         damage: "Dégâts",
         percentage: "Pourcentage",
@@ -5123,33 +5123,34 @@ function initResultTableHistory(battle) {
   });
 }
 
-function initDamageChart(battle) {
-  var { translation, reduceChartPointsContainer, reduceChartPoints } = battle;
-  var percentFormat = battle.numberFormats.percent;
-  var customPlugins = {
+function initDamageChart(battle, currentLanguage) {
+  const { reduceChartPointsContainer, reduceChartPoints, constants: { chartTranslationByLang } } = battle;
+  const chartTranslation = chartTranslationByLang[currentLanguage];
+  const percentFormat = battle.numberFormats.percent;
+  const customPlugins = {
     id: "customPlugins",
     afterDraw(chart) {
-      var missPercentage = chart.data.missPercentage;
+      const missPercentage = chart.data.missPercentage;
 
       if (!missPercentage) {
         return;
       }
 
-      var {
+      const {
         ctx,
         chartArea: { top, right },
       } = chart;
       ctx.save();
-      var text =
-        translation.miss + " : " + percentFormat.format(missPercentage);
-      var padding = 4;
-      var fontSize = 14;
+      const text =
+      chartTranslation.miss + " : " + percentFormat.format(missPercentage);
+      const padding = 4;
+      const fontSize = 14;
 
       ctx.font = fontSize + "px Helvetica Neue";
 
-      var textWidth = ctx.measureText(text).width;
-      var xPosition = right - textWidth - 5;
-      var yPosition = top + 5;
+      const textWidth = ctx.measureText(text).width;
+      const xPosition = right - textWidth - 5;
+      const yPosition = top + 5;
 
       ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
       ctx.fillRect(
@@ -5177,17 +5178,18 @@ function initDamageChart(battle) {
 
   Chart.register(customPlugins);
 
-  var ctx = battle.plotDamage.getContext("2d");
-  var maxLabelsInTooltip = 10;
-  var nullLabelText = " ...";
+  const ctx = battle.plotDamage.getContext("2d");
+  const maxLabelsInTooltip = 10;
+  const nullLabelText = " ...";
 
-  var chart = new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: "scatter",
     data: {
       missPercentage: 0,
       datasets: [],
     },
     options: {
+      locale: currentLanguage,
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -5200,17 +5202,17 @@ function initDamageChart(battle) {
             e.native.target.style.cursor = "default";
           },
           onClick: function (e, legendItem, legend) {
-            var currentIndex = legendItem.datasetIndex;
-            var ci = legend.chart;
-            var isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
-            var datasets = ci.data.datasets;
-            var hideReducePoints = true;
-            var isReducePointsChecked = reduceChartPoints.checked;
+            const currentIndex = legendItem.datasetIndex;
+            const ci = legend.chart;
+            const isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
+            const datasets = ci.data.datasets;
+            const hideReducePoints = true;
+            const isReducePointsChecked = reduceChartPoints.checked;
 
             datasets[currentIndex].hidden = isCurrentDatasetVisible;
             legendItem.hidden = isCurrentDatasetVisible;
 
-            for (var index in datasets) {
+            for (const index in datasets) {
               if (ci.isDatasetVisible(index) && datasets[index].canBeReduced) {
                 showElement(reduceChartPointsContainer);
                 hideReducePoints = false;
@@ -5230,7 +5232,7 @@ function initDamageChart(battle) {
         },
         title: {
           display: true,
-          text: translation.damageRepartition,
+          text: chartTranslation.damageRepartition,
           font: {
             size: 20,
           },
@@ -5242,13 +5244,13 @@ function initDamageChart(battle) {
                 return nullLabelText;
               }
 
-              var xValue = battle.numberFormats.default.format(
+              const xValue = battle.numberFormats.default.format(
                 context.parsed.x
               );
-              var yValue = battle.numberFormats.percent.format(
+              const yValue = battle.numberFormats.percent.format(
                 context.parsed.y
               );
-              var label =
+              const label =
                 " " +
                 context.dataset.label +
                 " : (" +
@@ -5275,7 +5277,7 @@ function initDamageChart(battle) {
           position: "bottom",
           title: {
             display: true,
-            text: translation.damage,
+            text: chartTranslation.damage,
             font: {
               size: 16,
             },
@@ -5289,7 +5291,7 @@ function initDamageChart(battle) {
         y: {
           title: {
             display: true,
-            text: translation.percentage,
+            text: chartTranslation.percentage,
             font: {
               size: 16,
             },
@@ -5313,32 +5315,32 @@ function initDamageChart(battle) {
     },
   });
 
-  var datasetsStyle = [
+  const datasetsStyle = [
     {
       name: "normalHit",
       canBeReduced: false,
-      label: translation.normalHit,
+      label: chartTranslation.normalHit,
       backgroundColor: "rgba(75, 192, 192, 0.2)",
       borderColor: "rgba(75, 192, 192, 1)",
     },
     {
       name: "piercingHit",
       canBeReduced: false,
-      label: translation.piercingHit,
+      label: chartTranslation.piercingHit,
       backgroundColor: "rgba(192, 192, 75, 0.2)",
       borderColor: "rgba(192, 192, 75, 1)",
     },
     {
       name: "criticalHit",
       canBeReduced: false,
-      label: translation.criticalHit,
+      label: chartTranslation.criticalHit,
       backgroundColor: "rgba(192, 75, 192, 0.2)",
       borderColor: "rgba(192, 75, 192, 1)",
     },
     {
       name: "criticalPiercingHit",
       canBeReduced: false,
-      label: translation.criticalPiercingHit,
+      label: chartTranslation.criticalPiercingHit,
       backgroundColor: "rgba(75, 75, 192, 0.2)",
       borderColor: "rgba(75, 75, 192, 1)",
     },
@@ -5351,23 +5353,24 @@ function initDamageChart(battle) {
   };
 }
 
-function initBonusVariationChart(battle) {
-  var translation = battle.translation;
+function initBonusVariationChart(battle, currentLanguage) {
+  const { constants: { chartTranslationByLang }, plotBonusVariation } = battle;
+  const chartTranslation = chartTranslationByLang[currentLanguage];
 
-  var ctx = battle.plotBonusVariation.getContext("2d");
+  const ctx = plotBonusVariation.getContext("2d");
 
-  var chart = new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: "line",
     data: {
       datasets: [
         {
-          label: translation.averageDamage,
+          label: chartTranslation.averageDamage,
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
           fill: true,
         },
         {
-          label: translation.damageAugmentation,
+          label: chartTranslation.damageAugmentation,
           backgroundColor: "rgba(192, 192, 75, 0.2)",
           borderColor: "rgba(192, 192, 75, 1)",
           hidden: true,
@@ -5377,6 +5380,7 @@ function initBonusVariationChart(battle) {
       ],
     },
     options: {
+      locale: currentLanguage,
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -5411,7 +5415,7 @@ function initBonusVariationChart(battle) {
         },
         title: {
           display: true,
-          text: translation.bonusVariationTitle,
+          text: chartTranslation.bonusVariationTitle,
           font: {
             size: 18,
           },
@@ -5442,7 +5446,7 @@ function initBonusVariationChart(battle) {
         y: {
           title: {
             display: true,
-            text: translation.averageDamage,
+            text: chartTranslation.averageDamage,
             font: {
               size: 16,
             },
@@ -5476,20 +5480,6 @@ function filterAttackTypeSelection(characters, battleChoice, targetValue) {
   }
 }
 
-function getTranslation(translation) {
-  var userLanguage = navigator.language;
-  var langToUse = "en";
-
-  for (var lang in translation) {
-    if (userLanguage.startsWith(lang)) {
-      langToUse = lang;
-      break;
-    }
-  }
-
-  return translation[langToUse];
-}
-
 function addBattleData(battle) {
   var errorElements = document.querySelectorAll("[data-error]");
   var { elements: attackTypeElements, container: attackTypeContainer } =
@@ -5514,7 +5504,7 @@ function addBattleData(battle) {
   }
 }
 
-function createDamageCalculatorInformation() {
+function createDamageCalculatorInformation(currentLanguage) {
   const characters = {
     unsavedChanges: false,
     savedCharacters: {},
@@ -5666,15 +5656,15 @@ function createDamageCalculatorInformation() {
     simulationCounter: document.getElementById("simulation-counter"),
     simulationTime: document.getElementById("simulation-time"),
     numberFormats: {
-      default: new Intl.NumberFormat(undefined, {
+      default: new Intl.NumberFormat(currentLanguage, {
         minimumFractionDigits: 0,
         maximumFractionDigits: 1,
       }),
-      percent: new Intl.NumberFormat(undefined, {
+      percent: new Intl.NumberFormat(currentLanguage, {
         style: "percent",
         maximumFractionDigits: 3,
       }),
-      second: new Intl.NumberFormat(undefined, {
+      second: new Intl.NumberFormat(currentLanguage, {
         style: "unit",
         unit: "second",
         unitDisplay: "long",
@@ -5683,13 +5673,12 @@ function createDamageCalculatorInformation() {
     },
     mapping: createMapping(),
     constants: constants,
-    translation: getTranslation(constants.translation),
   };
 
   addBattleData(battle);
   initResultTableHistory(battle);
-  initDamageChart(battle);
-  initBonusVariationChart(battle);
+  initDamageChart(battle, currentLanguage);
+  initBonusVariationChart(battle, currentLanguage);
   reduceChartPointsListener(battle);
   downloadRawDataListener(battle);
 
@@ -5886,7 +5875,7 @@ async function addScript(src) {
     translatePage();
   }
 
-  const [characters, battle] = createDamageCalculatorInformation();
+  const [characters, battle] = createDamageCalculatorInformation(currentLanguage);
   characterManagement(characters, battle);
   monsterManagement(characters, battle);
   updateBattleChoice(characters, battle.battleChoice);
