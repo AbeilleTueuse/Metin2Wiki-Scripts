@@ -5713,45 +5713,53 @@ function parseText(input) {
 
 function translateText(general) {
   for (const element of document.querySelectorAll("[data-t]")) {
-    const translateText = general[element.dataset.t];
+      const translateText = general[element.dataset.t];
 
-    if (!translateText) continue;
+      if (!translateText) continue;
 
-    const childNodes = element.childNodes;
+      const childNodes = element.childNodes;
 
-    if (childNodes.length === 1) {
-      childNodes[0].textContent = translateText;
-      continue;
-    }
-
-    const parsedText = parseText(translateText);
-
-    let childIndex = 0;
-    let textIndex = 0;
-
-    while (childIndex < childNodes.length) {
-      const child = childNodes[childIndex];
-      const parsed = parsedText[textIndex];
-
-      if (child.nodeName === "A" && child.firstChild?.nodeName === "IMG") {
-        childIndex++;
-      } else if (child.nodeName === parsed.category) {
-        child.textContent = parsed.text;
-        childIndex++;
-        textIndex++;
-      } else if (child.nodeName === "A") {
-        element.insertBefore(document.createTextNode(parsed.text), child);
-        textIndex++;
-      } else {
-        child.textContent = "";
-        childIndex++;
+      if (childNodes.length === 1) {
+          childNodes[0].textContent = translateText;
+          continue;
       }
-    }
 
-    if (textIndex < parsedText.length) {
-      const textNode = document.createTextNode(parsedText[textIndex].text);
-      element.appendChild(textNode);
-    }
+      const parsedText = parseText(translateText);
+
+      let childIndex = 0;
+      let textIndex = 0;
+
+      while (childIndex < childNodes.length) {
+          const child = childNodes[childIndex];
+          const parsed = parsedText[textIndex];
+
+          let childName = child.nodeName;
+
+          if (childName === "A" && child.firstChild?.nodeName === "IMG" ) {
+            childName = "IMG";
+          }
+
+          if (childName === parsed.category) {
+              if (childName !== "IMG") {
+                  child.textContent = parsed.text;
+              }
+              childIndex++;
+              textIndex++;
+          } else if (childName !== "A" && childName !== "#text") {
+              childIndex++;
+          } else if (childName === "A") {
+              element.insertBefore(document.createTextNode(parsed.text), child);
+              textIndex++;
+          } else {
+              child.textContent = "";
+              childIndex++;
+          }
+      }
+
+      if (textIndex < parsedText.length) {
+          const textNode = document.createTextNode(parsedText[textIndex].text);
+          element.appendChild(textNode);
+      }
   }
 }
 
