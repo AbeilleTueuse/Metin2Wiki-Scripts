@@ -1633,6 +1633,36 @@ function addNewMonster(
   addBattleChoice(battle.battleChoice, monsterVnum, newMonster, true);
 }
 
+function translateiFrameElements(iframeDoc, category) {
+  const specialTranslations = translation.special;
+  const filterName = iframeDoc.getElementById("filter-name");
+  const translatedPlaceholder = 
+    category === "monster" 
+    ? specialTranslations.monsterPlaceholder 
+    : specialTranslations.stonePlaceholder;
+
+  if (filterName && translatedPlaceholder) {
+    filterName.placeholder = translatedPlaceholder;
+  }
+}
+
+function translateiFrame(iframeDoc, category) {
+  const filterForm = iframeDoc.getElementById("filter-form");
+
+  if (filterForm) {
+    translateiFrameElements(iframeDoc, category);
+  } else {
+    const observer = new MutationObserver((mutations, obs) => {
+      const filterForm = iframeDoc.getElementById("filter-form");
+      if (filterForm) {
+        translateiFrameElements(iframeDoc, category);
+        obs.disconnect();
+      }
+    });
+    observer.observe(iframeDoc.body, { childList: true, subtree: true });
+  }
+}
+
 function addButtonsToCardsAndTranslate(
   characters,
   iframeDoc,
@@ -1664,6 +1694,10 @@ function addButtonsToCardsAndTranslate(
     if (translateMonsters) {
       cardNameElement.textContent = getTranslatedMonsterName(monsterVnum);
     }
+  }
+
+  if (translateMonsters) {
+    translateiFrame(iframeDoc, category);
   }
 }
 
@@ -1728,7 +1762,7 @@ function handleiFrame(iframeInfo, category) {
 
     addButtonsToCardsAndTranslate(characters, iframeDoc, iframeInfo, category);
     updateiFrameButtons(characters, iframeInfo, category);
-
+    
     iframeInfoCategory.loadIsFinished = true;
 
     hideElement(loadingAnimation);
@@ -5778,7 +5812,8 @@ function translateText(general) {
 
       if (
         (childName === "A" && child.firstChild?.nodeName === "IMG") ||
-        !(isNodeToTranslate || childName === "#text")
+        !(isNodeToTranslate || childName === "#text") ||
+        child.dataset?.notranslate
       ) {
         childName = "NOTRANSLATE";
       }
@@ -5823,11 +5858,26 @@ function translateWeapons(weapons) {
   }
 }
 
+function handleSpecialIndexes(generalTranslations, specialIndexes) {
+  const specialTranslations = {};
+  translation.special = specialTranslations;
+
+  for (const [generalIndex, specialKey] of Object.entries(specialIndexes)) {
+    const translatedValue = generalTranslations[generalIndex];
+
+    if (translatedValue) {
+      specialTranslations[specialKey] = translatedValue;
+    }
+  }
+}
+
 function translatePage() {
   const { general, weapons } = translation;
+  const specialIndexes = { 471: "monsterPlaceholder", 472: "stonePlaceholder" };
 
   translateText(general);
   translateWeapons(weapons);
+  handleSpecialIndexes(general, specialIndexes);
 }
 
 function setLanguage(radios, lang, url, reload = false) {
