@@ -1636,10 +1636,7 @@ function addNewMonster(
 function translateiFrameElements(iframeDoc, category) {
   const filterName = iframeDoc.getElementById("filter-name");
   const { general, special } = translation;
-  const translatedPlaceholder = 
-    category === "monster" 
-    ? special.monsterPlaceholder 
-    : special.stonePlaceholder;
+  const translatedPlaceholder = special.placeholder;
 
   if (filterName && translatedPlaceholder) {
     filterName.placeholder = translatedPlaceholder;
@@ -5922,8 +5919,7 @@ function translateSummary() {
 function translatePage() {
   const { general, weapons } = translation;
   const specialIndexes = { 
-    471: "monsterPlaceholder",
-    472: "stonePlaceholder",
+    471: "placeholder",
     473: "boss",
     474: "pageTitle",
     475: "toc",
