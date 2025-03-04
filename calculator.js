@@ -1662,6 +1662,28 @@ function translateiFrame(iframeDoc, category) {
   }
 }
 
+function translateMonsterCard(card, cardNameElement, monsterVnum) {
+  const mapping = translation.mapping;
+  const levelElement = card.querySelector("[data-level]");
+  const typeElement = card.querySelector("[data-type] a");
+  const damageElements = card.querySelectorAll("[data-damage] a");
+
+  cardNameElement.textContent = getTranslatedMonsterName(monsterVnum);
+
+  levelElement.textContent = levelElement.textContent.replace(
+    "Boss",
+    translation.special.boss
+  );
+
+  if (typeElement) {
+    typeElement.textContent = mapping[typeElement.textContent];
+  }
+
+  damageElements.forEach((damageElement) => {
+    damageElement.textContent = mapping[damageElement.textContent];
+  });
+}
+
 function addButtonsToCardsAndTranslate(
   characters,
   iframeDoc,
@@ -1691,24 +1713,7 @@ function addButtonsToCardsAndTranslate(
     vnumToButtons[monsterVnum] = buttonTemplatesClone.children;
 
     if (translateMonsters) {
-      const { boss } = translation.special;
-      const mapping = translation.mapping;
-      const levelElement = card.querySelector("[data-level]");
-      const typeElement = card.querySelector("[data-type] a");
-      const damageElements = card.querySelectorAll("[data-damage] a");
-
-      levelElement.textContent = levelElement.textContent.replace("Boss", boss);
-      cardNameElement.textContent = getTranslatedMonsterName(monsterVnum);
-
-      if (typeElement) {
-        typeElement.textContent = mapping[typeElement.textContent];
-      }
-
-      if (damageElements) {
-        damageElements.forEach((damageElement) => {
-          damageElement.textContent = mapping[damageElement.textContent];
-        });
-      }
+      translateMonsterCard(card, cardNameElement, monsterVnum);
     }
   }
 
@@ -5103,10 +5108,7 @@ function initResultTableHistory(battle) {
 }
 
 function initDamageChart(battle, currentLanguage, defaultText) {
-  const {
-    reduceChartPointsContainer,
-    reduceChartPoints,
-  } = battle;
+  const { reduceChartPointsContainer, reduceChartPoints } = battle;
   const percentFormat = battle.numberFormats.percent;
   const customPlugins = {
     id: "customPlugins",
@@ -5123,7 +5125,7 @@ function initDamageChart(battle, currentLanguage, defaultText) {
       } = chart;
       ctx.save();
       const text =
-      defaultText.miss + " : " + percentFormat.format(missPercentage);
+        defaultText.miss + " : " + percentFormat.format(missPercentage);
       const padding = 4;
       const fontSize = 14;
 
@@ -5780,20 +5782,20 @@ function handleSpecialIndexes(generalTranslations, specialIndexes) {
 
   translation.mapping = {
     "Demi-humain": specialTranslations.halfHuman,
-    "Mal": specialTranslations.devil,
-    "Désert": specialTranslations.desert,
-    "Animal": specialTranslations.animal,
-    "Orc": specialTranslations.orc,
-    "Mystique": specialTranslations.mystic,
+    Mal: specialTranslations.devil,
+    Désert: specialTranslations.desert,
+    Animal: specialTranslations.animal,
+    Orc: specialTranslations.orc,
+    Mystique: specialTranslations.mystic,
     "Mort-vivant": specialTranslations.undead,
-    "Insecte": specialTranslations.insect,
-    "Zodiaque": specialTranslations.zodiac,
+    Insecte: specialTranslations.insect,
+    Zodiaque: specialTranslations.zodiac,
     "Aucun type": specialTranslations.noType,
-    "Mêlée": specialTranslations.melee,
-    "Flèche": specialTranslations.arrow,
-    "Magique": specialTranslations.magic,
-    "DC": specialTranslations.skill,
-  }
+    Mêlée: specialTranslations.melee,
+    Flèche: specialTranslations.arrow,
+    Magique: specialTranslations.magic,
+    DC: specialTranslations.skill,
+  };
 }
 
 function translateTitle() {
@@ -5879,7 +5881,7 @@ function translatePage(defaultText) {
     498: "melee",
     499: "arrow",
     500: "magic",
-    516: "skill"
+    516: "skill",
   };
 
   translateText(general);
@@ -5907,7 +5909,8 @@ function getDefaultText() {
     damageRepartition: "Distribution des dégâts",
     averageDamage: "Dégâts moyens",
     damageAugmentation: "Augmentation des dégâts",
-    bonusVariationTitle: "Évolution des dégâts moyens[[]]par rapport à la valeur d'un bonus",
+    bonusVariationTitle:
+      "Évolution des dégâts moyens[[]]par rapport à la valeur d'un bonus",
   };
 }
 
