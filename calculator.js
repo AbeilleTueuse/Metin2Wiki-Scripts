@@ -1691,10 +1691,24 @@ function addButtonsToCardsAndTranslate(
     vnumToButtons[monsterVnum] = buttonTemplatesClone.children;
 
     if (translateMonsters) {
-      // const levelElement = card.querySelector("[data-level]");
-      // const typeElement = card.querySelector("[data-type] a");
-      // levelElement.textContent = levelElement.textContent.replace("Boss", specialTranslations.boss);
+      const { boss } = translation.special;
+      const mapping = translation.mapping;
+      const levelElement = card.querySelector("[data-level]");
+      const typeElement = card.querySelector("[data-type] a");
+      const damageElements = card.querySelectorAll("[data-damage] a");
+
+      levelElement.textContent = levelElement.textContent.replace("Boss", boss);
       cardNameElement.textContent = getTranslatedMonsterName(monsterVnum);
+
+      if (typeElement) {
+        typeElement.textContent = mapping[typeElement.textContent];
+      }
+
+      if (damageElements) {
+        damageElements.forEach((damageElement) => {
+          damageElement.textContent = mapping[damageElement.textContent];
+        });
+      }
     }
   }
 
@@ -5753,6 +5767,7 @@ function translateWeapons(weapons) {
 
 function handleSpecialIndexes(generalTranslations, specialIndexes) {
   const specialTranslations = {};
+
   translation.special = specialTranslations;
 
   for (const [generalIndex, specialKey] of Object.entries(specialIndexes)) {
@@ -5761,6 +5776,23 @@ function handleSpecialIndexes(generalTranslations, specialIndexes) {
     if (translatedValue) {
       specialTranslations[specialKey] = translatedValue;
     }
+  }
+
+  translation.mapping = {
+    "Demi-humain": specialTranslations.halfHuman,
+    "Mal": specialTranslations.devil,
+    "Désert": specialTranslations.desert,
+    "Animal": specialTranslations.animal,
+    "Orc": specialTranslations.orc,
+    "Mystique": specialTranslations.mystic,
+    "Mort-vivant": specialTranslations.undead,
+    "Insecte": specialTranslations.insect,
+    "Zodiaque": specialTranslations.zodiac,
+    "Aucun type": specialTranslations.noType,
+    "Mêlée": specialTranslations.melee,
+    "Flèche": specialTranslations.arrow,
+    "Magique": specialTranslations.magic,
+    "DC": specialTranslations.skill,
   }
 }
 
@@ -5804,10 +5836,8 @@ function translateSummary() {
 
 function translateDefaultText(defaultText) {
   const specialTranslations = translation.special;
-  console.log(specialTranslations);
 
   for (const key of Object.keys(defaultText)) {
-    console.log(key);
     if (specialTranslations.hasOwnProperty(key)) {
       defaultText[key] = specialTranslations[key];
     }
@@ -5836,6 +5866,20 @@ function translatePage(defaultText) {
     512: "averageDamage",
     513: "damageAugmentation",
     514: "bonusVariationTitle",
+    489: "halfHuman",
+    490: "devil",
+    491: "desert",
+    492: "animal",
+    493: "orc",
+    494: "mystic",
+    495: "undead",
+    496: "insect",
+    497: "zodiac",
+    515: "noType",
+    498: "melee",
+    499: "arrow",
+    500: "magic",
+    516: "skill"
   };
 
   translateText(general);
