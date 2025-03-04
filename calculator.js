@@ -846,6 +846,7 @@ function uploadCharacter(
   battle
 ) {
   var selectFilesLength = selectedFiles.length;
+  var defaultPseudo = characters.defaultText.pseudo;
 
   for (var fileIndex = 0; fileIndex < selectFilesLength; fileIndex++) {
     var selectedFile = selectedFiles[fileIndex];
@@ -861,7 +862,7 @@ function uploadCharacter(
             var characterPseudo = String(characterDataObject.name);
 
             hideElement(characters.characterCreation);
-            characterPseudo = validPseudo(characterPseudo);
+            characterPseudo = validPseudo(characterPseudo, defaultPseudo);
 
             [characterDataObject, characterPseudo] = addUniquePseudo(
               characterDataObject,
@@ -1074,6 +1075,7 @@ function handleClickOnCharacter(
 ) {
   var displayedPseudo = characters.characterCreation.name.value;
   var pseudo = spanInput.dataset.name;
+  var { unsavedWarning, deleteWarning } = characters.defaultText;
 
   if (edition) {
     if (!characters.unsavedChanges) {
@@ -1087,9 +1089,7 @@ function handleClickOnCharacter(
     } else if (displayedPseudo === pseudo) {
       // pass
     } else {
-      var result = confirm(
-        "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
-      );
+      var result = confirm(unsavedWarning);
 
       if (result) {
         updateForm(
@@ -1118,9 +1118,7 @@ function handleClickOnCharacter(
             pseudo
           );
         } else {
-          var result = confirm(
-            "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
-          );
+          var result = confirm(unsavedWarning);
 
           if (result) {
             addNewCharacter(
@@ -1146,11 +1144,7 @@ function handleClickOnCharacter(
         break;
 
       case "delete":
-        var result = confirm(
-          "Voulez-vous vraiment supprimer définitivement le personnage " +
-            pseudo +
-            " ?"
-        );
+        var result = confirm(deleteWarning.replace("[[]]", pseudo));
         if (result) {
           deleteCharacter(characters, pseudo, characterElement, battle);
         }
@@ -1209,11 +1203,11 @@ function handleNewCharacter(
   return [newCharacterTemplate, spanInput];
 }
 
-function validPseudo(pseudo) {
+function validPseudo(pseudo, defaultPseudo) {
   var newPseudo = pseudoFormat(pseudo);
 
   if (!newPseudo) {
-    return "Pseudo";
+    return pseudoFormat(defaultPseudo);
   }
 
   return newPseudo;
@@ -1228,6 +1222,7 @@ function addNewCharacter(
 ) {
   function editAndSetCharacterPseudoInput(selectedCharacter, spanInput) {
     var maxPseudoLength = 20;
+    var defaultPseudo = characters.defaultText.pseudo;
 
     var selection = window.getSelection();
     var range = document.createRange();
@@ -1243,7 +1238,7 @@ function addNewCharacter(
     selection.addRange(range);
 
     function pseudoValidation() {
-      var characterPseudo = validPseudo(spanInput.textContent);
+      var characterPseudo = validPseudo(spanInput.textContent, defaultPseudo);
       var characterDataObject = { name: characterPseudo };
 
       if (pseudoToDuplicate) {
@@ -1489,6 +1484,7 @@ function characterManagement(characters, battle) {
     saveButton,
     characterCreation,
     bonusVariation,
+    defaultText: { unsavedWarning },
   } = characters;
 
   Object.keys(characters.savedCharacters).forEach(function (pseudo) {
@@ -1510,9 +1506,7 @@ function characterManagement(characters, battle) {
         battle
       );
     } else {
-      var result = confirm(
-        "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées."
-      );
+      var result = confirm(unsavedWarning);
 
       if (result) {
         addNewCharacter(
@@ -1770,7 +1764,7 @@ function handleiFrame(iframeInfo, category) {
 
     addButtonsToCardsAndTranslate(characters, iframeDoc, iframeInfo, category);
     updateiFrameButtons(characters, iframeInfo, category);
-    
+
     iframeInfoCategory.loadIsFinished = true;
 
     hideElement(loadingAnimation);
@@ -5048,114 +5042,6 @@ function createConstants() {
       shaman: [4, 6, 8],
       lycan: [5, 8],
     },
-    chartTranslationByLang: {
-      fr: {
-        damage: "Dégâts",
-        percentage: "Pourcentage",
-        miss: "Miss",
-        normalHit: "Coup classique",
-        criticalHit: "Coup critique",
-        piercingHit: "Coup perçant",
-        criticalPiercingHit: "Coup critique perçant",
-        damageRepartition: "Distribution des dégâts",
-        averageDamage: "Dégâts moyens",
-        damageAugmentation: "Augmentation des dégâts",
-        bonusVariationTitle: [
-          "Évolution des dégâts moyens",
-          "par rapport à la valeur d'un bonus",
-        ],
-      },
-      en: {
-        damage: "Damage",
-        percentage: "Percentage",
-        miss: "Miss",
-        normalHit: "Normal Hit",
-        criticalHit: "Critical Hit",
-        piercingHit: "Piercing Hit",
-        criticalPiercingHit: "Critical Piercing Hit",
-        damageRepartition: "Damage Repartition",
-        averageDamage: "Average Damage",
-        damageAugmentation: "Damage Augmentation",
-        bonusVariationTitle: [
-          "Evolution of Average Damage",
-          "Relative to a Bonus Value",
-        ],
-      },
-      tr: {
-        damage: "Hasar",
-        percentage: "Yüzde",
-        miss: "Miss Vuruş",
-        normalHit: "Düz Vuruş",
-        criticalHit: "Kritik Vuruş",
-        piercingHit: "Delici Vuruş",
-        criticalPiercingHit: "Kritikli Delici Vuruş",
-        damageRepartition: "Hasar Dağılımı",
-        averageDamage: "Ortalama Hasar",
-        damageAugmentation: "Ortalama Hasar Artışı",
-        bonusVariationTitle: [
-          "Bir bonusun değerine kıyasla",
-          "Ortalama Hasar Çizelgesi",
-        ],
-      },
-      ro: {
-        damage: "Daune",
-        percentage: "Procent",
-        miss: "Miss",
-        normalHit: "Lovitura normala",
-        criticalHit: "Lovitura critica",
-        piercingHit: "Lovitura patrunzatoare",
-        criticalPiercingHit: "Lovitura critica si patrunzatoare",
-        damageRepartition: "Distribuția daunelor",
-        averageDamage: "Media damageului",
-        damageAugmentation: "Damage imbunatatit",
-        bonusVariationTitle: [
-          "Evolutia mediei damageului",
-          "relativ la o valoare bonus",
-        ],
-      },
-      de: {
-        damage: "Schäden",
-        percentage: "Prozentsatz",
-        miss: "Verfehlen",
-        normalHit: "Normaler Treffer",
-        criticalHit: "Kritischer Treffer",
-        piercingHit: "Durchdringender Treffer",
-        criticalPiercingHit: "Kritischer durchdringender Treffer",
-        damageRepartition: "Schadensverteilung",
-        averageDamage: "Durchschnittlicher Schaden",
-        damageAugmentation: "Schadenserhöhung",
-        bonusVariationTitle: [
-          "Entwicklung des durchschnittlichen Schadens",
-          "im Verhältnis zu einem Bonus",
-        ],
-      },
-      pt: {
-        damage: "Dano",
-        percentage: "Percentagem",
-        miss: "Miss",
-        normalHit: "Dano normal",
-        criticalHit: "Dano crítico",
-        piercingHit: "Dano perfurante",
-        criticalPiercingHit: "Dano crítico perfurante",
-        damageRepartition: "Repartição de dano",
-        averageDamage: "Dano médio",
-        damageAugmentation: "Aumento de dano",
-        bonusVariationTitle: ["Evolução do dano médio", "relativo a um bónus"],
-      },
-      // es: {
-      //   damage: "Daño",
-      //   percentage: "Porcentaje",
-      //   miss: "Miss",
-      //   normalHit: "Daño normal",
-      //   criticalHit: "Daño crítico",
-      //   piercingHit: "Daño perforante",
-      //   criticalPiercingHit: "Daño crítico perforante",
-      //   damageRepartition: "Repartición de daños",
-      //   averageDamage: "Daño medio",
-      //   damageAugmentation: "Aumento de daño",
-      //   bonusVariationTitle: ["Evolución del daño medio", "Relativo a una bonificación"]
-      // },
-    },
   };
   return constants;
 }
@@ -5202,13 +5088,11 @@ function initResultTableHistory(battle) {
   });
 }
 
-function initDamageChart(battle, currentLanguage) {
+function initDamageChart(battle, currentLanguage, defaultText) {
   const {
     reduceChartPointsContainer,
     reduceChartPoints,
-    constants: { chartTranslationByLang },
   } = battle;
-  const chartTranslation = chartTranslationByLang[currentLanguage];
   const percentFormat = battle.numberFormats.percent;
   const customPlugins = {
     id: "customPlugins",
@@ -5225,7 +5109,7 @@ function initDamageChart(battle, currentLanguage) {
       } = chart;
       ctx.save();
       const text =
-        chartTranslation.miss + " : " + percentFormat.format(missPercentage);
+      defaultText.miss + " : " + percentFormat.format(missPercentage);
       const padding = 4;
       const fontSize = 14;
 
@@ -5315,7 +5199,7 @@ function initDamageChart(battle, currentLanguage) {
         },
         title: {
           display: true,
-          text: chartTranslation.damageRepartition,
+          text: defaultText.damageRepartition,
           font: {
             size: 20,
           },
@@ -5360,7 +5244,7 @@ function initDamageChart(battle, currentLanguage) {
           position: "bottom",
           title: {
             display: true,
-            text: chartTranslation.damage,
+            text: defaultText.damage,
             font: {
               size: 16,
             },
@@ -5374,7 +5258,7 @@ function initDamageChart(battle, currentLanguage) {
         y: {
           title: {
             display: true,
-            text: chartTranslation.percentage,
+            text: defaultText.percentage,
             font: {
               size: 16,
             },
@@ -5402,28 +5286,28 @@ function initDamageChart(battle, currentLanguage) {
     {
       name: "normalHit",
       canBeReduced: false,
-      label: chartTranslation.normalHit,
+      label: defaultText.normalHit,
       backgroundColor: "rgba(75, 192, 192, 0.2)",
       borderColor: "rgba(75, 192, 192, 1)",
     },
     {
       name: "piercingHit",
       canBeReduced: false,
-      label: chartTranslation.piercingHit,
+      label: defaultText.piercingHit,
       backgroundColor: "rgba(192, 192, 75, 0.2)",
       borderColor: "rgba(192, 192, 75, 1)",
     },
     {
       name: "criticalHit",
       canBeReduced: false,
-      label: chartTranslation.criticalHit,
+      label: defaultText.criticalHit,
       backgroundColor: "rgba(192, 75, 192, 0.2)",
       borderColor: "rgba(192, 75, 192, 1)",
     },
     {
       name: "criticalPiercingHit",
       canBeReduced: false,
-      label: chartTranslation.criticalPiercingHit,
+      label: defaultText.criticalPiercingHit,
       backgroundColor: "rgba(75, 75, 192, 0.2)",
       borderColor: "rgba(75, 75, 192, 1)",
     },
@@ -5436,12 +5320,8 @@ function initDamageChart(battle, currentLanguage) {
   };
 }
 
-function initBonusVariationChart(battle, currentLanguage) {
-  const {
-    constants: { chartTranslationByLang },
-    plotBonusVariation,
-  } = battle;
-  const chartTranslation = chartTranslationByLang[currentLanguage];
+function initBonusVariationChart(battle, currentLanguage, defaultText) {
+  const { plotBonusVariation } = battle;
 
   const ctx = plotBonusVariation.getContext("2d");
 
@@ -5450,13 +5330,13 @@ function initBonusVariationChart(battle, currentLanguage) {
     data: {
       datasets: [
         {
-          label: chartTranslation.averageDamage,
+          label: defaultText.averageDamage,
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
           fill: true,
         },
         {
-          label: chartTranslation.damageAugmentation,
+          label: defaultText.damageAugmentation,
           backgroundColor: "rgba(192, 192, 75, 0.2)",
           borderColor: "rgba(192, 192, 75, 1)",
           hidden: true,
@@ -5501,7 +5381,7 @@ function initBonusVariationChart(battle, currentLanguage) {
         },
         title: {
           display: true,
-          text: chartTranslation.bonusVariationTitle,
+          text: defaultText.bonusVariationTitle.split("[[]]"),
           font: {
             size: 18,
           },
@@ -5532,7 +5412,7 @@ function initBonusVariationChart(battle, currentLanguage) {
         y: {
           title: {
             display: true,
-            text: chartTranslation.averageDamage,
+            text: defaultText.averageDamage,
             font: {
               size: 16,
             },
@@ -5590,7 +5470,11 @@ function addBattleData(battle) {
   }
 }
 
-function createDamageCalculatorInformation(defaultLang, currentLanguage) {
+function createDamageCalculatorInformation(
+  defaultLang,
+  currentLanguage,
+  defaultText
+) {
   const characters = {
     unsavedChanges: false,
     savedCharacters: {},
@@ -5635,6 +5519,7 @@ function createDamageCalculatorInformation(defaultLang, currentLanguage) {
       "#skill-container [data-class]"
     ),
     translateMonsters: defaultLang !== currentLanguage,
+    defaultText: defaultText,
   };
 
   for (const [pseudo, character] of Object.entries(getSavedCharacters())) {
@@ -5765,8 +5650,8 @@ function createDamageCalculatorInformation(defaultLang, currentLanguage) {
 
   addBattleData(battle);
   initResultTableHistory(battle);
-  initDamageChart(battle, currentLanguage);
-  initBonusVariationChart(battle, currentLanguage);
+  initDamageChart(battle, currentLanguage, defaultText);
+  initBonusVariationChart(battle, currentLanguage, defaultText);
   reduceChartPointsListener(battle);
   downloadRawDataListener(battle);
 
@@ -5884,7 +5769,8 @@ function translateTitle() {
 
   if (translatedTitle) {
     document.querySelector("h1").textContent = translatedTitle;
-    document.querySelector("ul.subpage").lastElementChild.textContent = translatedTitle;
+    document.querySelector("ul.subpage").lastElementChild.textContent =
+      translatedTitle;
   }
 }
 
@@ -5896,7 +5782,7 @@ function translateSummary() {
     if (toc) {
       tocContainer.querySelector("h2").textContent = toc;
     }
-    
+
     if (hide) {
       tocContainer.querySelector("a.togglelink").textContent = hide;
     }
@@ -5916,14 +5802,40 @@ function translateSummary() {
   }
 }
 
-function translatePage() {
+function translateDefaultText(defaultText) {
+  const specialTranslations = translation.special;
+  console.log(specialTranslations);
+
+  for (const key of Object.keys(defaultText)) {
+    console.log(key);
+    if (specialTranslations.hasOwnProperty(key)) {
+      defaultText[key] = specialTranslations[key];
+    }
+  }
+}
+
+function translatePage(defaultText) {
   const { general, weapons } = translation;
-  const specialIndexes = { 
+  const specialIndexes = {
     471: "placeholder",
     473: "boss",
     474: "pageTitle",
     475: "toc",
-    476: "hide"
+    476: "hide",
+    502: "unsavedWarning",
+    503: "deleteWarning",
+    504: "pseudo",
+    481: "damage",
+    505: "percentage",
+    506: "miss",
+    507: "normalHit",
+    508: "criticalHit",
+    509: "piercingHit",
+    510: "criticalPiercingHit",
+    511: "damageRepartition",
+    512: "averageDamage",
+    513: "damageAugmentation",
+    514: "bonusVariationTitle",
   };
 
   translateText(general);
@@ -5931,6 +5843,28 @@ function translatePage() {
   handleSpecialIndexes(general, specialIndexes);
   translateTitle();
   translateSummary();
+  translateDefaultText(defaultText);
+}
+
+function getDefaultText() {
+  return {
+    unsavedWarning:
+      "Voulez-vous continuer ? Les dernières modifications ne seront pas sauvegardées.",
+    deleteWarning:
+      "Voulez-vous vraiment supprimer définitivement le personnage [[]] ?",
+    pseudo: "Pseudo",
+    damage: "Dégâts",
+    percentage: "Pourcentage",
+    miss: "Miss",
+    normalHit: "Coup classique",
+    criticalHit: "Coup critique",
+    piercingHit: "Coup perçant",
+    criticalPiercingHit: "Coup critique perçant",
+    damageRepartition: "Distribution des dégâts",
+    averageDamage: "Dégâts moyens",
+    damageAugmentation: "Augmentation des dégâts",
+    bonusVariationTitle: "Évolution des dégâts moyens[[]]par rapport à la valeur d'un bonus",
+  };
 }
 
 function setLanguage(radios, lang, url, reload = false) {
@@ -6010,6 +5944,7 @@ async function addScript(src) {
   const chartLibrary = "https://cdn.jsdelivr.net/npm/chart.js";
 
   const defaultLang = "fr";
+  const defaultText = getDefaultText();
 
   loadStyle(simulatorStyle);
 
@@ -6029,12 +5964,13 @@ async function addScript(src) {
   await Promise.all(scriptsToLoad);
 
   if (translationScript) {
-    translatePage();
+    translatePage(defaultText);
   }
 
   const [characters, battle] = createDamageCalculatorInformation(
     defaultLang,
-    currentLanguage
+    currentLanguage,
+    defaultText
   );
   characterManagement(characters, battle);
   monsterManagement(characters, battle);
