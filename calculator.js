@@ -1634,15 +1634,23 @@ function addNewMonster(
 }
 
 function translateiFrameElements(iframeDoc, category) {
-  const specialTranslations = translation.special;
   const filterName = iframeDoc.getElementById("filter-name");
+  const { general, special } = translation;
   const translatedPlaceholder = 
     category === "monster" 
-    ? specialTranslations.monsterPlaceholder 
-    : specialTranslations.stonePlaceholder;
+    ? special.monsterPlaceholder 
+    : special.stonePlaceholder;
 
   if (filterName && translatedPlaceholder) {
     filterName.placeholder = translatedPlaceholder;
+  }
+
+  for (const element of iframeDoc.querySelectorAll("[data-t]")) {
+    const translateText = general[element.dataset.t];
+
+    if (translateText) {
+      element.textContent = translateText;
+    }
   }
 }
 
@@ -1669,29 +1677,32 @@ function addButtonsToCardsAndTranslate(
   iframeInfo,
   category
 ) {
-  var buttonTemplates = characters.monsterButtonTemplates.children[0];
-  var cardToEdit = iframeDoc.getElementById("cards-container").children;
-  var { nameToVnum } = iframeInfo;
-  var vnumToButtons = iframeInfo[category].vnumToButtons;
-  var translateMonsters = characters.translateMonsters;
+  const buttonTemplates = characters.monsterButtonTemplates.children[0];
+  const cardToEdit = iframeDoc.getElementById("cards-container").children;
+  const { nameToVnum } = iframeInfo;
+  const vnumToButtons = iframeInfo[category].vnumToButtons;
+  const translateMonsters = characters.translateMonsters;
 
-  for (var cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
-    var card = cardToEdit[cardIndex];
-    var cardNameElement = card.querySelector("[data-name]").firstChild;
-    var buttonTemplatesClone = buttonTemplates.cloneNode(true);
-    var cardName = cardNameElement.title.replace(/\s/g, " ");
+  for (let cardIndex = 0; cardIndex < cardToEdit.length; cardIndex++) {
+    const card = cardToEdit[cardIndex];
+    const cardNameElement = card.querySelector("[data-name]").firstChild;
+    const buttonTemplatesClone = buttonTemplates.cloneNode(true);
+    const cardName = cardNameElement.title.replace(/\s/g, " ");
 
     if (!nameToVnum.hasOwnProperty(cardName)) {
       continue;
     }
 
-    var monsterVnum = nameToVnum[cardName];
+    const monsterVnum = nameToVnum[cardName];
 
     buttonTemplatesClone.dataset.monsterId = monsterVnum;
     card.lastElementChild.appendChild(buttonTemplatesClone);
     vnumToButtons[monsterVnum] = buttonTemplatesClone.children;
 
     if (translateMonsters) {
+      // const levelElement = card.querySelector("[data-level]");
+      // const typeElement = card.querySelector("[data-type] a");
+      // levelElement.textContent = levelElement.textContent.replace("Boss", specialTranslations.boss);
       cardNameElement.textContent = getTranslatedMonsterName(monsterVnum);
     }
   }
@@ -5871,13 +5882,59 @@ function handleSpecialIndexes(generalTranslations, specialIndexes) {
   }
 }
 
+function translateTitle() {
+  const translatedTitle = translation.special.pageTitle;
+
+  if (translatedTitle) {
+    document.querySelector("h1").textContent = translatedTitle;
+    document.querySelector("ul.subpage").lastElementChild.textContent = translatedTitle;
+  }
+}
+
+function translateSummary() {
+  const tocContainer = document.getElementById("toc");
+  const { toc, hide } = translation.special;
+
+  if (tocContainer) {
+    if (toc) {
+      tocContainer.querySelector("h2").textContent = toc;
+    }
+    
+    if (hide) {
+      tocContainer.querySelector("a.togglelink").textContent = hide;
+    }
+
+    for (const link of tocContainer.querySelectorAll("ul a")) {
+      const hash = link.hash.substr(1);
+      const title = document.getElementById(hash);
+
+      if (title) {
+        const toctext = link.querySelector("span.toctext");
+
+        if (toctext) {
+          toctext.firstElementChild.textContent = title.textContent;
+        }
+      }
+    }
+  }
+}
+
 function translatePage() {
   const { general, weapons } = translation;
-  const specialIndexes = { 471: "monsterPlaceholder", 472: "stonePlaceholder" };
+  const specialIndexes = { 
+    471: "monsterPlaceholder",
+    472: "stonePlaceholder",
+    473: "boss",
+    474: "pageTitle",
+    475: "toc",
+    476: "hide"
+  };
 
   translateText(general);
   translateWeapons(weapons);
   handleSpecialIndexes(general, specialIndexes);
+  translateTitle();
+  translateSummary();
 }
 
 function setLanguage(radios, lang, url, reload = false) {
