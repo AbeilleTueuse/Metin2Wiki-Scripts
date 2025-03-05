@@ -5829,7 +5829,8 @@ function translateDefaultText(defaultText) {
   }
 }
 
-function translatePage(defaultText) {
+function translatePage(defaultText, currentLanguage) {
+  const mwContent = document.querySelector(".mw-content-ltr");
   const { general, weapons } = translation;
   const specialIndexes = {
     471: "placeholder",
@@ -5873,6 +5874,10 @@ function translatePage(defaultText) {
   translateTitle();
   translateSummary();
   translateDefaultText(defaultText);
+
+  if (mwContent) {
+    mwContent.lang = currentLanguage;
+  }
 }
 
 function getDefaultText() {
@@ -5994,7 +5999,7 @@ async function addScript(src) {
   await Promise.all(scriptsToLoad);
 
   if (translationScript) {
-    translatePage(defaultText);
+    translatePage(defaultText, currentLanguage);
   }
 
   const [characters, battle] = createDamageCalculatorInformation(
