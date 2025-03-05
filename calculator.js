@@ -1754,11 +1754,13 @@ function handleiFrame(iframeInfo, category) {
 
   iframe.src = mw.util.getUrl(pageName);
 
-  iframe.addEventListener("filterLoad", function () {
+  iframe.addEventListener("load", function () {
     var iframeDoc = this.contentDocument || this.contentWindow.document;
+    var htmlElement = iframeDoc.documentElement;
     var iframeBody = iframeDoc.body;
     var content = iframeDoc.getElementById("show-after-loading");
 
+    htmlElement.setAttribute("lang", characters.currentLanguage);
     iframeBody.firstElementChild.replaceWith(content);
 
     iframeBody.style.background = "transparent";
@@ -5517,6 +5519,7 @@ function createDamageCalculatorInformation(
     skillElementsToFilter: document.querySelectorAll(
       "#skill-container [data-class]"
     ),
+    currentLanguage: currentLanguage,
     translateMonsters: defaultLang !== currentLanguage,
     defaultText: defaultText,
   };
@@ -5829,7 +5832,8 @@ function translateDefaultText(defaultText) {
   }
 }
 
-function translatePage(defaultText) {
+function translatePage(defaultText, currentLanguage) {
+  const mwContent = document.querySelector(".mw-content-ltr");
   const { general, weapons } = translation;
   const specialIndexes = {
     471: "placeholder",
@@ -5873,6 +5877,10 @@ function translatePage(defaultText) {
   translateTitle();
   translateSummary();
   translateDefaultText(defaultText);
+
+  if (mwContent) {
+    mwContent.setAttribute("lang", currentLanguage);
+  }
 }
 
 function getDefaultText() {
@@ -5994,7 +6002,7 @@ async function addScript(src) {
   await Promise.all(scriptsToLoad);
 
   if (translationScript) {
-    translatePage(defaultText);
+    translatePage(defaultText, currentLanguage);
   }
 
   const [characters, battle] = createDamageCalculatorInformation(
