@@ -1627,7 +1627,7 @@ function addNewMonster(
   addBattleChoice(battle.battleChoice, monsterVnum, newMonster, true);
 }
 
-function translateiFrameElements(iframeDoc, category) {
+function translateiFrame(iframeDoc) {
   const filterName = iframeDoc.getElementById("filter-name");
   const { general, special } = translation;
   const translatedPlaceholder = special.placeholder;
@@ -1642,23 +1642,6 @@ function translateiFrameElements(iframeDoc, category) {
     if (translateText) {
       element.textContent = translateText;
     }
-  }
-}
-
-function translateiFrame(iframeDoc, category) {
-  const filterForm = iframeDoc.getElementById("filter-form");
-
-  if (filterForm) {
-    translateiFrameElements(iframeDoc, category);
-  } else {
-    const observer = new MutationObserver((mutations, obs) => {
-      const filterForm = iframeDoc.getElementById("filter-form");
-      if (filterForm) {
-        translateiFrameElements(iframeDoc, category);
-        obs.disconnect();
-      }
-    });
-    observer.observe(iframeDoc.body, { childList: true, subtree: true });
   }
 }
 
@@ -1718,7 +1701,7 @@ function addButtonsToCardsAndTranslate(
   }
 
   if (translateMonsters) {
-    translateiFrame(iframeDoc, category);
+    translateiFrame(iframeDoc);
   }
 }
 
@@ -1771,7 +1754,7 @@ function handleiFrame(iframeInfo, category) {
 
   iframe.src = mw.util.getUrl(pageName);
 
-  iframe.addEventListener("load", function () {
+  iframe.addEventListener("filterLoad", function () {
     var iframeDoc = this.contentDocument || this.contentWindow.document;
     var iframeBody = iframeDoc.body;
     var content = iframeDoc.getElementById("show-after-loading");

@@ -164,7 +164,7 @@ function filterInitialization(filterForm) {
     filterCounter: {
       count: 0,
       span: document.getElementById("filter-counter"),
-    }
+    },
   };
   const filters = filterForm.querySelectorAll("[data-filter]");
 
@@ -424,6 +424,13 @@ function filterWithUrl(filterName, filterData) {
   }
 }
 
+function dispatchFilterEvent() {
+  const filterLoadEvent = new CustomEvent("filterLoad", {
+    bubbles: true,
+  });
+  document.dispatchEvent(filterLoadEvent);
+}
+
 function main_filter() {
   const filterForm = document.getElementById("filter-form");
   const filterName = document.getElementById("filter-name");
@@ -434,7 +441,7 @@ function main_filter() {
     elem: extractElementData,
     type: extractTypeData,
     damage: extractDamageData,
-    loc: extractLocData
+    loc: extractLocData,
   };
 
   const filterData = filterInitialization(filterForm);
@@ -449,6 +456,7 @@ function main_filter() {
   filterWithUrl(filterName, filterData);
   filterCards(cardsContainer, filterData, cardsData);
   handleFormEvents(cardsContainer, filterForm, filterData, cardsData);
+  dispatchFilterEvent();
 }
 
 main_filter();

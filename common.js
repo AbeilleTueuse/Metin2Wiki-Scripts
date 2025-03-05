@@ -156,7 +156,6 @@ Exécutée une fois au chargement de la page
       "Loot",
       "Map",
       "Filter",
-      "Calculator",
       "Element",
       "Pets",
       "Colorblind",
@@ -189,6 +188,12 @@ Exécutée une fois au chargement de la page
     }
 
     loadNextScript();
+  }
+
+  if (loadScripts.indexOf("Calculator") !== -1) {
+    addScript(
+      "/index.php?title=MediaWiki:Script/Calculator.js&action=raw&ctype=text/javascript"
+    );
   }
 
   if (mw.config.get("wgUserName")) {
