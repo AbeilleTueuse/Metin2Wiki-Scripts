@@ -110,25 +110,6 @@ function cookies() {
   req.send();
 }
 
-function addScript(src, callback) {
-  var script = document.createElement("script");
-  script.src = src;
-
-  function onComplete() {
-    if (script.parentNode) {
-      script.parentNode.removeChild(script);
-    }
-    if (callback) {
-      callback();
-    }
-  }
-
-  script.onload = onComplete;
-  script.onerror = onComplete;
-
-  document.head.appendChild(script);
-}
-
 /* =======================================
 FONCTION GLOBALE
 Exécutée une fois au chargement de la page
@@ -147,59 +128,58 @@ Exécutée une fois au chargement de la page
   });
 
   /* Charge des scripts spécifiques au chargement de certaines pages */
-  if (loadScripts.length > 0) {
-    var allowedScripts = [
-      "Tabber",
-      "Skills",
-      "Modal",
-      "Switch",
-      "Loot",
-      "Map",
-      "Filter",
-      "Element",
-      "Pets",
-      "Colorblind",
-    ];
+  if (loadScripts.length) {
+    var allowedScripts = {
+      Tabber: true,
+      Skills: true,
+      Modal: true,
+      Switch: true,
+      Loot: true,
+      Map: true,
+      Filter: true,
+      Calculator: true,
+      Element: true,
+      Pets: true,
+      Colorblind: true,
+    };
+    var urlStart = "/index.php?title=MediaWiki:Script/";
+    var urlEnd = ".js&action=raw&ctype=text/javascript";
     var scriptsToLoad = [];
 
-    for (var i = 0; i < loadScripts.length; i++) {
-      var script = loadScripts[i].dataset["loadJavascript"];
+    loadScripts.forEach(function (scriptElement) {
+      var scriptName = scriptElement.dataset.loadJavascript;
 
-      if (
-        allowedScripts.indexOf(script) !== -1 &&
-        scriptsToLoad.indexOf(script) === -1
-      ) {
-        scriptsToLoad.push(script);
+      if (allowedScripts[scriptName]) {
+        allowedScripts[scriptName] = false;
+        scriptsToLoad.push(scriptName);
       }
-    }
+    });
 
-    function loadNextScript() {
-      if (scriptsToLoad.length > 0) {
-        var script = scriptsToLoad.shift();
-        addScript(
-          "/index.php?title=MediaWiki:Script/" +
-            script +
-            ".js&action=raw&ctype=text/javascript",
-          loadNextScript
-        );
+    if (scriptsToLoad.length) {
+      var firstScriptName = scriptsToLoad[0];
+
+      if (firstScriptName === "Element") {
+        scriptsToLoad.shift()
+        $.getScript(urlStart + firstScriptName + urlEnd, function () {
+          injectCustomElements();
+          loadNextScripts();
+        });
       } else {
-        removeLoadingAnimation();
+        loadNextScripts();
       }
     }
 
-    loadNextScript();
-  }
+    function loadNextScripts() {
+      scriptsToLoad.forEach(function (scriptName) {
+        mw.loader.load(urlStart + scriptName + urlEnd);
+      });
+    }
 
-  if (loadScripts.indexOf("Calculator") !== -1) {
-    addScript(
-      "/index.php?title=MediaWiki:Script/Calculator.js&action=raw&ctype=text/javascript"
-    );
+    removeLoadingAnimation();
   }
 
   if (mw.config.get("wgUserName")) {
-    mw.loader.load(
-      "/index.php?title=MediaWiki:Script/Redactor.js&action=raw&ctype=text/javascript"
-    );
+    mw.loader.load(urlStart + "Redactor" + urlEnd);
   }
 
   addButtonTop();

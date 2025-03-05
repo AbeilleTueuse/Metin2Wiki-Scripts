@@ -5975,10 +5975,10 @@ async function addScript(src) {
 
   const defaultLang = "fr";
   const defaultText = getDefaultText();
+  const currentLanguage = getCurrentLanguage(defaultLang);
 
   loadStyle(simulatorStyle);
 
-  const currentLanguage = getCurrentLanguage(defaultLang);
   let translationScript;
 
   if (currentLanguage !== defaultLang) {

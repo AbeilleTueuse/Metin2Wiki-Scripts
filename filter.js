@@ -424,14 +424,7 @@ function filterWithUrl(filterName, filterData) {
   }
 }
 
-function dispatchFilterEvent() {
-  const filterLoadEvent = new CustomEvent("filterLoad", {
-    bubbles: true,
-  });
-  document.dispatchEvent(filterLoadEvent);
-}
-
-function main_filter() {
+(function () {
   const filterForm = document.getElementById("filter-form");
   const filterName = document.getElementById("filter-name");
   const cardsContainer = document.getElementById("cards-container");
@@ -456,7 +449,4 @@ function main_filter() {
   filterWithUrl(filterName, filterData);
   filterCards(cardsContainer, filterData, cardsData);
   handleFormEvents(cardsContainer, filterForm, filterData, cardsData);
-  dispatchFilterEvent();
-}
-
-main_filter();
+})();

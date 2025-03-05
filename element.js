@@ -126,7 +126,7 @@ function addCollapsible(collapsibleContainer) {
   });
 }
 
-(function () {
+function injectCustomElements() {
   var allowedElements = [
     "input",
     "button",
@@ -234,4 +234,4 @@ function addCollapsible(collapsibleContainer) {
   for (var collapsibleContainer of collapsibleContainers) {
     addCollapsible(collapsibleContainer);
   }
-})();
+}

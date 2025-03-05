@@ -1,7 +1,7 @@
 const VALUES_1 = [
-  9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
-  11, 11, 11, 12, 12,
-],
+    9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 11, 12, 12,
+  ],
   VALUES_2 = [
     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
   ],
@@ -237,15 +237,15 @@ const VALUES_1 = [
   ];
 
 const BOOSTED_VALUES_1 = [
-  VALUES_20,
-  VALUES_20,
-  VALUES_20,
-  VALUES_20,
-  VALUES_21,
-  VALUES_21,
-  VALUES_21,
-  VALUES_21,
-],
+    VALUES_20,
+    VALUES_20,
+    VALUES_20,
+    VALUES_20,
+    VALUES_21,
+    VALUES_21,
+    VALUES_21,
+    VALUES_21,
+  ],
   BOOSTED_VALUES_2 = [
     VALUES_22,
     VALUES_22,
@@ -760,7 +760,9 @@ function editFirstCell(previousCell, currentCell) {
   const previousSpan = previousCell.firstChild;
   const currentSpan = currentCell.firstChild;
 
-  previousSpan.textContent = `${previousSpan.textContent.split(" ~")[0]} ~ ${currentSpan.textContent}`;
+  previousSpan.textContent = `${previousSpan.textContent.split(" ~")[0]} ~ ${
+    currentSpan.textContent
+  }`;
 }
 
 function regroupTable(petValues, tableValues) {
@@ -792,7 +794,7 @@ function regroupTable(petValues, tableValues) {
 
       editFirstCell(previousFirstCell, currentFirstCell);
 
-      petValues.rows[petValuesRowIndex + 1].remove()
+      petValues.rows[petValuesRowIndex + 1].remove();
       removedRowCount++;
     }
     previousRow = currentRow;
@@ -885,7 +887,7 @@ function createMapping() {
   );
 }
 
-function main() {
+(function () {
   const editForm = document.getElementById("edit-table"),
     petValues = document.getElementById("pet-values"),
     mapping = createMapping(),
@@ -911,10 +913,8 @@ function main() {
   });
 
   editForm.addEventListener("change", (event) => {
-    console.time("a")
+    console.time("a");
     editTable(petValues, editForm, mapping, allAxis, filter, event.target);
-    console.timeEnd("a")
+    console.timeEnd("a");
   });
-}
-
-main();
+})();
