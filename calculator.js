@@ -1756,9 +1756,11 @@ function handleiFrame(iframeInfo, category) {
 
   iframe.addEventListener("load", function () {
     var iframeDoc = this.contentDocument || this.contentWindow.document;
+    var htmlElement = iframeDoc.documentElement;
     var iframeBody = iframeDoc.body;
     var content = iframeDoc.getElementById("show-after-loading");
 
+    htmlElement.setAttribute("lang", characters.currentLanguage);
     iframeBody.firstElementChild.replaceWith(content);
 
     iframeBody.style.background = "transparent";
@@ -5517,6 +5519,7 @@ function createDamageCalculatorInformation(
     skillElementsToFilter: document.querySelectorAll(
       "#skill-container [data-class]"
     ),
+    currentLanguage: currentLanguage,
     translateMonsters: defaultLang !== currentLanguage,
     defaultText: defaultText,
   };
@@ -5876,7 +5879,7 @@ function translatePage(defaultText, currentLanguage) {
   translateDefaultText(defaultText);
 
   if (mwContent) {
-    mwContent.lang = currentLanguage;
+    mwContent.setAttribute("lang", currentLanguage);
   }
 }
 
