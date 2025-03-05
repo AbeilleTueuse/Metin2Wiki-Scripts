@@ -1754,7 +1754,7 @@ function handleiFrame(iframeInfo, category) {
 
   iframe.src = mw.util.getUrl(pageName);
 
-  iframe.addEventListener("filterLoad", function () {
+  iframe.addEventListener("load", function () {
     var iframeDoc = this.contentDocument || this.contentWindow.document;
     var iframeBody = iframeDoc.body;
     var content = iframeDoc.getElementById("show-after-loading");
