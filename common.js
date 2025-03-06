@@ -173,9 +173,9 @@ Exécutée une fois au chargement de la page
       scriptsToLoad.forEach(function (scriptName) {
         mw.loader.load(urlStart + scriptName + urlEnd);
       });
-    }
 
-    removeLoadingAnimation();
+      removeLoadingAnimation();
+    }
   }
 
   if (mw.config.get("wgUserName")) {
