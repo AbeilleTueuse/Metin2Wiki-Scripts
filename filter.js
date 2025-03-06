@@ -424,6 +424,16 @@ function filterWithUrl(filterName, filterData) {
   }
 }
 
+function dispatchFilterReadyEvent(filterForm) {
+  window.top.postMessage(
+    {
+      type: "filterReady",
+      category: filterForm.dataset.category,
+    },
+    "*"
+  );
+}
+
 (function () {
   const filterForm = document.getElementById("filter-form");
   const filterName = document.getElementById("filter-name");
@@ -449,4 +459,5 @@ function filterWithUrl(filterName, filterData) {
   filterWithUrl(filterName, filterData);
   filterCards(cardsContainer, filterData, cardsData);
   handleFormEvents(cardsContainer, filterForm, filterData, cardsData);
+  dispatchFilterReadyEvent(filterForm);
 })();

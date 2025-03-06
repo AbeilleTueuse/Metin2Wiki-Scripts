@@ -1754,7 +1754,13 @@ function handleiFrame(iframeInfo, category) {
 
   iframe.src = mw.util.getUrl(pageName);
 
-  iframe.addEventListener("load", function () {
+  window.addEventListener("message", function (event) {
+    if (event.origin !== window.origin || 
+      event.data?.type !== "filterReady" || 
+      event.data.category !== category
+    ) {
+      return;
+    }
     var iframeDoc = this.contentDocument || this.contentWindow.document;
     var htmlElement = iframeDoc.documentElement;
     var iframeBody = iframeDoc.body;
