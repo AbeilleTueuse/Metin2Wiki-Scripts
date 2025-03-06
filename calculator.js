@@ -1686,6 +1686,7 @@ function addButtonsToCardsAndTranslate(
     const cardName = cardNameElement.title.replace(/\s/g, " ");
 
     if (!nameToVnum.hasOwnProperty(cardName)) {
+      hideElement(card);
       continue;
     }
 
