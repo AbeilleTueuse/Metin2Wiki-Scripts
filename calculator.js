@@ -264,20 +264,21 @@ function addToDamageChart(
   const { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
     battle.damageChart;
   const isReducePointsChecked = battle.reduceChartPoints.checked;
-  var isFirstDataset = true;
-  var datasets = chart.data.datasets;
+  const datasets = chart.data.datasets;
+
+  let isFirstDataset = true;
 
   datasets.length = 0;
 
-  for (var index = 0; index < datasetsStyle.length; index++) {
-    var dataset = copyObject(datasetsStyle[index]);
+  for (let index = 0; index < datasetsStyle.length; index++) {
+    const dataset = copyObject(datasetsStyle[index]);
 
     if (!scatterDataByType.hasOwnProperty(dataset.name)) {
       continue;
     }
 
-    var scatterData = scatterDataByType[dataset.name];
-    var canBeReduced = scatterData.length > 2 * maxPoints;
+    const scatterData = scatterDataByType[dataset.name];
+    const canBeReduced = scatterData.length > 2 * maxPoints;
 
     dataset.hidden = !isFirstDataset;
     dataset.canBeReduced = canBeReduced;
