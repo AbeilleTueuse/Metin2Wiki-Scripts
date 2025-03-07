@@ -257,10 +257,7 @@ function aggregateDamage(scatterData, maxPoints) {
   return aggregateScatterData;
 }
 
-function addToDamageChart(
-  battle,
-  scatterDataByType
-) {
+function addToDamageChart(battle, scatterDataByType) {
   const { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
     battle.damageChart;
   const isReducePointsChecked = battle.reduceChartPoints.checked;
@@ -330,14 +327,11 @@ function handleChartAnimations(chart, addAnimations) {
   chart.options.transitions.active.animation.duration = addAnimations * 1000;
 }
 
-function updateDamageChartDescription(
-  battle,
-  uniqueDamageCount,
-) {
+function updateDamageChartDescription(battle, uniqueDamageCount) {
   const {
     chartDescriptionContainer,
     uniqueDamageCounters,
-    numberFormats: { default: defaultFormat }
+    numberFormats: { default: defaultFormat },
   } = battle;
 
   if (uniqueDamageCount > 1) {
@@ -1762,8 +1756,9 @@ function handleiFrame(iframeInfo, category) {
   iframe.src = mw.util.getUrl(pageName);
 
   window.addEventListener("message", function (event) {
-    if (event.origin !== window.origin || 
-      event.data?.type !== "filterReady" || 
+    if (
+      event.origin !== window.origin ||
+      event.data?.type !== "filterReady" ||
       event.data.category !== category
     ) {
       return;
@@ -4717,14 +4712,8 @@ function displayResults(
   var [meanDamage, minDamage, maxDamage, scatterDataByType, uniqueDamageCount] =
     prepareDamageData(damageWeightedByType, attackValues);
 
-  addToDamageChart(
-    battle,
-    scatterDataByType
-  );
-  updateDamageChartDescription(
-    battle,
-    uniqueDamageCount,
-  );
+  addToDamageChart(battle, scatterDataByType);
+  updateDamageChartDescription(battle, uniqueDamageCount);
   displayFightResults(
     battle,
     attackerName,
@@ -4782,21 +4771,24 @@ function displayFightInfo(
   displayTimeDuration,
   battle
 ) {
-  var container = battle.possibleDamageCounter.parentElement;
+  const {
+    damageInfoContainer,
+    numberFormats: { default: defaultFormat, second: secondFormat },
+    possibleDamageCounter,
+    damageTime,
+    displayTime,
+  } = battle;
 
   if (possibleDamageCount <= 1) {
-    hideElement(container);
+    hideElement(damageInfoContainer);
     return;
   } else {
-    showElement(container);
+    showElement(damageInfoContainer);
   }
 
-  var { numberFormats, possibleDamageCounter, damageTime, displayTime } =
-    battle;
-
-  possibleDamageCount = numberFormats.default.format(possibleDamageCount);
-  damageTimeDuration = numberFormats.second.format(damageTimeDuration / 1000);
-  displayTimeDuration = numberFormats.second.format(displayTimeDuration / 1000);
+  possibleDamageCount = defaultFormat.format(possibleDamageCount);
+  damageTimeDuration = secondFormat.format(damageTimeDuration / 1000);
+  displayTimeDuration = secondFormat.format(displayTimeDuration / 1000);
 
   possibleDamageCounter.textContent = possibleDamageCount;
   damageTime.textContent = damageTimeDuration;
@@ -5105,7 +5097,8 @@ function initResultTableHistory(battle) {
 
 function initDamageChart(battle, currentLanguage, defaultText) {
   const { reduceChartPointsContainer, reduceChartPoints } = battle;
-  const { default: defaultFormat, percent: percentFormat } = battle.numberFormats;
+  const { default: defaultFormat, percent: percentFormat } =
+    battle.numberFormats;
   const customPlugins = {
     id: "customPlugins",
     afterDraw(chart) {
@@ -5223,12 +5216,8 @@ function initDamageChart(battle, currentLanguage, defaultText) {
                 return nullLabelText;
               }
 
-              const xValue = defaultFormat.format(
-                context.parsed.x
-              );
-              const yValue = defaultFormat.format(
-                context.parsed.y
-              );
+              const xValue = defaultFormat.format(context.parsed.x);
+              const yValue = defaultFormat.format(context.parsed.y);
               const label =
                 " " +
                 context.dataset.label +
@@ -5635,7 +5624,10 @@ function createDamageCalculatorInformation(
     reduceChartPoints: document.getElementById("reduce-chart-points"),
     plotDamage: document.getElementById("plot-damage"),
     plotBonusVariation: document.getElementById("plot-bonus-variation"),
-    chartDescriptionContainer: document.getElementById("chart-description-container"),
+    chartDescriptionContainer: document.getElementById(
+      "chart-description-container"
+    ),
+    damageInfoContainer: document.getElementById("damage-info-container"),
     uniqueDamageCounters: document.querySelectorAll(".unique-damage-counter"),
     possibleDamageCounter: document.getElementById("possible-damage-counter"),
     damageTime: document.getElementById("damage-time"),
