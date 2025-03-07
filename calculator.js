@@ -5181,8 +5181,8 @@ function initDamageChart(battle, currentLanguage, defaultText) {
             const ci = legend.chart;
             const isCurrentDatasetVisible = ci.isDatasetVisible(currentIndex);
             const datasets = ci.data.datasets;
-            const hideReducePoints = true;
             const isReducePointsChecked = reduceChartPoints.checked;
+            let hideReducePoints = true;
 
             datasets[currentIndex].hidden = isCurrentDatasetVisible;
             legendItem.hidden = isCurrentDatasetVisible;
