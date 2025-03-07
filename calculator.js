@@ -258,12 +258,12 @@ function aggregateDamage(scatterData, maxPoints) {
 }
 
 function addToDamageChart(
-  scatterDataByType,
-  damageChart,
-  isReducePointsChecked
+  battle,
+  scatterDataByType
 ) {
-  var { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
-    damageChart;
+  const { chart, datasetsStyle, maxPoints, reduceChartPointsContainer } =
+    battle.damageChart;
+  const isReducePointsChecked = battle.reduceChartPoints.checked;
   var isFirstDataset = true;
   var datasets = chart.data.datasets;
 
@@ -330,18 +330,23 @@ function handleChartAnimations(chart, addAnimations) {
 }
 
 function updateDamageChartDescription(
-  uniqueDamageCounters,
+  battle,
   uniqueDamageCount,
-  formatNumber
 ) {
-  uniqueDamageCounters.forEach(function (element) {
-    if (uniqueDamageCount <= 1) {
-      hideElement(element.parentElement);
-    } else {
-      showElement(element.parentElement);
-      element.textContent = formatNumber.format(uniqueDamageCount);
-    }
-  });
+  const {
+    chartDescriptionContainer,
+    uniqueDamageCounters,
+    numberFormats: { default: defaultFormat }
+  } = battle;
+
+  if (uniqueDamageCount > 1) {
+    uniqueDamageCounters.forEach(function (element) {
+      element.textContent = defaultFormat.format(uniqueDamageCount);
+    });
+    showElement(chartDescriptionContainer);
+  } else {
+    hideElement(chartDescriptionContainer);
+  }
 }
 
 function getMonsterName(monsterVnum) {
@@ -4712,14 +4717,12 @@ function displayResults(
     prepareDamageData(damageWeightedByType, attackValues);
 
   addToDamageChart(
-    scatterDataByType,
-    battle.damageChart,
-    battle.reduceChartPoints.checked
+    battle,
+    scatterDataByType
   );
   updateDamageChartDescription(
-    battle.uniqueDamageCounters,
+    battle,
     uniqueDamageCount,
-    battle.numberFormats.default
   );
   displayFightResults(
     battle,
@@ -5101,7 +5104,7 @@ function initResultTableHistory(battle) {
 
 function initDamageChart(battle, currentLanguage, defaultText) {
   const { reduceChartPointsContainer, reduceChartPoints } = battle;
-  const percentFormat = battle.numberFormats.percent;
+  const { default: defaultFormat, percent: percentFormat } = battle.numberFormats;
   const customPlugins = {
     id: "customPlugins",
     afterDraw(chart) {
@@ -5219,10 +5222,10 @@ function initDamageChart(battle, currentLanguage, defaultText) {
                 return nullLabelText;
               }
 
-              const xValue = battle.numberFormats.default.format(
+              const xValue = defaultFormat.format(
                 context.parsed.x
               );
-              const yValue = battle.numberFormats.percent.format(
+              const yValue = defaultFormat.format(
                 context.parsed.y
               );
               const label =
@@ -5631,6 +5634,7 @@ function createDamageCalculatorInformation(
     reduceChartPoints: document.getElementById("reduce-chart-points"),
     plotDamage: document.getElementById("plot-damage"),
     plotBonusVariation: document.getElementById("plot-bonus-variation"),
+    chartDescriptionContainer: document.getElementById("chart-description-container"),
     uniqueDamageCounters: document.querySelectorAll(".unique-damage-counter"),
     possibleDamageCounter: document.getElementById("possible-damage-counter"),
     damageTime: document.getElementById("damage-time"),
