@@ -5687,19 +5687,27 @@ function translateText(general) {
     if (!translateText) continue;
 
     const childNodes = element.childNodes;
+    const numChildren = childNodes.length;
 
-    if (childNodes.length === 1) {
+    if (numChildren === 1) {
       childNodes[0].textContent = translateText;
       continue;
     }
 
     const parsedText = parseText(translateText);
+    const numParsed = parsedText.length;
 
     let childIndex = 0;
     let textIndex = 0;
 
-    while (childIndex < childNodes.length) {
+    while (childIndex < numChildren) {
       const child = childNodes[childIndex];
+
+      if (childIndex === numParsed) {
+        console.warn("Bad translation for element", element);
+        break;
+      }
+
       const parsed = parsedText[textIndex];
 
       let childName = child.nodeName;
