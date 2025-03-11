@@ -1763,7 +1763,7 @@ function handleiFrame(iframeInfo, category) {
     ) {
       return;
     }
-    var iframeDoc = this.contentDocument || this.contentWindow.document;
+    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
     var htmlElement = iframeDoc.documentElement;
     var iframeBody = iframeDoc.body;
     var content = iframeDoc.getElementById("show-after-loading");
@@ -5707,7 +5707,7 @@ function translateText(general) {
     while (childIndex < numChildren) {
       const child = childNodes[childIndex];
 
-      if (childIndex === numParsed) {
+      if (textIndex === numParsed) {
         console.warn("Bad translation for element", element);
         break;
       }
