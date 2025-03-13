@@ -5664,6 +5664,30 @@ function createDamageCalculatorInformation(
   return [characters, battle];
 }
 
+function handleTooltipsPosition() {
+  const content = document.getElementById("mw-content");
+  const tooltips = document.querySelectorAll(".tooltip-info");
+  const minSpace = 30;
+
+  tooltips.forEach((tooltip) => {
+    const tooltipPosition = tooltip.getBoundingClientRect();
+    const contentPosition = content.getBoundingClientRect();
+    const leftSpace = tooltipPosition.left - contentPosition.left;
+    const rightSpace = contentPosition.right - tooltipPosition.right;
+    const classList = tooltip.classList;
+    
+    if (leftSpace >= minSpace && rightSpace >= minSpace) {
+      classList.remove("tooltip-info-left", "tooltip-info-right");
+    } else if (leftSpace < rightSpace) {
+      classList.remove("tooltip-info-right");
+      classList.add("tooltip-info-left");
+    } else if (rightSpace < leftSpace) {
+      classList.remove("tooltip-info-left");
+      classList.add("tooltip-info-right");
+    }
+  });
+}
+
 function parseText(input) {
   const regex = /\[\[(.*?)\]\]|([^\[]+)/g;
   const result = [];
@@ -5998,6 +6022,7 @@ async function addScript(src) {
   const currentLanguage = getCurrentLanguage(defaultLang);
 
   loadStyle(simulatorStyle);
+  handleTooltipsPosition();
 
   let translationScript;
 
