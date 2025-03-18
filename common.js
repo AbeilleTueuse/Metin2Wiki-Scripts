@@ -118,10 +118,13 @@ Exécutée une fois au chargement de la page
 (function () {
   fixInsecureFavicon();
 
+  var urlStart = "/index.php?title=MediaWiki:Script/";
+  var urlEnd = ".js&action=raw&ctype=text/javascript";
+  var loadScripts = document.querySelectorAll("div[data-load-javascript]");
+
   var equipmentContainer = document.querySelectorAll(
     "div#mw-content-text .list-equip"
   );
-  var loadScripts = document.querySelectorAll("div[data-load-javascript]");
 
   equipmentContainer.forEach(function (container) {
     changeEquipementDisplay(container);
@@ -142,8 +145,6 @@ Exécutée une fois au chargement de la page
       Pets: true,
       Colorblind: true,
     };
-    var urlStart = "/index.php?title=MediaWiki:Script/";
-    var urlEnd = ".js&action=raw&ctype=text/javascript";
     var scriptsToLoad = [];
 
     loadScripts.forEach(function (scriptElement) {
