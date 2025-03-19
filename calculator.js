@@ -5806,33 +5806,39 @@ function translateTitle() {
   }
 }
 
-function translateSummary() {
+function translateSummary(attempts = 5) {
   const tocContainer = document.getElementById("toc");
+
+  if (!tocContainer) {
+    if (attempts > 0) {
+      console.log(`Translating summary... Attempts left: ${attempts}`);
+      setTimeout(() => translateSummary(attempts - 1), 1000);
+    }
+    return;
+  }
+
   const { toc, hide } = translation.special;
 
-  if (tocContainer) {
-    if (toc) {
-      tocContainer.querySelector("h2").textContent = toc;
-    }
+  const heading = tocContainer.querySelector("h2");
+  const toggleLink = tocContainer.querySelector("a.togglelink");
 
-    if (hide) {
-      tocContainer.querySelector("a.togglelink").textContent = hide;
-    }
+  if (heading) heading.textContent = toc;
+  if (toggleLink) toggleLink.textContent = hide;
 
-    for (const link of tocContainer.querySelectorAll("ul a")) {
-      const hash = link.hash.substr(1);
-      const title = document.getElementById(hash);
+  for (const link of tocContainer.querySelectorAll("ul a")) {
+    const hash = link.hash.substring(1);
+    const title = document.getElementById(hash);
 
-      if (title) {
-        const toctext = link.querySelector("span.toctext");
-
-        if (toctext) {
-          toctext.firstElementChild.textContent = title.textContent;
-        }
+    if (title) {
+      const toctext = link.querySelector("span.toctext");
+      
+      if (toctext?.firstElementChild) {
+        toctext.firstElementChild.textContent = title.textContent;
       }
     }
   }
 }
+
 
 function translateDefaultText(defaultText) {
   const specialTranslations = translation.special;
