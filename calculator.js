@@ -2778,6 +2778,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var defense = victim.defense;
   var defenseBoost = defense;
   var magicResistance = 0;
+  var magicPenetration = 0;
   var weaponDefense = 0;
   var tigerStrength = 0;
   var berserkBonus = 0;
@@ -2840,6 +2841,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
     if (isChecked(attacker.whiteDragonElixir)) {
       whiteDragonElixir = 10;
     }
+
+    magicPenetration = attacker.magicPenetration;
 
     if (isPC(victim)) {
       isPlayerVsPlayer = true;
@@ -3067,6 +3070,10 @@ function createBattleValues(attacker, victim, battle, skillType) {
       attacker.attackMagic + Math.min(100, attacker.attackMeleeMagic);
     attackValueMarriage = 0;
     defense = 0;
+    magicResistance = Math.floor(victim.magicResistance * (1 - magicPenetration / 120) + 0.5);
+    weaponDefense = 0;
+    calcAttackValues = calcMagicAttackValue;
+
     if (isDispell(attacker, 6)) {
       typeBonus = 0;
       raceBonus = 0;
@@ -3076,11 +3083,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
       for (var index = 0; index < elementBonus.length; index++) {
         elementBonus[index] = 0;
       }
-    } else {
-      magicResistance = victim.magicResistance;
+      magicResistance = 0;
     }
-    weaponDefense = 0;
-    calcAttackValues = calcMagicAttackValue;
   } else {
     calcAttackValues = calcSecondaryAttackValue;
   }
@@ -4577,6 +4581,10 @@ function addPotentialErrorInformation(
       }
       if (victim.magicResistance) {
         showElement(errorInformation["magic-resistance"]);
+
+        if (attacker.magicPenetration) {
+          showElement(errorInformation["magic-penetration"]);
+        }
       }
     }
   } else {
