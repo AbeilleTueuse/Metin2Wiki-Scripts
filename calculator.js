@@ -3070,7 +3070,12 @@ function createBattleValues(attacker, victim, battle, skillType) {
       attacker.attackMagic + Math.min(100, attacker.attackMeleeMagic);
     attackValueMarriage = 0;
     defense = 0;
-    magicResistance = Math.floor(victim.magicResistance * (1 - magicPenetration / 120) + 0.5);
+    magicResistance = victim.magicResistance;
+    
+    if (magicResistance > 0 && magicPenetration) {
+      magicResistance = Math.floor(magicResistance * (1 - magicPenetration / 120) + 0.5);
+    }
+
     weaponDefense = 0;
     calcAttackValues = calcMagicAttackValue;
 
