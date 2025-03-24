@@ -4586,10 +4586,9 @@ function addPotentialErrorInformation(
       }
       if (victim.magicResistance) {
         showElement(errorInformation["magic-resistance"]);
-
-        if (attacker.magicPenetration) {
-          showElement(errorInformation["magic-penetration"]);
-        }
+      }
+      if (victim.magicResistance > 0 && attacker.magicPenetration) {
+        showElement(errorInformation["magic-penetration"]);
       }
     }
   } else {
