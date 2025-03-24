@@ -4580,7 +4580,7 @@ function addPotentialErrorInformation(
         showElement(errorInformation["polymorph-bonus"]);
       }
     }
-    if (skillType === "magic") {
+    if (skillType === "magic" && !isDispell(attacker, 6)) {
       if (attacker.magicAttackValue) {
         showElement(errorInformation["magic-attack-value-bonus"]);
       }
