@@ -3104,7 +3104,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   missPercentage = Math.min(100, missPercentage);
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
   piercingHitPercentage = Math.min(piercingHitPercentage, 100);
-  console.log(skillType === "physical" && attacker.class !== "archery");
+
   const bonusValues = {
     missPercentage: missPercentage,
     skipCriticalStep: [
