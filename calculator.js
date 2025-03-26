@@ -4101,6 +4101,7 @@ function calcPhysicalSkillDamage(battleValues) {
       damageWithPrimaryBonuses <= 2
         ? [1, 2, 3, 4, 5]
         : [damageWithPrimaryBonuses];
+    const weightByDamage = weight / damageValues.length;
 
     for (let variation = minVariation; variation <= maxVariation; variation++) {
       for (const damage of damageValues) {
@@ -4120,12 +4121,12 @@ function calcPhysicalSkillDamage(battleValues) {
         const entry = savedDamage[damageKey];
 
         if (entry) {
-          entry[0] += weight;
+          entry[0] += weightByDamage;
           continue;
         }
 
         const damageByType = [[], [], [], []];
-        const currentDamageInfo = [weight, damageByType];
+        const currentDamageInfo = [weightByDamage, damageByType];
 
         const finalDamage = Math.floor(
           (damageWithFormula * bonusValues.weaponBonusCoeff) / 100
