@@ -2571,26 +2571,31 @@ function saveFinalSkillDamage(
 
   damage -= bonusValues.defense;
 
-  damage = floorMultiplication(damage, bonusValues.skillWardCoeff);
-  damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
+  const damageValues =
+    damage <= 2 && bonusValues.isPhysicalSkill ? [1, 2, 3, 4, 5] : [damage];
 
-  const tempDamage = Math.floor(
-    (damage * bonusValues.skillBonusByBonusCoeff) / 100
-  );
+  for (const minDamage of damageValues) {
+    damage = floorMultiplication(minDamage, bonusValues.skillWardCoeff);
+    damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
 
-  damage = Math.floor(
-    (tempDamage * bonusValues.magicAttackValueCoeff) / 100 + 0.5
-  );
-  damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
+    const tempDamage = Math.floor(
+      (damage * bonusValues.skillBonusByBonusCoeff) / 100
+    );
 
-  calcFinalDamage(
-    damage,
-    minPiercingDamage,
-    tempDamage,
-    bonusValues,
-    criticalAttackRange,
-    damageByType
-  );
+    damage = Math.floor(
+      (tempDamage * bonusValues.magicAttackValueCoeff) / 100 + 0.5
+    );
+    damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
+
+    calcFinalDamage(
+      damage,
+      minPiercingDamage,
+      tempDamage,
+      bonusValues,
+      criticalAttackRange,
+      damageByType
+    );
+  }
 }
 
 function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
@@ -3071,9 +3076,11 @@ function createBattleValues(attacker, victim, battle, skillType) {
     attackValueMarriage = 0;
     defense = 0;
     magicResistance = victim.magicResistance;
-    
+
     if (magicResistance > 0 && magicPenetration) {
-      magicResistance = Math.floor(magicResistance * (1 - magicPenetration / 120) + 0.5);
+      magicResistance = Math.floor(
+        magicResistance * (1 - magicPenetration / 120) + 0.5
+      );
     }
 
     weaponDefense = 0;
@@ -3097,7 +3104,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   missPercentage = Math.min(100, missPercentage);
   criticalHitPercentage = Math.min(criticalHitPercentage, 100);
   piercingHitPercentage = Math.min(piercingHitPercentage, 100);
-
+  console.log(skillType === "physical" && attacker.class !== "archery");
   const bonusValues = {
     missPercentage: missPercentage,
     skipCriticalStep: [
@@ -3108,6 +3115,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
       !Boolean(100 - piercingHitPercentage),
       !Boolean(piercingHitPercentage),
     ],
+    isPhysicalSkill: skillType === "physical" && attacker.class !== "archery",
     weaponBonusCoeff: 1,
     attackValueCoeff: 100 + attackValueMeleeMagic,
     attackValueMarriage: attackValueMarriage,
@@ -5843,14 +5851,13 @@ function translateSummary(attempts = 5) {
 
     if (title) {
       const toctext = link.querySelector("span.toctext");
-      
+
       if (toctext?.firstElementChild) {
         toctext.firstElementChild.textContent = title.textContent;
       }
     }
   }
 }
-
 
 function translateDefaultText(defaultText) {
   const specialTranslations = translation.special;
