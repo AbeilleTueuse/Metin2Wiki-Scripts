@@ -2454,8 +2454,7 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
 
 function calcFinalDamage(
   finalDamage,
-  minPiercingDamage,
-  tempDamage,
+  damageWithPrimaryBonuses,
   bonusValues,
   criticalAttackRange,
   damageByType
@@ -2479,9 +2478,9 @@ function calcFinalDamage(
         let damage = afterCriticalDamage;
 
         if (piercingIndex) {
-          damage += bonusValues.defenseBoost + Math.min(0, minPiercingDamage);
+          damage += Math.min(bonusValues.defenseBoost, damageWithPrimaryBonuses);
           damage += Math.floor(
-            (tempDamage * bonusValues.extraPiercingHitCoeff) / 1000
+            (damageWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
           );
         }
 
@@ -2536,7 +2535,6 @@ function calcFinalDamage(
 
 function saveFinalDamage(
   damage,
-  minPiercingDamage,
   damageWithPrimaryBonuses,
   bonusValues,
   criticalAttackRange,
@@ -2551,7 +2549,6 @@ function saveFinalDamage(
 
   calcFinalDamage(
     damage,
-    minPiercingDamage,
     damageWithPrimaryBonuses,
     bonusValues,
     criticalAttackRange,
@@ -2561,7 +2558,6 @@ function saveFinalDamage(
 
 function saveFinalSkillDamage(
   damage,
-  minPiercingDamage,
   bonusValues,
   criticalAttackRange,
   damageByType
@@ -2589,7 +2585,6 @@ function saveFinalSkillDamage(
 
     calcFinalDamage(
       damage,
-      minPiercingDamage,
       tempDamage,
       bonusValues,
       criticalAttackRange,
@@ -4043,18 +4038,17 @@ function calcPhysicalDamage(battleValues) {
       bonusValues
     );
 
-    const minPiercingDamage =
+    const damageAfterDefense =
       damageWithPrimaryBonuses -
       bonusValues.defenseBoost -
       bonusValues.defenseMarriage;
 
     const damageValues =
-      minPiercingDamage <= 2 ? [1, 2, 3, 4, 5] : [minPiercingDamage];
+      damageAfterDefense <= 2 ? [1, 2, 3, 4, 5] : [damageAfterDefense];
 
     for (const damage of damageValues) {
       saveFinalDamage(
         damage,
-        minPiercingDamage,
         damageWithPrimaryBonuses,
         bonusValues,
         criticalAttackRange,
@@ -4142,7 +4136,6 @@ function calcPhysicalSkillDamage(battleValues) {
 
         saveFinalSkillDamage(
           finalDamage,
-          damageWithPrimaryBonuses,
           bonusValues,
           criticalAttackRange,
           damageByType
@@ -4216,7 +4209,6 @@ function calcMagicSkillDamage(battleValues) {
       for (const damage of damageValues) {
         saveFinalSkillDamage(
           damage,
-          damageWithPrimaryBonuses,
           bonusValues,
           criticalAttackRange,
           damageByType
