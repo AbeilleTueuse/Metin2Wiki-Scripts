@@ -5228,7 +5228,7 @@ function initDamageChart(battle, currentLanguage, defaultText) {
               }
 
               const xValue = defaultFormat.format(context.parsed.x);
-              const yValue = defaultFormat.format(context.parsed.y);
+              const yValue = percentFormat.format(context.parsed.y);
               const label =
                 " " +
                 context.dataset.label +
