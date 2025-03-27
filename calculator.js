@@ -4114,10 +4114,8 @@ function calcPhysicalSkillDamage(battleValues) {
 
         let damageKey = damageWithFormula;
 
-        if (damageWithPrimaryBonuses < 0) {
-          damageKey = `${damageWithFormula}_${Math.abs(
-            damageWithPrimaryBonuses
-          )}`;
+        if (damageWithPrimaryBonuses < bonusValues.defenseBoost) {
+          damageKey = `${damageWithFormula}_${damageWithPrimaryBonuses}`;
         }
 
         const entry = savedDamage[damageKey];
@@ -4145,7 +4143,6 @@ function calcPhysicalSkillDamage(battleValues) {
       }
     }
   }
-
   processSavedDamage(savedDamage, damageWeightedByType, battleValues);
 
   return damageWeightedByType;
