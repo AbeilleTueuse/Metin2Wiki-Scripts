@@ -2449,7 +2449,7 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
 
   damage = Math.floor(damage * bonusValues.damageMultiplier);
 
-  return damage;
+  return Math.max(0, damage);
 }
 
 function calcFinalDamage(
