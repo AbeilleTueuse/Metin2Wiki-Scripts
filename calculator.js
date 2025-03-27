@@ -4143,6 +4143,7 @@ function calcPhysicalSkillDamage(battleValues) {
       }
     }
   }
+  
   processSavedDamage(savedDamage, damageWeightedByType, battleValues);
 
   return damageWeightedByType;
