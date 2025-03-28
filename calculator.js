@@ -2511,6 +2511,7 @@ function calcFinalDamage(
           }
         }
 
+        damage -= Math.floor(damage * bonusValues.resistance90PercentHp / 100);
         damage = Math.max(0, damage + bonusValues.defensePercent);
         damage += Math.min(
           300,
@@ -2519,7 +2520,6 @@ function calcFinalDamage(
         damage = Math.floor((damage * bonusValues.empireMalusCoeff) / 10);
         damage = Math.floor((damage * bonusValues.sungMaStrBonusCoeff) / 10000);
         damage -= Math.floor(damage * bonusValues.sungmaStrMalusCoeff);
-
         damage = Math.floor(
           (damage * bonusValues.whiteDragonElixirCoeff) / 100
         );
@@ -2796,6 +2796,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
   var rankBonus = 0;
   var useDarkProtection = false;
   var darkProtectionPoint = 0;
+  var resistance90PercentHp = 0;
   var defensePercent = 0;
   var damageBonus = 0;
   var empireMalus = 0;
@@ -3053,6 +3054,8 @@ function createBattleValues(attacker, victim, battle, skillType) {
       darkProtectionPoint = calcDarkProtectionPoint(skillPowerTable, victim);
     }
 
+    resistance90PercentHp = victim.resistance90PercentHp || 0;
+
     if (isMagicClass(victim)) {
       defensePercent = (-2 * victim.magicDefense * victim.defensePercent) / 100;
     } else {
@@ -3143,6 +3146,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
     darkProtectionPoint: darkProtectionPoint,
     darkProtectionSp: victim.darkProtectionSp,
     rankBonusCoeff: 100 + rankBonus,
+    resistance90PercentHp: resistance90PercentHp,
     defensePercent: Math.floor(defensePercent),
     damageBonusCoeff: Math.min(20, damageBonus),
     empireMalusCoeff: 10 - empireMalus,
