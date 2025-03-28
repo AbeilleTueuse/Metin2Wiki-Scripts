@@ -3188,7 +3188,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
 }
 
 function updateBattleValues(battleValues, skillFormula, skillInfo) {
-  var weaponBonus = 0;
+  var weaponBonus = skillInfo.adjust || 0;
   var skillWard = 0;
   var skillBonus = 0;
   var skillBonusByBonus = 0;
@@ -3202,7 +3202,7 @@ function updateBattleValues(battleValues, skillFormula, skillInfo) {
     var [weaponType, weaponBonusValue] = skillInfo.weaponBonus;
 
     if (weaponType === attacker.weapon.type) {
-      weaponBonus = weaponBonusValue;
+      weaponBonus += weaponBonusValue;
     }
   }
 
@@ -3258,13 +3258,13 @@ function calcBerserkBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var skillPower = getSkillPower(victim.skillBerserk, skillPowerTable);
+  const skillPower = getSkillPower(victim.skillBerserk, skillPowerTable);
 
   if (!skillPower) {
     return 0;
   }
 
-  var berserkBonus = Math.floor(skillPower * 25);
+  const berserkBonus = Math.floor(skillPower * 25);
 
   return berserkBonus;
 }
@@ -3274,15 +3274,15 @@ function calcBlessingBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var int = victim.intBlessing;
-  var dex = victim.dexBlessing;
-  var skillPower = getSkillPower(victim.skillBlessing, skillPowerTable);
+  const int = victim.intBlessing;
+  const dex = victim.dexBlessing;
+  const skillPower = getSkillPower(victim.skillBlessing, skillPowerTable);
 
   if (!skillPower) {
     return 0;
   }
 
-  var blessingBonus = floorMultiplication(
+  let blessingBonus = floorMultiplication(
     ((int * 0.3 + 5) * (2 * skillPower + 0.5) + 0.3 * dex) / (skillPower + 2.3),
     1
   );
@@ -3299,21 +3299,37 @@ function calcFearBonus(skillPowerTable, victim) {
     return 0;
   }
 
-  var skillPower = getSkillPower(victim.skillFear, skillPowerTable);
+  const skillPower = getSkillPower(victim.skillFear, skillPowerTable);
 
   if (!skillPower) {
     return 0;
   }
 
-  var fearBonus = 5 + Math.floor(skillPower * 20);
+  const fearBonus = 5 + Math.floor(skillPower * 20);
 
   return fearBonus;
 }
 
 function calcDarkProtectionPoint(skillPowerTable, victim) {
-  var skillPower = getSkillPower(victim.skillDarkProtection, skillPowerTable);
+  const skillPower = getSkillPower(victim.skillDarkProtection, skillPowerTable);
 
   return floorMultiplication(100 - victim.int * 0.84 * skillPower, 1);
+}
+
+function calcStealthBonus(skillPowerTable, attacker) {
+  if (!isChecked(attacker.useStealth)) {
+    return 0;
+  }
+
+  const skillPower = getSkillPower(attacker.skillStealth, skillPowerTable);
+
+  if (!skillPower) {
+    return 0;
+  }
+
+  const stealthBonus = skillPower * 50;
+
+  return stealthBonus;
 }
 
 function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
@@ -3464,6 +3480,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           };
           skillInfo.weaponBonus = [1, 50];
           skillInfo.range = [500, 700];
+          skillInfo.adjust = calcStealthBonus(skillPowerTable, attacker);
           improvedByBonus = true;
           improvedBySkillBonus = true;
           break;
