@@ -2478,9 +2478,13 @@ function calcFinalDamage(
         let damage = afterCriticalDamage;
 
         if (piercingIndex) {
-          damage += Math.min(bonusValues.defenseBoost, damageWithPrimaryBonuses);
+          damage += Math.min(
+            bonusValues.defenseBoost,
+            damageWithPrimaryBonuses
+          );
           damage += Math.floor(
-            (damageWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) / 1000
+            (damageWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) /
+              1000
           );
         }
 
@@ -2511,7 +2515,9 @@ function calcFinalDamage(
           }
         }
 
-        damage -= Math.floor(damage * bonusValues.resistance90PercentHp / 100);
+        damage -= Math.floor(
+          (damage * bonusValues.resistance90PercentHp) / 100
+        );
         damage = Math.max(0, damage + bonusValues.defensePercent);
         damage += Math.min(
           300,
@@ -4164,7 +4170,7 @@ function calcPhysicalSkillDamage(battleValues) {
       }
     }
   }
-  
+
   processSavedDamage(savedDamage, damageWeightedByType, battleValues);
 
   return damageWeightedByType;
@@ -4453,12 +4459,32 @@ function changeMonsterValues(monster, instance, attacker) {
       monster.fireResistance = -20;
   }
 
-  // Alastor
-  if (monster.vnum === 6790) {
-    monster.iceResistance = 0;
-    monster.iceBonus = 0;
-    monster.lightningResistance = -10;
-    monster.lightningBonus = 65;
+  switch (monster.vnum) {
+    // Alastor
+    case 6790:
+      monster.iceResistance = 0;
+      monster.iceBonus = 0;
+      monster.lightningResistance = -10;
+      monster.lightningBonus = 65;
+      break;
+
+    // Zodiac boss
+    case 2852:
+    case 2862:
+    case 2872:
+    case 2882:
+    case 2892:
+    case 2902:
+    case 2912:
+    case 2922:
+    case 2932:
+    case 2942:
+    case 2952:
+    case 2962:
+      monster.level = 136;
+      monster.vit = 200;
+      monster.rawDefense = 5000;
+      break;
   }
 }
 
@@ -4993,6 +5019,7 @@ function createMapping() {
       "insectBonus", // 5
       "desertBonus", // 6
       "devilBonus", // 7
+      "zodiacBonus", // 8
     ],
     raceBonus: {
       warrior: "warriorBonus",
