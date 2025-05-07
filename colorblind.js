@@ -151,12 +151,7 @@ class SpawnLayerManager {
     const filteredLayer = this._drawFilteredLayer(spawnLayer);
     ctx.drawImage(filteredLayer, 0, 0);
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-
-      const item = new ClipboardItem({ [blob.type]: blob });
-      await navigator.clipboard.write([item]);
-    });
+    this._copyCanvasContentsToClipboard(canvas);
   }
 
   _drawFilteredLayer(layer) {
@@ -169,6 +164,28 @@ class SpawnLayerManager {
     ctx.drawImage(layer, 0, 0);
   
     return canvas;
+  }
+
+  async _getBlobFromCanvas(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error("Canvas toBlob failed"));
+        }
+      });
+    });
+  }
+
+  async _copyCanvasContentsToClipboard(canvas) {
+    try {
+      const blob = await this._getBlobFromCanvas(canvas);
+      const data = [new ClipboardItem({ [blob.type]: blob })];
+      await navigator.clipboard.write(data);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   _copyAnimation(defaultEmoji, clickedEmoji) {
