@@ -27,6 +27,7 @@ body {
 
 ol li {
   padding: 0;
+  padding-left: 5px;
   counter-increment: custom-counter;
 }
 
@@ -273,6 +274,7 @@ button:active {
   text-decoration: none;
 }
 
+/* Remplacer popInfo et popContenu par pop-parent et pop-content */
 .popContenu {
   display: inline-block;
   transition: all 0.4s ease;
@@ -283,7 +285,17 @@ button:active {
   transition: all 0.4s ease;
 }
 
-.cadreFenetre {
+.pop-parent:hover .pop-content {
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.pop-content {
+  opacity: 0;
+}
+
+.cadreFenetre,
+.game-window {
   border: solid;
   border-image: url("https://fr-wiki.metin2.gameforge.com/images/1/11/Cadrefenetre.png")
     11 fill / auto / 0 repeat;

@@ -167,7 +167,6 @@ class SpawnLayerManager {
     const ctx = canvas.getContext("2d");
     ctx.filter = this.currentFilter || "none";
     ctx.drawImage(layer, 0, 0);
-    console.log(this.currentFilter);
   
     return canvas;
   }
