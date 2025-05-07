@@ -158,11 +158,11 @@ class SpawnLayerManager {
     const canvas = document.createElement("canvas");
     canvas.width = layer.width;
     canvas.height = layer.height;
-  
+
     const ctx = canvas.getContext("2d");
     ctx.filter = this.currentFilter || "none";
     ctx.drawImage(layer, 0, 0);
-  
+
     return canvas;
   }
 
