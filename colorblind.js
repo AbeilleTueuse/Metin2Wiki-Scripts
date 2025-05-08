@@ -142,8 +142,8 @@ class SpawnLayerManager {
 
   _copyCombinedImageToClipboard(map, spawnLayer) {
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(map.width, spawnLayer.width);
-    canvas.height = Math.max(map.height, spawnLayer.height);
+    canvas.width = Math.max(map.naturalWidth, spawnLayer.naturalWidth);
+    canvas.height = Math.max(map.naturalHeight, spawnLayer.naturalHeight);
 
     const ctx = canvas.getContext("2d");
     ctx.drawImage(map, 0, 0);
@@ -156,8 +156,8 @@ class SpawnLayerManager {
 
   _drawFilteredLayer(layer) {
     const canvas = document.createElement("canvas");
-    canvas.width = layer.width;
-    canvas.height = layer.height;
+    canvas.width = layer.naturalWidth;
+    canvas.height = layer.naturalHeight;
 
     const ctx = canvas.getContext("2d");
     ctx.filter = this.currentFilter || "none";
