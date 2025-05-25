@@ -81,7 +81,8 @@ table.map a.mw-collapsible-text,
 
 .fondfenetre,
 .sous-titre,
-table.pretty-table th {
+table.pretty-table th,
+table.pretty-table.sortable > thead > tr {
   background: url("https://fr-wiki.metin2.gameforge.com/images/8/89/Fondfenetre.png")
     repeat;
   color: white;
@@ -120,6 +121,10 @@ table.pretty-table caption {
 table.pretty-table th a,
 table.pretty-table th span {
   color: white;
+}
+
+table.pretty-table.sortable th {
+  filter: invert(1);
 }
 
 table.sticky-header-row thead tr {
