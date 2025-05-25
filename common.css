@@ -61,7 +61,7 @@ table.map a.mw-collapsible-text,
   border-image-slice: 5 0 4 0 fill;
   border-image-width: auto;
   border-image-repeat: repeat;
-  border-image-source: url(https://fr-wiki.metin2.gameforge.com/images/a/a7/Boxheaderbrown.png);
+  border-image-source: url("https://fr-wiki.metin2.gameforge.com/images/a/a7/Boxheaderbrown.png");
 }
 
 .cadre {
