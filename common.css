@@ -79,10 +79,9 @@ table.map a.mw-collapsible-text,
   border-top-left-radius: 15px;
 }
 
-.fondfenetre,
+#mw-content .fondfenetre,
 .sous-titre,
-table.pretty-table th,
-table.pretty-table.sortable > thead > tr {
+table.pretty-table th {
   background: url("https://fr-wiki.metin2.gameforge.com/images/8/89/Fondfenetre.png")
     repeat;
   color: white;
