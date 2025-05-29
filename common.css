@@ -123,8 +123,16 @@ table.pretty-table th span {
   color: white;
 }
 
-table.pretty-table.sortable th {
-  filter: invert(1);
+table.pretty-table.sortable th.headerSort {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2221%22 height=%229%22 viewBox=%220 0 21 9%22%3E %3Cpath fill=%22%23fff%22 d=%22M14.5 5l-4 4-4-4zM14.5 4l-4-4-4 4z%22/%3E %3C/svg%3E");
+}
+
+table.pretty-table.sortable th.headerSortUp {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2221%22 height=%224%22 viewBox=%220 0 21 4%22%3E %3Cpath fill=%22%23fff%22 d=%22M6.5 4l4-4 4 4z%22/%3E %3C/svg%3E");
+}
+
+table.pretty-table.sortable th.headerSortDown {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2221%22 height=%224%22 viewBox=%220 0 21 4%22%3E %3Cpath fill=%22%23fff%22 d=%22M14.5 0l-4 4-4-4z%22/%3E %3C/svg%3E")
 }
 
 table.sticky-header-row thead tr {
