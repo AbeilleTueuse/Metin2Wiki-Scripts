@@ -4469,18 +4469,18 @@ function changeMonsterValues(monster, instance, attacker) {
       break;
 
     // Zodiac boss
+    case 2752:
+    case 2762:
+    case 2772:
+    case 2782:
+    case 2792:
+    case 2802:
+    case 2812:
+    case 2822:
+    case 2832:
+    case 2842:
     case 2852:
     case 2862:
-    case 2872:
-    case 2882:
-    case 2892:
-    case 2902:
-    case 2912:
-    case 2922:
-    case 2932:
-    case 2942:
-    case 2952:
-    case 2962:
       monster.level = 136;
       monster.vit = 200;
       monster.rawDefense = 5000;
