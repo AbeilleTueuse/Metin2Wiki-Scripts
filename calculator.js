@@ -230,18 +230,20 @@ function prepareDamageData(damageWeightedByType, attackValues) {
 }
 
 function aggregateDamage(scatterData, maxPoints) {
-  var dataLength = scatterData.length;
-  var remainingData = dataLength;
-  var aggregateScatterData = [];
+  const dataLength = scatterData.length;
+  const groupLength = Math.ceil(dataLength / maxPoints);
+  const aggregateScatterData = [];
+  const groupCount = Math.ceil(dataLength / groupLength);
 
-  for (var groupIndex = 0; groupIndex < maxPoints; groupIndex++) {
-    var groupLength = Math.floor(remainingData / (maxPoints - groupIndex));
-    var startIndex = dataLength - remainingData;
-    var aggregateDamage = 0;
-    var aggregateProbability = 0;
+  for (let groupIndex = 0; groupIndex < groupCount; groupIndex++) {
+    const startIndex = groupIndex * groupLength;
+    const endIndex = Math.min(startIndex + groupLength, dataLength);
 
-    for (var index = startIndex; index < startIndex + groupLength; index++) {
-      var { x: damage, y: probability } = scatterData[index];
+    let aggregateDamage = 0;
+    let aggregateProbability = 0;
+
+    for (let index = startIndex; index < endIndex; index++) {
+      const { x: damage, y: probability } = scatterData[index];
       aggregateDamage += damage * probability;
       aggregateProbability += probability;
     }
@@ -250,8 +252,6 @@ function aggregateDamage(scatterData, maxPoints) {
       x: aggregateDamage / aggregateProbability,
       y: aggregateProbability,
     });
-
-    remainingData -= groupLength;
   }
 
   return aggregateScatterData;
