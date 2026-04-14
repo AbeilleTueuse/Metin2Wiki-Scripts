@@ -2223,19 +2223,32 @@ function calcMainAttackValue(attacker) {
 }
 
 function calcStatAttackValue(character) {
+  let statAttackValue;
+
   switch (character.race) {
     case "warrior":
     case "sura":
-      return 2 * character.str;
+      statAttackValue = 2 * character.str;
+      break;
     case "ninja":
-      return Math.floor((1 / 4) * (character.str + 7 * character.dex));
+      statAttackValue = Math.floor((1 / 4) * (character.str + 7 * character.dex));
+      break;
     case "shaman":
-      return Math.floor((1 / 3) * (5 * character.int + character.dex));
+      statAttackValue = Math.floor((1 / 3) * (5 * character.int + character.dex));
+      break;
     case "lycan":
-      return character.vit + 2 * character.dex;
+      statAttackValue = character.vit + 2 * character.dex;
+      break;
     default:
-      return 2 * character.str;
+      statAttackValue = 2 * character.str;
+      break;
   }
+
+  if (isPC(character) && isRiding(character) && !isPolymorph(character)) {
+    return Math.max(2 * character.str, statAttackValue);
+  }
+
+  return statAttackValue;
 }
 
 function calcPvpCriticalAttackRange(minAttackValue, maxAttackValue, growth) {
