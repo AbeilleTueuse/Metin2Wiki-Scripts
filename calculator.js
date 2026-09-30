@@ -101,7 +101,7 @@ function addRowToTableResultHistory(
   tableResultHistory,
   valuesToDisplay,
   deleteFightTemplate,
-  numberFormat
+  numberFormat,
 ) {
   var row = tableResultHistory.insertRow();
   editTableResultRow(row, valuesToDisplay, numberFormat);
@@ -312,7 +312,7 @@ function addToBonusVariationChart(
   damageByBonus,
   augmentationByBonus,
   xLabel,
-  chart
+  chart,
 ) {
   chart.data.datasets[0].data = damageByBonus;
   chart.data.datasets[1].data = augmentationByBonus;
@@ -374,7 +374,7 @@ function filterWeapon(
   weaponElement,
   weaponCategory,
   allowedWeaponsPerRace,
-  selectValueIsChanged = false
+  selectValueIsChanged = false,
 ) {
   var allowedWeapons = allowedWeaponsPerRace[selectedRace];
 
@@ -453,7 +453,7 @@ function handleWeaponDisplay(
   weaponCategory,
   weaponDisplay,
   weaponVnum,
-  newWeapon
+  newWeapon,
 ) {
   var newWeapon = newWeapon || getSelectedWeapon(weaponCategory);
 
@@ -480,7 +480,7 @@ function filterUpgrade(
   weaponUpgrade,
   weaponVnum,
   randomAttackValue,
-  randomMagicAttackValue
+  randomMagicAttackValue,
 ) {
   var weapon = createWeapon(weaponVnum);
   var currentUpgrade = Number(weaponUpgrade.value);
@@ -561,24 +561,24 @@ function filterForm(characters, battle) {
           selectedRace,
           weaponElement,
           characters.weaponCategory,
-          allowedWeaponsPerRace
+          allowedWeaponsPerRace,
         );
         handleWeaponDisplay(
           characters.weaponCategory,
           characters.weaponDisplay,
-          weaponElement.value
+          weaponElement.value,
         );
         filterUpgrade(
           characterCreation.weaponUpgrade,
           weaponElement.value,
           characters.randomAttackValue,
-          characters.randomMagicAttackValue
+          characters.randomMagicAttackValue,
         );
         filterSkills(classChoice.value, characters.skillElementsToFilter);
         handleBonusVariationUpdate(
           characterCreation,
           characters.bonusVariation,
-          true
+          true,
         );
 
         battleChoice.resetAttackType = true;
@@ -588,7 +588,7 @@ function filterForm(characters, battle) {
         handleBonusVariationUpdate(
           characterCreation,
           characters.bonusVariation,
-          true
+          true,
         );
 
         battleChoice.resetAttackType = true;
@@ -600,17 +600,17 @@ function filterForm(characters, battle) {
           characters.weaponCategory,
           characters.weaponDisplay,
           weaponElement.value,
-          target
+          target,
         );
         filterUpgrade(
           characterCreation.weaponUpgrade,
           target.value,
           characters.randomAttackValue,
-          characters.randomMagicAttackValue
+          characters.randomMagicAttackValue,
         );
         handleBonusVariationUpdate(
           characterCreation,
-          characters.bonusVariation
+          characters.bonusVariation,
         );
         break;
       case "isRiding":
@@ -712,7 +712,7 @@ function saveCharacter(
   characterCreation,
   battle,
   newCharacter,
-  characterDataObject
+  characterDataObject,
 ) {
   if (!characterDataObject) {
     var characterData = new FormData(characterCreation);
@@ -735,7 +735,7 @@ function saveCharacter(
     updateBattleChoiceImage(
       battleChoice,
       characterPseudo,
-      characterDataObject.race
+      characterDataObject.race,
     );
   }
 
@@ -743,7 +743,7 @@ function saveCharacter(
     if (isCharacterSelected(characterPseudo, battleChoice.attacker.selected)) {
       filterAttackTypeSelectionCharacter(
         characterDataObject,
-        battleChoice.attackType
+        battleChoice.attackType,
       );
     }
     battleChoice.resetAttackType = false;
@@ -843,7 +843,7 @@ function uploadCharacter(
   characters,
   characterTemplate,
   charactersContainer,
-  battle
+  battle,
 ) {
   var selectFilesLength = selectedFiles.length;
   var defaultPseudo = characters.defaultText.pseudo;
@@ -866,14 +866,14 @@ function uploadCharacter(
 
             [characterDataObject, characterPseudo] = addUniquePseudo(
               characterDataObject,
-              Object.keys(characters.savedCharacters)
+              Object.keys(characters.savedCharacters),
             );
             var selectedCharacter = handleNewCharacter(
               characters,
               characterTemplate,
               charactersContainer,
               battle,
-              characterPseudo
+              characterPseudo,
             )[0];
 
             if (selectFilesLength === 1) {
@@ -882,7 +882,7 @@ function uploadCharacter(
                 characters.characterCreation,
                 characters,
                 selectedCharacter,
-                battle
+                battle,
               );
             }
 
@@ -891,7 +891,7 @@ function uploadCharacter(
               characters.characterCreation,
               battle,
               true,
-              characterDataObject
+              characterDataObject,
             );
           }
         } catch (error) {
@@ -910,7 +910,7 @@ function handleUploadCharacter(
   characters,
   characterTemplate,
   charactersContainer,
-  battle
+  battle,
 ) {
   var characterInput = characters.characterInput;
   var dropZone = characters.dropZone;
@@ -941,7 +941,7 @@ function handleUploadCharacter(
       characters,
       characterTemplate,
       charactersContainer,
-      battle
+      battle,
     );
     dropZone.classList.remove("drop-zone--dragover");
   });
@@ -952,7 +952,7 @@ function handleUploadCharacter(
       characters,
       characterTemplate,
       charactersContainer,
-      battle
+      battle,
     );
   });
 }
@@ -1006,7 +1006,7 @@ function updateForm(
   characterCreation,
   characters,
   selectedElement,
-  battle
+  battle,
 ) {
   saveButtonGreen(characters.saveButton);
   hideElement(characterCreation.previousElementSibling);
@@ -1040,23 +1040,23 @@ function updateForm(
     weaponElement,
     characters.weaponCategory,
     battle.constants.allowedWeaponsPerRace,
-    true
+    true,
   );
   handlePolymorphDisplay(
     characters,
     characterCreation.polymorphMonster.value,
-    characterCreation.polymorphMonsterImage.value
+    characterCreation.polymorphMonsterImage.value,
   );
   handleWeaponDisplay(
     characters.weaponCategory,
     characters.weaponDisplay,
-    weaponElement.value
+    weaponElement.value,
   );
   filterUpgrade(
     characterCreation.weaponUpgrade,
     weaponElement.value,
     characters.randomAttackValue,
-    characters.randomMagicAttackValue
+    characters.randomMagicAttackValue,
   );
   for (var [targetName, sibling] of Object.entries(characters.toggleSiblings)) {
     filterCheckbox(characterCreation[targetName], sibling);
@@ -1071,7 +1071,7 @@ function handleClickOnCharacter(
   characters,
   characterElement,
   battle,
-  edition
+  edition,
 ) {
   var displayedPseudo = characters.characterCreation.name.value;
   var pseudo = spanInput.dataset.name;
@@ -1084,7 +1084,7 @@ function handleClickOnCharacter(
         characters.characterCreation,
         characters,
         characterElement,
-        battle
+        battle,
       );
     } else if (displayedPseudo === pseudo) {
       // pass
@@ -1097,7 +1097,7 @@ function handleClickOnCharacter(
           characters.characterCreation,
           characters,
           characterElement,
-          battle
+          battle,
         );
         characters.unsavedChanges = false;
       }
@@ -1115,7 +1115,7 @@ function handleClickOnCharacter(
             characters.newCharacterTemplate,
             characters.charactersContainer,
             battle,
-            pseudo
+            pseudo,
           );
         } else {
           var result = confirm(unsavedWarning);
@@ -1126,7 +1126,7 @@ function handleClickOnCharacter(
               characters.newCharacterTemplate,
               characters.charactersContainer,
               battle,
-              pseudo
+              pseudo,
             );
             saveButtonGreen(characters.saveButton);
             characters.unsavedChanges = false;
@@ -1139,7 +1139,7 @@ function handleClickOnCharacter(
         downloadData(
           JSON.stringify(character),
           "text/plain",
-          character.name + ".txt"
+          character.name + ".txt",
         );
         break;
 
@@ -1158,7 +1158,7 @@ function handleNewCharacter(
   characterTemplate,
   charactersContainer,
   battle,
-  pseudo
+  pseudo,
 ) {
   var newCharacterTemplate = characterTemplate.cloneNode(true);
   var spanInput = newCharacterTemplate.querySelector("span.input");
@@ -1180,7 +1180,7 @@ function handleNewCharacter(
         target,
         characters,
         newCharacterTemplate,
-        battle
+        battle,
       );
     } else {
       handleClickOnCharacter(
@@ -1189,7 +1189,7 @@ function handleNewCharacter(
         characters,
         newCharacterTemplate,
         battle,
-        true
+        true,
       );
     }
   });
@@ -1218,7 +1218,7 @@ function addNewCharacter(
   characterTemplate,
   charactersContainer,
   battle,
-  pseudoToDuplicate
+  pseudoToDuplicate,
 ) {
   function editAndSetCharacterPseudoInput(selectedCharacter, spanInput) {
     var maxPseudoLength = 20;
@@ -1243,14 +1243,14 @@ function addNewCharacter(
 
       if (pseudoToDuplicate) {
         characterDataObject = copyObject(
-          characters.savedCharacters[pseudoToDuplicate]
+          characters.savedCharacters[pseudoToDuplicate],
         );
         characterDataObject.name = characterPseudo;
       }
 
       [characterDataObject, characterPseudo] = addUniquePseudo(
         characterDataObject,
-        Object.keys(characters.savedCharacters)
+        Object.keys(characters.savedCharacters),
       );
 
       selection.removeAllRanges();
@@ -1263,13 +1263,13 @@ function addNewCharacter(
         characters.characterCreation,
         characters,
         selectedCharacter,
-        battle
+        battle,
       );
       saveCharacter(
         characters.savedCharacters,
         characters.characterCreation,
         battle,
-        true
+        true,
       );
     }
 
@@ -1310,7 +1310,7 @@ function addNewCharacter(
     characters,
     characterTemplate,
     charactersContainer,
-    battle
+    battle,
   );
 
   editAndSetCharacterPseudoInput(selectedCharacter, spanInput);
@@ -1344,7 +1344,7 @@ function resetBonusVariation(bonusVariation) {
 function handleBonusVariationUpdate(
   characterCreation,
   bonusVariation,
-  resetSkill
+  resetSkill,
 ) {
   var selectedBonus = characterCreation.bonusVariation.value;
   var displayName = characterCreation.bonusVariationName.value;
@@ -1367,7 +1367,7 @@ function handleBonusVariationUpdate(
     handleBonusVariation(
       characterCreation[selectedBonus],
       bonusVariation,
-      displayName
+      displayName,
     );
   } else {
     resetBonusVariation(bonusVariation);
@@ -1493,7 +1493,7 @@ function characterManagement(characters, battle) {
       characterTemplate,
       charactersContainer,
       battle,
-      pseudo
+      pseudo,
     );
   });
 
@@ -1503,7 +1503,7 @@ function characterManagement(characters, battle) {
         characters,
         characterTemplate,
         charactersContainer,
-        battle
+        battle,
       );
     } else {
       var result = confirm(unsavedWarning);
@@ -1513,7 +1513,7 @@ function characterManagement(characters, battle) {
           characters,
           characterTemplate,
           charactersContainer,
-          battle
+          battle,
         );
         saveButtonGreen(saveButton);
         characters.unsavedChanges = false;
@@ -1525,7 +1525,7 @@ function characterManagement(characters, battle) {
     characters,
     characterTemplate,
     charactersContainer,
-    battle
+    battle,
   );
 
   function handleLongPress(target) {
@@ -1610,7 +1610,7 @@ function addNewMonster(
   monsterVnum,
   monsterImage,
   iframeInfo,
-  category
+  category,
 ) {
   if (isValueInArray(monsterVnum, Object.keys(characters.savedMonsters)))
     return;
@@ -1655,7 +1655,7 @@ function translateMonsterCard(card, cardNameElement, monsterVnum) {
 
   levelElement.textContent = levelElement.textContent.replace(
     "Boss",
-    translation.special.boss
+    translation.special.boss,
   );
 
   if (typeElement) {
@@ -1671,7 +1671,7 @@ function addButtonsToCardsAndTranslate(
   characters,
   iframeDoc,
   iframeInfo,
-  category
+  category,
 ) {
   const buttonTemplates = characters.monsterButtonTemplates.children[0];
   const cardToEdit = iframeDoc.getElementById("cards-container").children;
@@ -1801,7 +1801,7 @@ function handleiFrame(iframeInfo, category) {
           changePolymorphValues(
             characters.characterCreation,
             monsterVnum,
-            monsterImage
+            monsterImage,
           );
           handlePolymorphDisplay(characters, monsterVnum, monsterImage);
           iframe.dispatchEvent(newChangeEvent());
@@ -1821,7 +1821,7 @@ function handleiFrame(iframeInfo, category) {
               monsterVnum,
               monsterImage,
               iframeInfo,
-              category
+              category,
             );
             hideElement(addButton);
             showElement(deleteButton);
@@ -2002,7 +2002,7 @@ function addBattleElement(
   pseudoOrVnum,
   characterOrMonster,
   category,
-  isMonster
+  isMonster,
 ) {
   var { template, raceToImage, translateMonsters } = battleChoice;
   var battleChoiceCategory = battleChoice[category];
@@ -2057,21 +2057,21 @@ function addBattleChoice(
   battleChoice,
   pseudoOrVnum,
   characterOrMonster,
-  isMonster = false
+  isMonster = false,
 ) {
   addBattleElement(
     battleChoice,
     pseudoOrVnum,
     characterOrMonster,
     "attacker",
-    isMonster
+    isMonster,
   );
   addBattleElement(
     battleChoice,
     pseudoOrVnum,
     characterOrMonster,
     "victim",
-    isMonster
+    isMonster,
   );
 }
 
@@ -2081,7 +2081,7 @@ function updateBattleChoiceImage(battleChoice, characterName, newRace) {
   battleChoice.categories.forEach(function (category) {
     handleImageFromWiki(
       battleChoice[category].character.elements[characterName].image,
-      imageSrc
+      imageSrc,
     );
 
     var selected = battleChoice[category].selected;
@@ -2231,10 +2231,14 @@ function calcStatAttackValue(character) {
       statAttackValue = 2 * character.str;
       break;
     case "ninja":
-      statAttackValue = Math.floor((1 / 4) * (character.str + 7 * character.dex));
+      statAttackValue = Math.floor(
+        (1 / 4) * (character.str + 7 * character.dex),
+      );
       break;
     case "shaman":
-      statAttackValue = Math.floor((1 / 3) * (5 * character.int + character.dex));
+      statAttackValue = Math.floor(
+        (1 / 3) * (5 * character.int + character.dex),
+      );
       break;
     case "lycan":
       statAttackValue = character.vit + 2 * character.dex;
@@ -2254,7 +2258,7 @@ function calcStatAttackValue(character) {
 function calcPvpCriticalAttackRange(minAttackValue, maxAttackValue, growth) {
   return Array.from(
     { length: maxAttackValue - minAttackValue + 1 },
-    (_, index) => (minAttackValue + growth + index) * 2
+    (_, index) => (minAttackValue + growth + index) * 2,
   );
 }
 
@@ -2279,17 +2283,17 @@ function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
       minAttackValue = Math.max(0, attacker.minAttackValueRandom - growth);
       maxAttackValue = Math.max(
         minAttackValue,
-        attacker.maxAttackValueRandom - growth
+        attacker.maxAttackValueRandom - growth,
       );
     }
 
     minAttackValueSlash = Math.min(
       attacker.minAttackValueSlash,
-      attacker.maxAttackValueSlash
+      attacker.maxAttackValueSlash,
     );
     maxAttackValueSlash = Math.max(
       attacker.minAttackValueSlash,
-      attacker.maxAttackValueSlash
+      attacker.maxAttackValueSlash,
     );
 
     attackValueOther += attacker.attackValue;
@@ -2302,7 +2306,7 @@ function calcSecondaryAttackValue(attacker, isPlayerVsPlayer) {
       criticalAttackRange = calcPvpCriticalAttackRange(
         minAttackValue,
         maxAttackValue,
-        growth
+        growth,
       );
     }
   } else {
@@ -2355,12 +2359,12 @@ function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
     minMagicAttackValue = Math.max(0, attacker.minMagicAttackValueRandom);
     maxMagicAttackValue = Math.max(
       minMagicAttackValue,
-      attacker.maxMagicAttackValueRandom
+      attacker.maxMagicAttackValueRandom,
     );
     minAttackValue = Math.max(0, attacker.minAttackValueRandom - growth);
     maxAttackValue = Math.max(
       minAttackValue,
-      attacker.maxAttackValueRandom - growth
+      attacker.maxAttackValueRandom - growth,
     );
   } else {
     minMagicAttackValue += growth;
@@ -2371,17 +2375,17 @@ function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
     criticalAttackRange = calcPvpCriticalAttackRange(
       minAttackValue,
       maxAttackValue,
-      growth
+      growth,
     );
   }
 
   minMagicAttackValueSlash = Math.min(
     attacker.minMagicAttackValueSlash,
-    attacker.maxMagicAttackValueSlash
+    attacker.maxMagicAttackValueSlash,
   );
   maxMagicAttackValueSlash = Math.max(
     attacker.minMagicAttackValueSlash,
-    attacker.maxMagicAttackValueSlash
+    attacker.maxMagicAttackValueSlash,
   );
 
   const weaponInterval = maxMagicAttackValue - minMagicAttackValue + 1;
@@ -2399,7 +2403,7 @@ function calcMagicAttackValue(attacker, isPlayerVsPlayer) {
     magicAttackValueAugmentation: getMagicAttackValueAugmentation(
       minMagicAttackValue,
       maxMagicAttackValue,
-      attacker.magicAttackValue
+      attacker.magicAttackValue,
     ),
     totalCardinal: totalCardinal,
     weights: calcWeights(minMagicAttackValue, maxMagicAttackValue, minInterval),
@@ -2439,7 +2443,7 @@ function calcDamageWithPrimaryBonuses(damage, bonusValues) {
   damage += bonusValues.attackValueMarriage;
 
   damage = Math.floor(
-    (damage * bonusValues.monsterResistanceMarriageCoeff) / 100
+    (damage * bonusValues.monsterResistanceMarriageCoeff) / 100,
   );
   damage = Math.floor((damage * bonusValues.monsterResistanceCoeff) / 100);
 
@@ -2470,7 +2474,7 @@ function calcFinalDamage(
   damageWithPrimaryBonuses,
   bonusValues,
   criticalAttackRange,
-  damageByType
+  damageByType,
 ) {
   for (let criticalIndex = 0; criticalIndex < 2; criticalIndex++) {
     if (bonusValues.skipCriticalStep[criticalIndex]) {
@@ -2493,21 +2497,21 @@ function calcFinalDamage(
         if (piercingIndex) {
           damage += Math.min(
             bonusValues.defenseBoost,
-            damageWithPrimaryBonuses
+            damageWithPrimaryBonuses,
           );
           damage += Math.floor(
             (damageWithPrimaryBonuses * bonusValues.extraPiercingHitCoeff) /
-              1000
+              1000,
           );
         }
 
         damage = Math.floor((damage * bonusValues.averageDamageCoeff) / 100);
         damage = Math.floor(
-          (damage * bonusValues.averageDamageResistanceCoeff) / 100
+          (damage * bonusValues.averageDamageResistanceCoeff) / 100,
         );
         damage = Math.floor((damage * bonusValues.skillDamageCoeff) / 100);
         damage = Math.floor(
-          (damage * bonusValues.skillDamageResistanceCoeff) / 100
+          (damage * bonusValues.skillDamageResistanceCoeff) / 100,
         );
         damage = Math.floor((damage * bonusValues.rankBonusCoeff) / 100);
 
@@ -2516,34 +2520,34 @@ function calcFinalDamage(
 
           const damageReduction = Math.floor(damage / 3);
           const spAbsorption = Math.floor(
-            (damageReduction * darkProtectionPoint) / 100
+            (damageReduction * darkProtectionPoint) / 100,
           );
 
           if (spAbsorption <= darkProtectionSp) {
             damage -= damageReduction;
           } else {
             damage -= Math.floor(
-              (darkProtectionSp * 100) / darkProtectionPoint
+              (darkProtectionSp * 100) / darkProtectionPoint,
             );
           }
         }
 
         damage -= Math.floor(
-          (damage * bonusValues.resistance90PercentHp) / 100
+          (damage * bonusValues.resistance90PercentHp) / 100,
         );
         damage = Math.max(0, damage + bonusValues.defensePercent);
         damage += Math.min(
           300,
-          Math.floor((damage * bonusValues.damageBonusCoeff) / 100)
+          Math.floor((damage * bonusValues.damageBonusCoeff) / 100),
         );
         damage = Math.floor((damage * bonusValues.empireMalusCoeff) / 10);
         damage = Math.floor((damage * bonusValues.sungMaStrBonusCoeff) / 10000);
         damage -= Math.floor(damage * bonusValues.sungmaStrMalusCoeff);
         damage = Math.floor(
-          (damage * bonusValues.whiteDragonElixirCoeff) / 100
+          (damage * bonusValues.whiteDragonElixirCoeff) / 100,
         );
         damage = Math.floor(
-          (damage * bonusValues.steelDragonElixirCoeff) / 100
+          (damage * bonusValues.steelDragonElixirCoeff) / 100,
         );
 
         damageByType[criticalIndex + 2 * piercingIndex].push(damage);
@@ -2557,7 +2561,7 @@ function saveFinalDamage(
   damageWithPrimaryBonuses,
   bonusValues,
   criticalAttackRange,
-  damageByType
+  damageByType,
 ) {
   damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
   damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
@@ -2571,7 +2575,7 @@ function saveFinalDamage(
     damageWithPrimaryBonuses,
     bonusValues,
     criticalAttackRange,
-    damageByType
+    damageByType,
   );
 }
 
@@ -2579,7 +2583,7 @@ function saveFinalSkillDamage(
   damage,
   bonusValues,
   criticalAttackRange,
-  damageByType
+  damageByType,
 ) {
   damage = Math.floor(damage * bonusValues.magicResistanceCoeff);
   damage = Math.trunc((damage * bonusValues.weaponDefenseCoeff) / 100);
@@ -2594,11 +2598,11 @@ function saveFinalSkillDamage(
     damage = floorMultiplication(damage, bonusValues.skillBonusCoeff);
 
     const tempDamage = Math.floor(
-      (damage * bonusValues.skillBonusByBonusCoeff) / 100
+      (damage * bonusValues.skillBonusByBonusCoeff) / 100,
     );
 
     damage = Math.floor(
-      (tempDamage * bonusValues.magicAttackValueCoeff) / 100 + 0.5
+      (tempDamage * bonusValues.magicAttackValueCoeff) / 100 + 0.5,
     );
     damage = Math.floor((damage * bonusValues.tigerStrengthCoeff) / 100);
 
@@ -2607,59 +2611,68 @@ function saveFinalSkillDamage(
       tempDamage,
       bonusValues,
       criticalAttackRange,
-      damageByType
+      damageByType,
     );
   }
 }
 
-function computePolymorphPoint(attacker, victim, polymorphPowerTable) {
-  attacker.polymorphDex = attacker.dex;
-  victim.polymorphDex = victim.dex;
+function applyPolymorphStats(character, polymorphPowerTable) {
+  character.polymorphDex = character.dex;
+  character.minAttackValuePolymorph = 0;
+  character.maxAttackValuePolymorph = 0;
 
-  attacker.minAttackValuePolymorph = 0;
-  attacker.maxAttackValuePolymorph = 0;
-
-  if (isPC(attacker) && isPolymorph(attacker)) {
-    var polymorphPowerPct =
-      getPolymorphPower(attacker.polymorphPoint, polymorphPowerTable) / 100;
-    var polymorphMonster = createMonster(
-      attacker.polymorphMonster,
-      null,
-      null,
-      true
-    );
-
-    var polymorphStr = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.str
-    );
-
-    attacker.polymorphDex += floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.dex
-    );
-
-    attacker.minAttackValuePolymorph = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.minAttackValue
-    );
-    attacker.maxAttackValuePolymorph = floorMultiplication(
-      polymorphPowerPct,
-      polymorphMonster.maxAttackValue
-    );
-
-    if (!attacker.weapon) {
-      attacker.maxAttackValuePolymorph += 1;
-    }
-
-    attacker.attackValue = 0;
-
-    if (isMagicClass(attacker)) {
-      attacker.statAttackValue = 2 * (polymorphStr + attacker.int);
-    } else {
-      attacker.statAttackValue = 2 * (polymorphStr + attacker.str);
-    }
+  if (!isPC(character) || !isPolymorph(character)) {
+    return;
   }
+
+  const polymorphPowerPct =
+    getPolymorphPower(character.polymorphPoint, polymorphPowerTable) / 100;
+
+  const polymorphMonster = createMonster(
+    character.polymorphMonster,
+    null,
+    null,
+    true,
+  );
+
+  console.log(polymorphMonster.vit);
+  console.log(polymorphMonster.rawDefense);
+
+  const polymorphStr = floorMultiplication(
+    polymorphPowerPct,
+    polymorphMonster.str,
+  );
+
+  character.polymorphDex += floorMultiplication(
+    polymorphPowerPct,
+    polymorphMonster.dex,
+  );
+
+  character.minAttackValuePolymorph = floorMultiplication(
+    polymorphPowerPct,
+    polymorphMonster.minAttackValue,
+  );
+  character.maxAttackValuePolymorph = floorMultiplication(
+    polymorphPowerPct,
+    polymorphMonster.maxAttackValue,
+  );
+
+  if (!character.weapon) {
+    character.maxAttackValuePolymorph += 1;
+  }
+
+  character.attackValue = 0;
+
+  if (isMagicClass(character)) {
+    character.statAttackValue = 2 * (polymorphStr + character.int);
+  } else {
+    character.statAttackValue = 2 * (polymorphStr + character.str);
+  }
+}
+
+function updateCombatantsPolymorphStats(attacker, victim, polymorphPowerTable) {
+  applyPolymorphStats(attacker, polymorphPowerTable);
+  applyPolymorphStats(victim, polymorphPowerTable);
 }
 
 function computeHorse(attacker) {
@@ -2674,7 +2687,7 @@ function computeHorse(attacker) {
 
     attacker.horseAttackValue = floorMultiplication(
       2 * attacker.level + attacker.statAttackValue,
-      attacker.horsePoint / horseConstant
+      attacker.horsePoint / horseConstant,
     );
   }
 }
@@ -2738,7 +2751,7 @@ function calcElementCoeffPvP(elementBonus, mapping, attacker, victim) {
 
     minElementMalus = Math.min(
       0,
-      Math.max(minElementMalus, minElementMalus - elementDifference)
+      Math.max(minElementMalus, minElementMalus - elementDifference),
     );
   }
 }
@@ -2826,7 +2839,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
   attacker.statAttackValue = calcStatAttackValue(attacker);
 
-  computePolymorphPoint(attacker, victim, polymorphPowerTable);
+  updateCombatantsPolymorphStats(attacker, victim, polymorphPowerTable);
   computeHorse(attacker);
 
   if (isPC(attacker)) {
@@ -2899,7 +2912,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           attackValueMarriage = getMarriageBonusValue(
             attacker,
             marriageTable,
-            "loveNecklace"
+            "loveNecklace",
           );
         }
 
@@ -2907,7 +2920,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           criticalHitPercentage += getMarriageBonusValue(
             attacker,
             marriageTable,
-            "loveEarrings"
+            "loveEarrings",
           );
         }
 
@@ -2915,7 +2928,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           piercingHitPercentage += getMarriageBonusValue(
             attacker,
             marriageTable,
-            "harmonyEarrings"
+            "harmonyEarrings",
           );
         }
       }
@@ -2986,7 +2999,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           monsterResistanceMarriage = getMarriageBonusValue(
             victim,
             marriageTable,
-            "harmonyBracelet"
+            "harmonyBracelet",
           );
         }
 
@@ -2994,7 +3007,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
           defenseMarriage = getMarriageBonusValue(
             victim,
             marriageTable,
-            "harmonyNecklace"
+            "harmonyNecklace",
           );
         }
       }
@@ -3053,11 +3066,11 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
     criticalHitPercentage = Math.max(
       0,
-      criticalHitPercentage - victim.criticalHitResistance
+      criticalHitPercentage - victim.criticalHitResistance,
     );
     piercingHitPercentage = Math.max(
       0,
-      piercingHitPercentage - victim.piercingHitResistance
+      piercingHitPercentage - victim.piercingHitResistance,
     );
 
     if (skillType) {
@@ -3096,7 +3109,7 @@ function createBattleValues(attacker, victim, battle, skillType) {
 
     if (magicResistance > 0 && magicPenetration) {
       magicResistance = Math.floor(
-        magicResistance * (1 - magicPenetration / 120) + 0.5
+        magicResistance * (1 - magicPenetration / 120) + 0.5,
       );
     }
 
@@ -3303,7 +3316,7 @@ function calcBlessingBonus(skillPowerTable, victim) {
 
   let blessingBonus = floorMultiplication(
     ((int * 0.3 + 5) * (2 * skillPower + 0.5) + 0.3 * dex) / (skillPower + 2.3),
-    1
+    1,
   );
 
   if (victim.class === "dragon" && isChecked(victim.blessingOnself)) {
@@ -3363,7 +3376,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
   if (skillId <= 9) {
     var skillPower = getSkillPower(
       attacker["attackSkill" + skillId],
-      skillPowerTable
+      skillPowerTable,
     );
 
     var improvedBySkillBonus = false;
@@ -3376,7 +3389,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               1.1 * atk + (0.5 * atk + 1.5 * str) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3386,7 +3399,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               3 * atk + (0.8 * atk + 5 * str + 3 * dex + vit) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3397,7 +3410,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2 * atk + (atk + dex * 3 + str * 7 + vit) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3407,7 +3420,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               (3 * atk + (atk + 1.5 * str) * skillPower) * 1.07,
-              1
+              1,
             );
           };
           break;
@@ -3417,7 +3430,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
             return floorMultiplication(
               3 * atk +
                 (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3430,7 +3443,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2.3 * atk + (4 * atk + 4 * str + vit) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3441,7 +3454,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2.3 * atk + (3 * atk + 4 * str + 3 * vit) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3451,7 +3464,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower,
-              1
+              1,
             );
           };
           break;
@@ -3460,7 +3473,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3471,7 +3484,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
             return floorMultiplication(
               (2 * atk + (2 * atk + 2 * dex + 2 * vit + 4 * str) * skillPower) *
                 1.1,
-              1
+              1,
             );
           };
           break;
@@ -3481,7 +3494,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
             return floorMultiplication(
               3 * atk +
                 (0.9 * atk + variation + 5 * str + 3 * dex + lv) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3494,7 +3507,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk + (1.2 * atk + variation + 4 * dex + 4 * str) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [1, 50];
@@ -3508,7 +3521,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk + (1.6 * atk + variation + 7 * dex + 7 * str) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [1, 35];
@@ -3520,7 +3533,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2 * atk + (0.5 * atk + 9 * dex + 7 * str) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3530,7 +3543,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2 * lv + (atk + 3 * str + 18 * dex) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3540,7 +3553,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               (2 * lv + (atk + 3 * str + 18 * dex) * skillPower) * 1.1,
-              1
+              1,
             );
           };
           break;
@@ -3549,7 +3562,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               atk + (1.7 * atk + variation + 6 * dex + 5 * lv) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3572,7 +3585,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               atk + (1.7 * atk + 5 * dex + str) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3582,7 +3595,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               1.5 * atk + (2.6 * atk + 0.9 * int + variation) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [100, 300];
@@ -3594,7 +3607,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               (3 * dex + 200 + 2 * str + 2 * int) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.removeWeaponReduction = true;
@@ -3606,7 +3619,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
               atk +
                 (1.4 * atk + variation + 7 * dex + 4 * str + 4 * int) *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [100, 200];
@@ -3620,7 +3633,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (1.2 * atk + variation + 6 * dex + 3 * str + 3 * int) *
                   skillPower) *
                 1.2,
-              1
+              1,
             );
           };
           skillInfo.range = [100, 200];
@@ -3631,7 +3644,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               1.9 * atk + (2.6 * atk + variation) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3647,7 +3660,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 2 * lv +
                 2 * int +
                 (2 * atk + 4 * str + 14 * int) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3661,7 +3674,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 2 * lv +
                 2 * int +
                 (1.5 * atk + str + 12 * int) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3674,7 +3687,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 5 * lv +
                 2 * int +
                 (10 * int + 7 * mav + variation) * attackFactor * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [50, 100];
@@ -3684,7 +3697,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk, variation) {
             return floorMultiplication(
               1.9 * atk + (2.6 * atk + variation) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3700,7 +3713,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 5 * lv +
                 2 * int +
                 (13 * int + 6 * mav + variation) * attackFactor * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [50, 100];
@@ -3726,7 +3739,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 2 * lv +
                 2 * int +
                 (7 * int + 6 * mav + variation) * attackFactor * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [200, 500];
@@ -3750,7 +3763,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (5 * vit + 5 * dex + 29 * int + 9 * mav) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3764,7 +3777,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3779,7 +3792,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
               70 +
                 5 * lv +
                 (18 * int + 7 * str + 5 * mav + 50) * attackFactor * skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [4, 10];
@@ -3794,7 +3807,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (16 * int + 6 * dex + 6 * mav + 120) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [4, 10];
@@ -3810,7 +3823,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (20 * int + 3 * str + 10 * mav + 100) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [4, 10];
@@ -3825,7 +3838,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (5 * vit + 5 * dex + 30 * int + variation + 9 * mav) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3842,7 +3855,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (8 * int + 2 * dex + 8 * mav + variation) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [6, 10];
@@ -3858,7 +3871,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (13 * int + 2 * str + 10 * mav + variation) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [6, 10];
@@ -3875,7 +3888,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
                 (8 * int + 2 * str + 8 * mav + variation) *
                   attackFactor *
                   skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 800];
@@ -3900,7 +3913,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               2 * atk + (atk + 3 * dex + 5 * str + vit) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [5, 35];
@@ -3912,7 +3925,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               atk + (1.6 * atk + 200 + 7 * dex + 7 * str) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.weaponBonus = [5, 35];
@@ -3923,7 +3936,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
           skillFormula = function (atk) {
             return floorMultiplication(
               3 * atk + (0.8 * atk + 6 * str + 2 * dex + vit) * skillPower,
-              1
+              1,
             );
           };
           improvedByBonus = true;
@@ -3934,7 +3947,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
             return floorMultiplication(
               1.8 * atk +
                 (atk + 6 * dex + variation + 3 * str + lv) * skillPower,
-              1
+              1,
             );
           };
           skillInfo.range = [1, 1000];
@@ -3964,7 +3977,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
   } else {
     var skillPower = getSkillPower(
       attacker["horseSkill" + skillId],
-      skillPowerTable
+      skillPowerTable,
     );
 
     switch (skillId) {
@@ -3979,7 +3992,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
         skillFormula = function (atk) {
           return floorMultiplication(
             2.4 * (200 + 1.5 * lv) + 600 * skillPower,
-            1
+            1,
           );
         };
         break;
@@ -3988,7 +4001,7 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
         skillFormula = function (atk) {
           return floorMultiplication(
             2 * (200 + 1.5 * lv) + 600 * skillPower,
-            1
+            1,
           );
         };
         break;
@@ -4006,14 +4019,14 @@ function getSkillFormula(battle, skillId, battleValues, removeSkillVariation) {
 
 function calcMagicAttackValueAugmentation(
   magicAttackValueWeapon,
-  magicAttackValueBonus
+  magicAttackValueBonus,
 ) {
   if (magicAttackValueBonus) {
     return Math.max(
       1,
       0.0025056 *
         magicAttackValueBonus ** 0.602338 *
-        magicAttackValueWeapon ** 1.20476
+        magicAttackValueWeapon ** 1.20476,
     );
   }
   return 0;
@@ -4022,7 +4035,7 @@ function calcMagicAttackValueAugmentation(
 function getMagicAttackValueAugmentation(
   minMagicAttackValue,
   maxMagicAttackValue,
-  magicAttackValueBonus
+  magicAttackValueBonus,
 ) {
   var magicAttackValueAugmentation = [];
 
@@ -4032,7 +4045,7 @@ function getMagicAttackValueAugmentation(
     magicAttackValue++
   ) {
     magicAttackValueAugmentation.push(
-      calcMagicAttackValueAugmentation(magicAttackValue, magicAttackValueBonus)
+      calcMagicAttackValueAugmentation(magicAttackValue, magicAttackValueBonus),
     );
   }
 
@@ -4075,7 +4088,7 @@ function calcPhysicalDamage(battleValues) {
 
     const damageWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
       rawDamage,
-      bonusValues
+      bonusValues,
     );
 
     const damageAfterDefense =
@@ -4092,7 +4105,7 @@ function calcPhysicalDamage(battleValues) {
         damageWithPrimaryBonuses,
         bonusValues,
         criticalAttackRange,
-        damageByType
+        damageByType,
       );
     }
 
@@ -4136,7 +4149,7 @@ function calcPhysicalSkillDamage(battleValues) {
 
     const damageWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
       rawDamage,
-      bonusValues
+      bonusValues,
     );
 
     const damageValues =
@@ -4149,7 +4162,7 @@ function calcPhysicalSkillDamage(battleValues) {
       for (const damage of damageValues) {
         const damageWithFormula = skillFormula(
           damage * bonusValues.useDamage,
-          variation
+          variation,
         );
 
         let damageKey = damageWithFormula;
@@ -4169,14 +4182,14 @@ function calcPhysicalSkillDamage(battleValues) {
         const currentDamageInfo = [weightByDamage, damageByType];
 
         const finalDamage = Math.floor(
-          (damageWithFormula * bonusValues.weaponBonusCoeff) / 100
+          (damageWithFormula * bonusValues.weaponBonusCoeff) / 100,
         );
 
         saveFinalSkillDamage(
           finalDamage,
           bonusValues,
           criticalAttackRange,
-          damageByType
+          damageByType,
         );
 
         savedDamage[damageKey] = currentDamageInfo;
@@ -4217,7 +4230,7 @@ function calcMagicSkillDamage(battleValues) {
     for (let variation = minVariation; variation <= maxVariation; variation++) {
       const rawDamage = skillFormula(
         magicAttackValue + magicAttackValueAugmentation[index],
-        variation
+        variation,
       );
 
       const entry = savedDamage[rawDamage];
@@ -4231,12 +4244,12 @@ function calcMagicSkillDamage(battleValues) {
       const currentDamageInfo = [weight, damageByType];
 
       let damageWithPrimaryBonuses = Math.floor(
-        (rawDamage * bonusValues.weaponBonusCoeff) / 100
+        (rawDamage * bonusValues.weaponBonusCoeff) / 100,
       );
 
       damageWithPrimaryBonuses = calcDamageWithPrimaryBonuses(
         damageWithPrimaryBonuses,
-        bonusValues
+        bonusValues,
       );
 
       const damageValues =
@@ -4249,7 +4262,7 @@ function calcMagicSkillDamage(battleValues) {
           damage,
           bonusValues,
           criticalAttackRange,
-          damageByType
+          damageByType,
         );
       }
 
@@ -4267,7 +4280,7 @@ function calcDamage(
   victim,
   attackType,
   battle,
-  removeSkillVariation
+  removeSkillVariation,
 ) {
   var damageCalculator, skillId, skillType;
 
@@ -4307,7 +4320,7 @@ function damageWithoutVariation(
   victim,
   attackType,
   battle,
-  characters
+  characters,
 ) {
   var startDamageTime = performance.now();
 
@@ -4315,7 +4328,7 @@ function damageWithoutVariation(
     attacker,
     victim,
     attackType,
-    battle
+    battle,
   );
 
   var endDamageTime = performance.now();
@@ -4325,7 +4338,7 @@ function damageWithoutVariation(
     damageWeightedByType,
     battle,
     attacker.name,
-    victim.name
+    victim.name,
   );
 
   var endDisplayTime = performance.now();
@@ -4334,14 +4347,14 @@ function damageWithoutVariation(
     attackValues.possibleDamageCount,
     endDamageTime - startDamageTime,
     endDisplayTime - endDamageTime,
-    battle
+    battle,
   );
   addPotentialErrorInformation(
     battle.errorInformation,
     attacker,
     victim,
     skillType,
-    characters
+    characters,
   );
 
   hideElement(battle.bonusVariationResultContainer);
@@ -4355,7 +4368,7 @@ function damageWithVariation(
   attackType,
   battle,
   entity,
-  entityVariation
+  entityVariation,
 ) {
   var startTime = performance.now();
   var damageByBonus = [];
@@ -4384,7 +4397,7 @@ function damageWithVariation(
       copyObject(victim),
       attackType,
       battle,
-      true
+      true,
     );
 
     var meanDamage = calcMeanDamage(damageWeightedByType, totalCardinal);
@@ -4409,12 +4422,12 @@ function damageWithVariation(
     damageByBonus,
     augmentationByBonus,
     entity.bonusVariationName,
-    battle.bonusVariationChart
+    battle.bonusVariationChart,
   );
 
   simulationCount = battle.numberFormats.default.format(simulationCount);
   simulationTime = battle.numberFormats.second.format(
-    (endTime - startTime) / 1000
+    (endTime - startTime) / 1000,
   );
 
   battle.simulationCounter.textContent = simulationCount;
@@ -4503,7 +4516,10 @@ function changeMonsterValues(monster, instance, attacker) {
 
 function createWeapon(vnum) {
   var weapon = copyObject(weaponData[vnum]);
-  var serpentVnums = [360, 380, 1210, 2230, 3250, 5200, 6150, 7330];
+  var serpentVnums = [
+    360, 380, 1210, 2230, 3250, 5200, 6150, 7330, 400, 420, 1230, 2250, 3270,
+    5220, 6170, 7350,
+  ];
   var weaponValues = weapon[1];
   var isSerpent = isValueInArray(Number(vnum), serpentVnums);
   var isSpecial = Array.isArray(weaponValues[0]);
@@ -4547,7 +4563,7 @@ function createMonster(
   monsterVnum,
   translateMonster,
   attacker,
-  polymorphMonster
+  polymorphMonster,
 ) {
   var monsterAttributes = monsterData[monsterVnum];
 
@@ -4613,7 +4629,7 @@ function addPotentialErrorInformation(
   attacker,
   victim,
   skillType,
-  characters
+  characters,
 ) {
   for (var error of Object.values(errorInformation)) {
     hideElement(error);
@@ -4632,10 +4648,7 @@ function addPotentialErrorInformation(
         showElement(errorInformation["polymorph-level"]);
       }
 
-      if (
-        (attacker.polymorphPoint <= 39 && attacker.attackValuePercent <= 199) ||
-        (attacker.polymorphPoint === 40 && attacker.attackValuePercent <= 299)
-      ) {
+      if (attacker.polymorphPoint <= 39 && attacker.attackValuePercent <= 199) {
         showElement(errorInformation["polymorph-bonus"]);
       }
     }
@@ -4712,7 +4725,7 @@ function reduceChartPointsListener(battle) {
     chart.update();
 
     displayTime.textContent = numberFormat.format(
-      (performance.now() - startDisplayTime) / 1000
+      (performance.now() - startDisplayTime) / 1000,
     );
 
     setTimeout(function () {
@@ -4778,7 +4791,7 @@ function displayResults(
   damageWeightedByType,
   battle,
   attackerName,
-  victimName
+  victimName,
 ) {
   var [meanDamage, minDamage, maxDamage, scatterDataByType, uniqueDamageCount] =
     prepareDamageData(damageWeightedByType, attackValues);
@@ -4791,7 +4804,7 @@ function displayResults(
     victimName,
     meanDamage,
     minDamage,
-    maxDamage
+    maxDamage,
   );
   battle.damageWeightedByType = damageWeightedByType;
   battle.scatterDataByType = scatterDataByType;
@@ -4803,7 +4816,7 @@ function displayFightResults(
   victimName,
   meanDamage,
   minDamage,
-  maxDamage
+  maxDamage,
 ) {
   var {
     tableResultFight,
@@ -4832,7 +4845,7 @@ function displayFightResults(
     tableResultHistory,
     valuesToDisplay,
     deleteFightTemplate,
-    numberFormat
+    numberFormat,
   );
 }
 
@@ -4840,7 +4853,7 @@ function displayFightInfo(
   possibleDamageCount,
   damageTimeDuration,
   displayTimeDuration,
-  battle
+  battle,
 ) {
   const {
     damageInfoContainer,
@@ -4982,7 +4995,7 @@ function createBattle(characters, battle) {
     } else {
       var attacker = createMonster(
         attackerNameOrVnum,
-        characters.translateMonsters
+        characters.translateMonsters,
       );
     }
 
@@ -4993,7 +5006,7 @@ function createBattle(characters, battle) {
       var victim = createMonster(
         victimNameOrVnum,
         characters.translateMonsters,
-        attacker
+        attacker,
       );
     }
 
@@ -5004,7 +5017,7 @@ function createBattle(characters, battle) {
         attackType,
         battle,
         attacker,
-        attackerVariation
+        attackerVariation,
       );
     } else if (useBonusVariationMode(victim, victimVariation)) {
       damageWithVariation(
@@ -5013,7 +5026,7 @@ function createBattle(characters, battle) {
         attackType,
         battle,
         victim,
-        victimVariation
+        victimVariation,
       );
     } else {
       damageWithoutVariation(attacker, victim, attackType, battle, characters);
@@ -5097,9 +5110,9 @@ function createMapping() {
 function createConstants() {
   var constants = {
     polymorphPowerTable: [
-      10, 11, 11, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27,
+      0, 10, 11, 11, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27,
       29, 31, 33, 35, 37, 39, 41, 44, 46, 49, 52, 55, 59, 62, 66, 70, 74, 79,
-      84, 89, 94, 100, 0,
+      84, 89, 94, 100,
     ],
     skillPowerTable: [
       0, 0.05, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26,
@@ -5142,7 +5155,7 @@ function initResultTableHistory(battle) {
         tableResultHistory,
         savedFight,
         deleteFightTemplate,
-        numberFormat
+        numberFormat,
       );
     }
   }
@@ -5201,7 +5214,7 @@ function initDamageChart(battle, currentLanguage, defaultText) {
         xPosition - padding,
         yPosition - padding,
         textWidth + 2 * padding,
-        fontSize + 2 * padding
+        fontSize + 2 * padding,
       );
 
       ctx.strokeStyle = "red";
@@ -5209,7 +5222,7 @@ function initDamageChart(battle, currentLanguage, defaultText) {
         xPosition - padding,
         yPosition - padding,
         textWidth + 2 * padding,
-        fontSize + 2 * padding
+        fontSize + 2 * padding,
       );
 
       ctx.fillStyle = "#666";
@@ -5546,7 +5559,7 @@ function addBattleData(battle) {
 function createDamageCalculatorInformation(
   defaultLang,
   currentLanguage,
-  defaultText
+  defaultText,
 ) {
   const characters = {
     unsavedChanges: false,
@@ -5572,7 +5585,7 @@ function createDamageCalculatorInformation(
     weaponDisplay: document.getElementById("weapon-display"),
     randomAttackValue: document.getElementById("random-attack-value"),
     randomMagicAttackValue: document.getElementById(
-      "random-magic-attack-value"
+      "random-magic-attack-value",
     ),
     toggleSiblings: {},
     polymorphDisplay: document.getElementById("polymorph-display"),
@@ -5589,7 +5602,7 @@ function createDamageCalculatorInformation(
       displaySpan: document.getElementById("bonus-variation-display"),
     },
     skillElementsToFilter: document.querySelectorAll(
-      "#skill-container [data-class]"
+      "#skill-container [data-class]",
     ),
     currentLanguage: currentLanguage,
     translateMonsters: defaultLang !== currentLanguage,
@@ -5637,7 +5650,7 @@ function createDamageCalculatorInformation(
         },
         button: document.getElementById("attacker-trigger"),
         defaultButtonContent: document.getElementById(
-          "attacker-default-button-content"
+          "attacker-default-button-content",
         ),
         buttonContent: document.getElementById("attacker-button-content"),
         container: document.getElementById("attacker-selection"),
@@ -5661,7 +5674,7 @@ function createDamageCalculatorInformation(
         },
         button: document.getElementById("victim-trigger"),
         defaultButtonContent: document.getElementById(
-          "victim-default-button-content"
+          "victim-default-button-content",
         ),
         buttonContent: document.getElementById("victim-button-content"),
         selected: null,
@@ -5685,19 +5698,19 @@ function createDamageCalculatorInformation(
     fightResultContainer: document.getElementById("fight-result-container"),
     downLoadRawData: document.getElementById("download-raw-data"),
     downLoadRawDataVariation: document.getElementById(
-      "download-raw-data-variation"
+      "download-raw-data-variation",
     ),
     bonusVariationResultContainer: document.getElementById(
-      "bonus-variation-result-container"
+      "bonus-variation-result-container",
     ),
     reduceChartPointsContainer: document.getElementById(
-      "reduce-chart-points-container"
+      "reduce-chart-points-container",
     ),
     reduceChartPoints: document.getElementById("reduce-chart-points"),
     plotDamage: document.getElementById("plot-damage"),
     plotBonusVariation: document.getElementById("plot-bonus-variation"),
     chartDescriptionContainer: document.getElementById(
-      "chart-description-container"
+      "chart-description-container",
     ),
     damageInfoContainer: document.getElementById("damage-info-container"),
     uniqueDamageCounters: document.querySelectorAll(".unique-damage-counter"),
@@ -6097,7 +6110,7 @@ async function addScript(src) {
   const [characters, battle] = createDamageCalculatorInformation(
     defaultLang,
     currentLanguage,
-    defaultText
+    defaultText,
   );
   characterManagement(characters, battle);
   monsterManagement(characters, battle);
